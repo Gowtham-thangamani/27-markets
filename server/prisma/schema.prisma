@@ -53,6 +53,15 @@ model User {
   kycProfile      KycProfile?
   auditLogs       AuditLog[]
 
+  assignedLeads       Lead[]          @relation("LeadAssignee")
+  convertedFromLeads  Lead[]          @relation("LeadConverted")
+  leadNotes           LeadNote[]      @relation("LeadNoteAuthor")
+  clientNotesAbout    ClientNote[]    @relation("ClientNoteSubject")
+  clientNotesAuthored ClientNote[]    @relation("ClientNoteAuthor")
+  tickets             Ticket[]        @relation("TicketClient")
+  assignedTickets     Ticket[]        @relation("TicketAssignee")
+  ticketMessages      TicketMessage[] @relation("TicketMessageAuthor")
+
   @@index([email])
 }
 
@@ -252,4 +261,108 @@ model AuditLog {
   @@index([userId])
   @@index([action])
   @@index([createdAt])
+}
+
+// ─────────────────────────── CRM ───────────────────────────
+
+enum LeadSource {
+  DEMO
+  REGISTER
+  MANUAL
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  LOST
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+model Lead {
+  id              String     @id @default(cuid())
+  name            String
+  email           String
+  phone           String?
+  country         String?
+  source          LeadSource @default(MANUAL)
+  status          LeadStatus @default(NEW)
+  assignedToId    String?
+  assignedTo      User?      @relation("LeadAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  convertedUserId String?
+  convertedUser   User?      @relation("LeadConverted", fields: [convertedUserId], references: [id], onDelete: SetNull)
+  notes           LeadNote[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([status])
+  @@index([assignedToId])
+}
+
+model LeadNote {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation("LeadNoteAuthor", fields: [authorId], references: [id])
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([leadId])
+}
+
+model ClientNote {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    User     @relation("ClientNoteSubject", fields: [clientId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation("ClientNoteAuthor", fields: [authorId], references: [id])
+  body      String
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([clientId])
+}
+
+model Ticket {
+  id           String          @id @default(cuid())
+  userId       String
+  user         User            @relation("TicketClient", fields: [userId], references: [id], onDelete: Cascade)
+  subject      String
+  category     String
+  priority     TicketPriority  @default(MEDIUM)
+  status       TicketStatus    @default(OPEN)
+  assignedToId String?
+  assignedTo   User?           @relation("TicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  messages     TicketMessage[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([status])
+  @@index([userId])
+}
+
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation("TicketMessageAuthor", fields: [authorId], references: [id])
+  body      String
+  internal  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
 }
