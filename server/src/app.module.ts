@@ -12,6 +12,7 @@ import { UsersModule } from './users/users.module';
 import { AccountsModule } from './accounts/accounts.module';
 import { FundsModule } from './funds/funds.module';
 import { KycModule } from './kyc/kyc.module';
+import { AdminModule } from './admin/admin.module';
 import { HealthController } from './health/health.controller';
 
 @Module({
@@ -26,6 +27,7 @@ import { HealthController } from './health/health.controller';
     AccountsModule,
     FundsModule,
     KycModule,
+    AdminModule,
   ],
   controllers: [HealthController],
   providers: [
