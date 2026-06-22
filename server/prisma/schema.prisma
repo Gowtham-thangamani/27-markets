@@ -1,0 +1,254 @@
+// Apex Markets — data model.
+// MONEY RULES:
+//  - All monetary amounts use Decimal (Postgres NUMERIC). NEVER floats.
+//  - Balances are NEVER stored on accounts; they are DERIVED from immutable
+//    ledger postings (double-entry). This makes every balance provable and
+//    reconcilable, and removes any client-side authority over money.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────── Identity ───────────────────────────
+
+enum UserRole {
+  CLIENT
+  PARTNER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  phone         String?
+  country       String?
+  role          UserRole   @default(CLIENT)
+  status        UserStatus @default(ACTIVE)
+
+  // 2FA (TOTP)
+  twoFactorSecret  String?
+  twoFactorEnabled Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions       Session[]
+  tradingAccounts TradingAccount[]
+  ledgerAccounts  LedgerAccount[]
+  kycProfile      KycProfile?
+  auditLogs       AuditLog[]
+
+  @@index([email])
+}
+
+// Refresh-token sessions. The raw refresh token is NEVER stored — only a hash.
+model Session {
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenHash String
+  userAgent        String?
+  ip               String?
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// ─────────────────────────── Accounts ───────────────────────────
+
+enum AccountType {
+  STANDARD
+  RAW_SPREAD
+  VIP
+}
+
+enum AccountMode {
+  LIVE
+  DEMO
+}
+
+enum AccountStatus {
+  ACTIVE
+  PENDING
+  SUSPENDED
+  ARCHIVED
+}
+
+// A client-facing trading account. Its balance is the balance of the linked
+// LIABILITY ledger account — not a column here.
+model TradingAccount {
+  id        String        @id @default(cuid())
+  number    String        @unique // human-facing account number
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      AccountType
+  mode      AccountMode
+  currency  String        @default("USD")
+  leverage  String        @default("1:500")
+  status    AccountStatus @default(ACTIVE)
+  createdAt DateTime      @default(now())
+
+  // Each trading account owns exactly one client-liability ledger account.
+  ledgerAccount LedgerAccount?
+
+  @@index([userId])
+}
+
+// ──────────────────── Double-entry ledger ────────────────────
+
+enum LedgerAccountType {
+  ASSET // bank/PSP clearing, what the firm holds
+  LIABILITY // what the firm owes a client (their balance)
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+model LedgerAccount {
+  id        String            @id @default(cuid())
+  code      String            @unique // e.g. CLIENT:<tradingAccountId> or SYSTEM:PSP_CLEARING
+  name      String
+  type      LedgerAccountType
+  currency  String            @default("USD")
+  userId    String?
+  user      User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // For client-liability accounts, the owning trading account (1:1).
+  tradingAccountId String?         @unique
+  tradingAccount   TradingAccount? @relation(fields: [tradingAccountId], references: [id], onDelete: Cascade)
+
+  postings  Posting[]
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+enum JournalKind {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER
+  ADJUSTMENT
+  FEE
+}
+
+enum JournalStatus {
+  PENDING
+  POSTED
+  FAILED
+  REVERSED
+}
+
+// A journal entry is an atomic, balanced transaction: the sum of its postings'
+// signed amounts MUST equal zero (debits = credits). Enforced in code within a
+// DB transaction. Entries are immutable once POSTED (reversed via new entries).
+model JournalEntry {
+  id             String        @id @default(cuid())
+  reference      String        @unique // human ref e.g. TX-100245
+  kind           JournalKind
+  status         JournalStatus @default(POSTED)
+  // Guards against duplicate money operations on retries.
+  idempotencyKey String        @unique
+  // SIMULATION entries never correspond to real funds.
+  simulated      Boolean       @default(true)
+  memo           String?
+  createdById    String?
+  createdAt      DateTime      @default(now())
+
+  postings Posting[]
+
+  @@index([kind])
+  @@index([createdAt])
+}
+
+enum PostingDirection {
+  DEBIT
+  CREDIT
+}
+
+model Posting {
+  id              String           @id @default(cuid())
+  journalEntryId  String
+  journalEntry    JournalEntry     @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  ledgerAccountId String
+  ledgerAccount   LedgerAccount    @relation(fields: [ledgerAccountId], references: [id])
+  direction       PostingDirection
+  // Always positive; direction carries the sign. NUMERIC(20,8).
+  amount          Decimal          @db.Decimal(20, 8)
+  currency        String           @default("USD")
+  createdAt       DateTime         @default(now())
+
+  @@index([ledgerAccountId])
+  @@index([journalEntryId])
+}
+
+// ─────────────────────────── KYC ───────────────────────────
+
+enum KycStepStatus {
+  NOT_SUBMITTED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model KycProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  identityStatus KycStepStatus @default(NOT_SUBMITTED)
+  addressStatus  KycStepStatus @default(NOT_SUBMITTED)
+  selfieStatus   KycStepStatus @default(NOT_SUBMITTED)
+
+  documents KycDocument[]
+  updatedAt DateTime @updatedAt
+}
+
+// We store a REFERENCE to the document in object storage, never the file or
+// raw PII, in the primary DB.
+model KycDocument {
+  id           String     @id @default(cuid())
+  kycProfileId String
+  kycProfile   KycProfile @relation(fields: [kycProfileId], references: [id], onDelete: Cascade)
+  step         String // identity | address | selfie
+  storageKey   String // pointer into object storage (S3/GCS)
+  fileName     String
+  mimeType     String?
+  createdAt    DateTime   @default(now())
+
+  @@index([kycProfileId])
+}
+
+// ─────────────────────────── Audit ───────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String // e.g. auth.login, funds.deposit, kyc.submit
+  entity    String?
+  entityId  String?
+  metadata  Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}

@@ -1,0 +1,26 @@
+node_modules
+dist
+dist-ssr
+*.local
+.vite
+
+# Env (never commit real secrets; .env.example is the template)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+dev.log
+npm-debug.log*
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+
+# Playwright QA artifacts
+.playwright-mcp
+*.png

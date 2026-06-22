@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  * {
+    @apply border-ink-300/60;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-ink-900 text-gray-200 font-sans antialiased;
+    background-image:
+      radial-gradient(70% 50% at 50% -10%, rgba(225, 29, 46, 0.12), transparent 60%),
+      radial-gradient(40% 30% at 90% 10%, rgba(225, 29, 46, 0.06), transparent 70%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  ::selection {
+    @apply bg-brand-500/40 text-white;
+  }
+
+  /* Focus visibility for keyboard users */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-ink-900;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0a0a0a;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #262626;
+    border-radius: 6px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3a3a3a;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply rounded-2xl border border-white/[0.06] bg-ink-700/70 backdrop-blur-xl;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+  }
+
+  .red-glow {
+    box-shadow: 0 0 0 1px rgba(225, 29, 46, 0.35), 0 0 40px rgba(225, 29, 46, 0.2);
+  }
+
+  .card-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+  .card-lift:hover {
+    @apply -translate-y-1 border-brand-500/40;
+    box-shadow: 0 0 0 1px rgba(225, 29, 46, 0.3), 0 18px 50px rgba(0, 0, 0, 0.55),
+      0 0 40px rgba(225, 29, 46, 0.12);
+  }
+
+  .text-gradient-red {
+    @apply bg-gradient-to-br from-white via-white to-brand-400 bg-clip-text text-transparent;
+  }
+
+  .section-eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.25em] text-brand-500;
+  }
+
+  .grid-bg {
+    background-size: 44px 44px;
+    @apply bg-grid-faint;
+  }
+
+  .hairline {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent;
+  }
+}
+
+@layer utilities {
+  .container-x {
+    @apply mx-auto w-full max-w-7xl px-5 sm:px-8;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Travelling pulse dot along an SVG offset-path */
+@keyframes wave-travel {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+.wave-dot {
+  offset-distance: 0%;
+  animation: wave-travel 3.5s ease-in-out 1.5s infinite;
+}
+
+/* Respect reduced motion globally */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

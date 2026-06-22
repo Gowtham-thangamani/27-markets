@@ -1,0 +1,173 @@
+import { motion } from 'framer-motion'
+import { ArrowRight, Layers, Rocket, Gauge, ShieldCheck, Headphones } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Button } from '@/components/ui'
+import { Reveal } from '@/components/Reveal'
+import { SectionHeading } from '@/components/SectionHeading'
+import { HeroVisual } from '@/components/marketing/HeroVisual'
+import { FeatureCard } from '@/components/marketing/FeatureCard'
+import { MarketCard } from '@/components/marketing/MarketCard'
+import { PartnerSection } from '@/components/marketing/PartnerSection'
+import { CTABand } from '@/components/marketing/CTABand'
+import { fadeUp, staggerContainer, slideInLeft } from '@/lib/motion'
+import { whyFeatures, marketCategories } from '@/mock/content'
+
+const heroStats = [
+  { icon: Layers, value: '0.0', label: 'Pips from spreads' },
+  { icon: Rocket, value: '1:500', label: 'Up to leverage' },
+  { icon: Gauge, value: '<30ms', label: 'Ultra-fast execution' },
+  { icon: ShieldCheck, value: 'Tier-1', label: 'Liquidity providers' },
+  { icon: Headphones, value: '24/5', label: 'Customer support' },
+]
+
+export default function HomePage() {
+  return (
+    <>
+      {/* HERO */}
+      <section className="relative overflow-hidden">
+        <div className="grid-bg pointer-events-none absolute inset-0 opacity-40" />
+        <div className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[60rem] -translate-x-1/2 bg-radial-red opacity-70 blur-2xl" />
+
+        <div className="container-x relative grid items-center gap-10 py-16 lg:grid-cols-2 lg:py-24">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="show"
+            className="relative z-10"
+          >
+            <motion.span
+              variants={fadeUp}
+              className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/[0.08] px-3 py-1 text-xs font-medium text-brand-300"
+            >
+              <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-brand-500" />
+              Next-generation multi-asset broker
+            </motion.span>
+
+            <motion.h1
+              variants={fadeUp}
+              className="mt-5 font-display text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl"
+            >
+              Trade
+              <br />
+              Beyond
+              <br />
+              <span className="text-gradient-red">Limits</span>
+            </motion.h1>
+
+            <motion.p variants={fadeUp} className="mt-5 text-sm font-medium text-brand-300/90">
+              Precision · Performance · Partnership
+            </motion.p>
+
+            <motion.p variants={fadeUp} className="mt-3 max-w-md text-base leading-relaxed text-gray-400">
+              Access global financial markets through a broker built for traders, partners, and
+              long-term growth.
+            </motion.p>
+
+            <motion.div variants={fadeUp} className="mt-8 flex flex-wrap gap-3">
+              <Link to="/register">
+                <Button size="lg" className="gap-2">
+                  Open Live Account <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link to="/demo">
+                <Button variant="outline" size="lg">
+                  Try Free Demo
+                </Button>
+              </Link>
+            </motion.div>
+          </motion.div>
+
+          <motion.div variants={slideInLeft} initial="hidden" animate="show" className="relative">
+            <HeroVisual />
+          </motion.div>
+        </div>
+
+        {/* STATS STRIP */}
+        <div className="container-x relative z-10 pb-14">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.4 }}
+            className="glass-panel grid grid-cols-2 divide-white/[0.05] sm:grid-cols-3 lg:grid-cols-5 lg:divide-x"
+          >
+            {heroStats.map((s) => (
+              <motion.div
+                key={s.label}
+                variants={fadeUp}
+                className="flex items-center gap-3 p-5"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-400">
+                  <s.icon className="h-5 w-5" />
+                </span>
+                <div>
+                  <div className="font-display text-xl font-bold text-white">{s.value}</div>
+                  <div className="text-xs text-gray-400">{s.label}</div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* WHY CHOOSE US */}
+      <section className="container-x py-20 sm:py-24">
+        <SectionHeading
+          align="left"
+          eyebrow="Why Apex Markets"
+          title={
+            <>
+              Built for traders.
+              <br />
+              Powered by technology.
+            </>
+          }
+          description="We combine advanced technology, deep liquidity, and transparent conditions to deliver a superior trading experience."
+        />
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.2 }}
+          className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+        >
+          {whyFeatures.map((f) => (
+            <FeatureCard key={f.title} {...f} />
+          ))}
+        </motion.div>
+      </section>
+
+      {/* PARTNER */}
+      <PartnerSection />
+
+      {/* MARKETS PREVIEW */}
+      <section className="container-x py-20 sm:py-24">
+        <SectionHeading
+          eyebrow="Global Markets"
+          title="Trade 100+ global markets with confidence"
+          description="Diversify your portfolio with 100+ instruments across multiple asset classes."
+        />
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.15 }}
+          className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+        >
+          {marketCategories.map((c) => (
+            <MarketCard key={c.key} category={c} />
+          ))}
+        </motion.div>
+        <Reveal className="mt-10 text-center">
+          <Link to="/markets">
+            <Button variant="outline" size="lg" className="gap-2">
+              View All Instruments <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+        </Reveal>
+      </section>
+
+      <CTABand />
+    </>
+  )
+}
