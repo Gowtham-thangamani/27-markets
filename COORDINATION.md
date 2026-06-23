@@ -73,8 +73,8 @@ conflicting migrations against the same DB.
 
 | Agent / Lane | Working on | Files locked (editing now) | Branch @ commit | Updated |
 |--------------|-----------|----------------------------|-----------------|---------|
-| Integrator | trunk + wiring | — | integration @ — | 2026-06-23 |
-| L1 Finance | (unassigned) | — | — | — |
+| Integrator | trunk + wiring | — | integration @ 2ad09fc | 2026-06-23 |
+| L1 Finance | withdrawal approval lifecycle (ledger+funds done; admin-finance next) | — | feat/crm-finance @ b38a2b5 | 2026-06-23 |
 | L2 Leads/Support | (unassigned) | — | — | — |
 | L3 Blog | (unassigned) | — | — | — |
 | L4 Market | (unassigned) | — | — | — |
