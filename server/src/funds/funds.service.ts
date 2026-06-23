@@ -6,7 +6,7 @@ import {
   NotImplementedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JournalKind, KycStepStatus, PostingDirection } from '@prisma/client';
+import { JournalKind, JournalStatus, KycStepStatus, PostingDirection } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LedgerService } from '../ledger/ledger.service';
 import { AccountsService } from '../accounts/accounts.service';
@@ -97,11 +97,14 @@ export class FundsService {
     }
 
     const payable = await this.ledger.getSystemAccount('SYSTEM:WITHDRAWALS_PAYABLE');
+    // Created PENDING: the posting holds the balance immediately, but the payout
+    // awaits finance approval (markPosted) or rejection (reverse).
     const entry = await this.ledger.post({
       kind: JournalKind.WITHDRAWAL,
       reference: generateTxReference(),
       idempotencyKey: dto.idempotencyKey ?? `withdraw:${userId}:${randomUUID()}`,
       simulated: true,
+      status: JournalStatus.PENDING,
       createdById: userId,
       memo: `Withdrawal via ${dto.method}`,
       postings: [
@@ -110,7 +113,7 @@ export class FundsService {
       ],
     });
 
-    await this.audit.record({ userId, action: 'funds.withdraw', entity: 'JournalEntry', entityId: entry.id, metadata: { amount: dto.amount, method: dto.method, simulated: true } });
+    await this.audit.record({ userId, action: 'funds.withdraw', entity: 'JournalEntry', entityId: entry.id, metadata: { amount: dto.amount, method: dto.method, simulated: true, status: entry.status } });
     return { reference: entry.reference, status: entry.status, simulated: true, amount: formatMoney(amount) };
   }
 
