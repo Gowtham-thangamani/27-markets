@@ -5,14 +5,17 @@ import { AdminLayout } from './layouts/AdminLayout'
 import { RequireAuth } from './components/portal/RequireAuth'
 import { RequireStaff } from './components/admin/RequireStaff'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
+import AdminBlogListPage from './pages/admin/AdminBlogListPage'
+import AdminBlogEditorPage from './pages/admin/AdminBlogEditorPage'
 
 import HomePage from './pages/HomePage'
 import AboutPage from './pages/AboutPage'
 import MarketsPage from './pages/MarketsPage'
-import PlatformsPage from './pages/PlatformsPage'
 import AccountsPage from './pages/AccountsPage'
 import PartnershipPage from './pages/PartnershipPage'
 import ContactPage from './pages/ContactPage'
+import BlogListPage from './pages/BlogListPage'
+import BlogDetailPage from './pages/BlogDetailPage'
 import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
 import DemoPage from './pages/auth/DemoPage'
@@ -34,10 +37,11 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/markets" element={<MarketsPage />} />
-        <Route path="/platforms" element={<PlatformsPage />} />
         <Route path="/accounts" element={<AccountsPage />} />
         <Route path="/partnership" element={<PartnershipPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/blog" element={<BlogListPage />} />
+        <Route path="/blog/:slug" element={<BlogDetailPage />} />
       </Route>
 
       {/* Auth (standalone full-screen) */}
@@ -75,6 +79,9 @@ export default function App() {
       >
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboardPage />} />
+        <Route path="blog" element={<AdminBlogListPage />} />
+        <Route path="blog/new" element={<AdminBlogEditorPage />} />
+        <Route path="blog/:id" element={<AdminBlogEditorPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />
