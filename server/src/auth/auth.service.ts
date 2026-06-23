@@ -10,6 +10,7 @@ import * as QRCode from 'qrcode';
 import type { User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { LeadsService } from '../leads/leads.service';
 import { TokensService } from './tokens.service';
 import { RegisterDto, LoginDto } from './dto';
 import type { Env } from '../config/env.validation';
@@ -39,6 +40,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly tokens: TokensService,
     private readonly audit: AuditService,
+    private readonly leads: LeadsService,
     private readonly config: ConfigService<Env, true>,
   ) {}
 
@@ -69,6 +71,14 @@ export class AuthService {
         country: dto.country,
         kycProfile: { create: {} },
       },
+    });
+
+    // Connect the acquisition funnel: convert a matching prospect (or record one).
+    await this.leads.convertOnRegister(user.id, {
+      name: `${user.firstName} ${user.lastName}`,
+      email: user.email,
+      phone: user.phone ?? undefined,
+      country: user.country ?? undefined,
     });
 
     const tokens = await this.issueSession(user, ctx);

@@ -5,6 +5,7 @@ import { Button, Input, Select } from '@/components/ui'
 import { useToast } from '@/context/ToastContext'
 import { zodResolver } from '@/lib/zodResolver'
 import { demoSchema, type DemoValues } from '@/lib/validation'
+import { leadsApi } from '@/lib/leadsApi'
 
 export default function DemoPage() {
   const toast = useToast()
@@ -18,10 +19,20 @@ export default function DemoPage() {
     defaultValues: { platform: 'WebTrader', balance: '50000' },
   })
 
-  const onSubmit = async () => {
-    await new Promise((r) => setTimeout(r, 700))
-    toast.success('Demo account ready', 'Check your email for login details and virtual funds.')
-    navigate('/login')
+  const onSubmit = async (values: DemoValues) => {
+    try {
+      // Capture the prospect as a CRM lead (sales follows up).
+      await leadsApi.capture({
+        name: values.name,
+        email: values.email,
+        source: 'DEMO',
+        message: `Demo request — platform: ${values.platform}, virtual balance: $${Number(values.balance).toLocaleString()}`,
+      })
+      toast.success('Demo requested', 'Our team will email your demo login and virtual funds shortly.')
+      navigate('/login')
+    } catch (err) {
+      toast.error('Could not submit request', (err as Error).message)
+    }
   }
 
   return (
