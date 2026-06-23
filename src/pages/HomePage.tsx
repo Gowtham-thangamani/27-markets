@@ -6,6 +6,7 @@ import { Reveal } from '@/components/Reveal'
 import { SectionHeading } from '@/components/SectionHeading'
 import { HeroVisual } from '@/components/marketing/HeroVisual'
 import { LiveTicker } from '@/components/marketing/LiveTicker'
+import { SignalFlow } from '@/components/marketing/SignalFlow'
 import { FeatureCard } from '@/components/marketing/FeatureCard'
 import { MarketCard } from '@/components/marketing/MarketCard'
 import { PartnerSection } from '@/components/marketing/PartnerSection'
@@ -28,6 +29,7 @@ export default function HomePage() {
       <section className="relative overflow-hidden">
         <div className="grid-bg pointer-events-none absolute inset-0 opacity-40" />
         <div className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[60rem] -translate-x-1/2 bg-radial-red opacity-70 blur-2xl" />
+        <SignalFlow className="opacity-60" />
 
         <div className="container-x relative grid items-center gap-10 py-16 lg:grid-cols-2 lg:py-24">
           <motion.div
@@ -79,7 +81,9 @@ export default function HomePage() {
           </motion.div>
 
           <motion.div variants={slideInLeft} initial="hidden" animate="show" className="relative">
-            <HeroVisual />
+            <div className="drift">
+              <HeroVisual />
+            </div>
           </motion.div>
         </div>
 

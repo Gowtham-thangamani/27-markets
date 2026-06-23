@@ -95,7 +95,7 @@ export default function KycPage() {
                     label={`Upload ${step.title.toLowerCase()}`}
                     onFile={async (file) => {
                       try {
-                        await submitKyc(step.id, file.name)
+                        await submitKyc(step.id, file)
                         toast.success('Document submitted', `${step.title} is now under review.`)
                       } catch (err) {
                         toast.error('Upload failed', (err as Error).message)

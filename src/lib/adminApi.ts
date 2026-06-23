@@ -1,4 +1,4 @@
-import { api } from './api'
+import { api, API_BASE_URL } from './api'
 import type { TicketPriority, TicketStatus } from './supportApi'
 
 export interface AdminDashboardSummary {
@@ -10,6 +10,14 @@ export interface AdminDashboardSummary {
 }
 
 export type KycStepStatus = 'NOT_SUBMITTED' | 'PENDING' | 'APPROVED' | 'REJECTED'
+
+export interface KycDocument {
+  id: string
+  step: 'identity' | 'address' | 'selfie'
+  fileName: string
+  mimeType: string | null
+  createdAt: string
+}
 export type LeadStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'CONVERTED' | 'LOST'
 export type LeadSource = 'DEMO' | 'REGISTER' | 'MANUAL'
 
@@ -117,7 +125,10 @@ export const adminApi = {
   replyTicket: (id: string, body: string, internal?: boolean) =>
     api.post<AdminTicketDetail>(`/admin/tickets/${id}/reply`, { body, internal }),
 
-  // KYC review (ADMIN)
+  // KYC review (ADMIN/AGENT)
+  listKycDocuments: (userId: string) => api.get<KycDocument[]>(`/kyc/documents/${userId}`),
+  /** Direct URL to stream a document inline (auth cookie is same-site, sent on navigation). */
+  kycDocumentUrl: (id: string) => `${API_BASE_URL}/kyc/document/${id}`,
   reviewKyc: (userId: string, step: 'identity' | 'address' | 'selfie', status: 'APPROVED' | 'REJECTED' | 'PENDING') =>
     api.post('/kyc/review', { userId, step, status }),
 }

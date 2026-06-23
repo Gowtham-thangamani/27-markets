@@ -49,7 +49,7 @@ interface PortalDataValue {
   deposit: (input: MoneyInput) => Promise<void>
   withdraw: (input: MoneyInput) => Promise<void>
   transfer: (input: TransferInput) => Promise<void>
-  submitKyc: (id: KycStep['id'], fileName: string) => Promise<void>
+  submitKyc: (id: KycStep['id'], file: File) => Promise<void>
   addTicket: (ticket: Omit<SupportTicket, 'id' | 'createdAt' | 'status'>) => void
   markAllNotificationsRead: () => void
 }
@@ -151,12 +151,10 @@ export function PortalDataProvider({ children }: { children: ReactNode }) {
   )
 
   const submitKyc = useCallback(
-    async (id: KycStep['id'], fileName: string) => {
-      await api.post('/kyc/submit', {
-        step: id,
-        fileName,
-        storageKey: `local/${id}/${fileName}`,
-      })
+    async (id: KycStep['id'], file: File) => {
+      const form = new FormData()
+      form.append('file', file)
+      await api.upload(`/kyc/upload/${id}`, form)
       await refresh()
     },
     [refresh],

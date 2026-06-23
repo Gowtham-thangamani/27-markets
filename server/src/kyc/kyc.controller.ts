@@ -1,9 +1,26 @@
-import { Body, Controller, Get, HttpCode, Post, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Res,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UserRole } from '@prisma/client';
-import { KycService } from './kyc.service';
-import { SubmitKycDto, ReviewKycDto } from './dto';
+import type { Response } from 'express';
+import { KycService, type UploadedFile as KycFile } from './kyc.service';
+import { KYC_STEPS, type KycStep, ReviewKycDto } from './dto';
 import { CurrentUser, Roles } from '../common/decorators';
 import { RolesGuard } from '../auth/guards/roles.guard';
+
+const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10MB
+const ALLOWED_MIME = /^(image\/(png|jpe?g|webp)|application\/pdf)$/;
 
 @Controller('kyc')
 export class KycController {
@@ -14,10 +31,49 @@ export class KycController {
     return this.kyc.status(userId);
   }
 
+  /** Client uploads a document for a step (multipart). Marks the step PENDING. */
   @HttpCode(200)
-  @Post('submit')
-  submit(@CurrentUser('id') userId: string, @Body() dto: SubmitKycDto) {
-    return this.kyc.submit(userId, dto);
+  @Post('upload/:step')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_FILE_BYTES } }))
+  upload(
+    @CurrentUser('id') userId: string,
+    @Param('step') step: string,
+    @UploadedFile() file?: KycFile,
+  ) {
+    if (!KYC_STEPS.includes(step as KycStep)) {
+      throw new BadRequestException('Invalid KYC step');
+    }
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+    if (!ALLOWED_MIME.test(file.mimetype)) {
+      throw new BadRequestException('Unsupported file type. Upload a PNG, JPG, WEBP, or PDF.');
+    }
+    return this.kyc.uploadDocument(userId, step as KycStep, file);
+  }
+
+  // ── Staff (compliance) ──
+
+  /** Latest document per step for a client. */
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.AGENT)
+  @Get('documents/:userId')
+  documents(@Param('userId') userId: string) {
+    return this.kyc.documentsFor(userId);
+  }
+
+  /** Stream a stored document inline for staff review. */
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.AGENT)
+  @Get('document/:id')
+  async document(@Param('id') id: string, @Res() res: Response) {
+    const { buffer, mimeType, fileName } = await this.kyc.readDocument(id);
+    res.set({
+      'Content-Type': mimeType,
+      'Content-Disposition': `inline; filename="${encodeURIComponent(fileName)}"`,
+      'Cache-Control': 'private, no-store',
+    });
+    res.send(buffer);
   }
 
   @HttpCode(200)

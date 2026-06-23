@@ -1,11 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotImplementedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JournalKind, PostingDirection } from '@prisma/client';
+import { JournalKind, KycStepStatus, PostingDirection } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LedgerService } from '../ledger/ledger.service';
 import { AccountsService } from '../accounts/accounts.service';
@@ -66,8 +67,27 @@ export class FundsService {
     return { reference: entry.reference, status: entry.status, simulated: true, amount: formatMoney(amount) };
   }
 
+  /**
+   * Withdrawals require completed KYC — a core AML/CFT control. Deposits and
+   * internal transfers are not gated; getting money OUT is.
+   */
+  private async assertKycVerified(userId: string): Promise<void> {
+    const kyc = await this.prisma.kycProfile.findUnique({ where: { userId } });
+    const verified =
+      kyc &&
+      kyc.identityStatus === KycStepStatus.APPROVED &&
+      kyc.addressStatus === KycStepStatus.APPROVED &&
+      kyc.selfieStatus === KycStepStatus.APPROVED;
+    if (!verified) {
+      throw new ForbiddenException(
+        'Complete identity verification (KYC) before withdrawing funds.',
+      );
+    }
+  }
+
   async withdraw(userId: string, dto: WithdrawDto) {
     this.assertCanMoveFunds();
+    await this.assertKycVerified(userId);
     const amount = toMoney(dto.amount);
     const clientLedgerId = await this.accounts.ledgerAccountIdFor(userId, dto.accountId);
 

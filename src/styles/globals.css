@@ -5,6 +5,10 @@
 @layer base {
   :root {
     color-scheme: dark;
+    /* Ported from the 27 Markets landing page */
+    --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --red: #e11d2e;
+    --red-glow: rgba(225, 29, 46, 0.35);
   }
 
   * {
@@ -101,6 +105,45 @@
   .skip-link:focus {
     @apply not-sr-only fixed left-4 top-4 z-[300] rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white;
   }
+
+  /* ─── Animations ported from the 27 Markets landing page ─── */
+
+  /* Vertical "data signal" streaks that flow down a section background. */
+  .signal-rail {
+    @apply pointer-events-none absolute inset-0 overflow-hidden;
+  }
+  .signal-line {
+    position: absolute;
+    top: 0;
+    width: 1px;
+    height: 34%;
+    opacity: 0;
+    will-change: transform, opacity;
+    background: linear-gradient(to bottom, transparent, var(--red), transparent);
+    filter: drop-shadow(0 0 6px var(--red-glow));
+    animation: signalflow 7s var(--ease) infinite;
+  }
+
+  /* Fade + rise into place, then float gently forever. */
+  .drift {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: floatin 0.8s var(--ease) forwards, drift 9s ease-in-out 0.8s infinite;
+  }
+
+  /* Expanding glow ring — for "live" indicators. */
+  .glow-ping {
+    animation: glow-pulse 2.6s var(--ease) infinite;
+  }
+
+  /* Animated scroll cue line. */
+  .scroll-cue {
+    width: 1px;
+    height: 38px;
+    transform-origin: top;
+    background: linear-gradient(to bottom, var(--red), transparent);
+    animation: scroll-cue 2.4s var(--ease) infinite;
+  }
 }
 
 @layer utilities {
@@ -147,6 +190,67 @@
     display: block;
     offset-distance: 0%;
     animation: wave-travel 3.5s ease-in-out 1.5s infinite;
+  }
+}
+
+/* ─── Keyframes ported from the 27 Markets landing page ─── */
+@keyframes signalflow {
+  0% {
+    transform: translateY(-120%);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(320%);
+    opacity: 0;
+  }
+}
+@keyframes drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+@keyframes floatin {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes glow-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--red-glow);
+  }
+  70% {
+    box-shadow: 0 0 0 9px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+@keyframes scroll-cue {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  50% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  50.1% {
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
   }
 }
 

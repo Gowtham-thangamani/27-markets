@@ -8,6 +8,9 @@
 const BASE_URL: string =
   (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:4000/api'
 
+/** Absolute API base — useful for building direct resource URLs (e.g. file streams). */
+export const API_BASE_URL = BASE_URL
+
 export class ApiError extends Error {
   status: number
   code?: string
@@ -53,11 +56,13 @@ function messageFrom(body: unknown, fallback: string): { message: string; code?:
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, _retried, skipRefresh } = options
 
+  // FormData is sent as-is so the browser sets the multipart boundary header.
+  const isForm = typeof FormData !== 'undefined' && body instanceof FormData
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
     credentials: 'include',
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
+    headers: body != null && !isForm ? { 'Content-Type': 'application/json' } : undefined,
+    body: body == null ? undefined : isForm ? body : JSON.stringify(body),
   })
 
   if (res.ok) {
@@ -101,6 +106,8 @@ export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body?: unknown, opts?: RequestOptions) =>
     request<T>(path, { ...opts, method: 'POST', body }),
+  upload: <T>(path: string, formData: FormData, opts?: RequestOptions) =>
+    request<T>(path, { ...opts, method: 'POST', body: formData }),
   patch: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PATCH', body }),
   del: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
 }

@@ -44,10 +44,19 @@ export class KycService {
       create: { userId },
     });
 
+    // Latest uploaded filename per step, so the portal can show what's on file.
+    const docs = await this.prisma.kycDocument.findMany({
+      where: { kycProfileId: profile.id },
+      orderBy: { createdAt: 'desc' },
+      select: { step: true, fileName: true },
+    });
+    const latestFile = new Map<string, string>();
+    for (const d of docs) if (!latestFile.has(d.step)) latestFile.set(d.step, d.fileName);
+
     const steps = [
-      { id: 'identity', status: profile.identityStatus },
-      { id: 'address', status: profile.addressStatus },
-      { id: 'selfie', status: profile.selfieStatus },
+      { id: 'identity', status: profile.identityStatus, fileName: latestFile.get('identity') ?? null },
+      { id: 'address', status: profile.addressStatus, fileName: latestFile.get('address') ?? null },
+      { id: 'selfie', status: profile.selfieStatus, fileName: latestFile.get('selfie') ?? null },
     ];
     const approved = steps.filter((s) => s.status === KycStepStatus.APPROVED).length;
 
@@ -56,34 +65,6 @@ export class KycService {
       progress: Math.round((approved / steps.length) * 100),
       verified: approved === steps.length,
     };
-  }
-
-  /** Record a document submitted via the signed-URL flow (step → PENDING). */
-  async submit(userId: string, dto: SubmitKycDto) {
-    const profile = await this.prisma.kycProfile.upsert({
-      where: { userId },
-      update: {},
-      create: { userId },
-    });
-
-    await this.prisma.$transaction([
-      this.prisma.kycProfile.update({
-        where: { id: profile.id },
-        data: { [STEP_FIELD[dto.step]]: KycStepStatus.PENDING } as Prisma.KycProfileUpdateInput,
-      }),
-      this.prisma.kycDocument.create({
-        data: {
-          kycProfileId: profile.id,
-          step: dto.step,
-          storageKey: dto.storageKey,
-          fileName: dto.fileName,
-          mimeType: dto.mimeType,
-        },
-      }),
-    ]);
-
-    await this.audit.record({ userId, action: 'kyc.submit', entity: 'KycProfile', entityId: profile.id, metadata: { step: dto.step } });
-    return this.status(userId);
   }
 
   /** Store an uploaded document, mark the step PENDING for review. */

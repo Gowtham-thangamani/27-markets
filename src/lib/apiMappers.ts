@@ -94,7 +94,7 @@ export interface ApiUser {
 }
 
 export interface ApiKycStatus {
-  steps: { id: 'identity' | 'address' | 'selfie'; status: string }[]
+  steps: { id: 'identity' | 'address' | 'selfie'; status: string; fileName?: string | null }[]
   progress: number
   verified: boolean
 }
@@ -170,5 +170,6 @@ export function mapKyc(status: ApiKycStatus): KycStep[] {
     title: KYC_META[s.id].title,
     description: KYC_META[s.id].description,
     status: kycStatusFromApi[s.status] ?? 'Not Submitted',
+    fileName: s.fileName ?? undefined,
   }))
 }
