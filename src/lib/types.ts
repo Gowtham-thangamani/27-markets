@@ -1,4 +1,4 @@
-/** Shared domain types for the Apex Markets portal (mock data). */
+/** Shared domain types for the 27 Markets portal (mock data). */
 
 export type AccountType = 'Standard' | 'Raw Spread' | 'VIP'
 export type AccountStatus = 'Active' | 'Pending' | 'Suspended' | 'Archived'
@@ -76,10 +76,13 @@ export interface NotificationItem {
   kind: 'info' | 'success' | 'warning'
 }
 
+export type AppRole = 'CLIENT' | 'PARTNER' | 'ADMIN' | 'AGENT'
+
 export interface UserProfile {
   id: string
   name: string
   email: string
+  role: AppRole
   phone: string
   country: string
   joinedAt: string

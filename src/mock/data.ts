@@ -13,6 +13,7 @@ export const demoUser: UserProfile = {
   id: 'usr_10241',
   name: 'Jordan Avery',
   email: 'jordan.avery@example.com',
+  role: 'CLIENT',
   phone: '+971 50 123 4567',
   country: 'United Arab Emirates',
   joinedAt: '2025-02-14T10:00:00Z',
@@ -134,14 +135,14 @@ export const seedTickets: SupportTicket[] = [
 export const seedNotifications: NotificationItem[] = [
   { id: 'n1', title: 'Deposit confirmed', body: 'Your $5,000 bank transfer was credited to account 21001234.', date: '2026-06-18T12:31:00Z', read: false, kind: 'success' },
   { id: 'n2', title: 'KYC update required', body: 'Your proof of address is under review. We will notify you shortly.', date: '2026-06-17T09:15:00Z', read: false, kind: 'warning' },
-  { id: 'n3', title: 'New platform release', body: 'Apex Terminal 5.2 is now available in the Download Center.', date: '2026-06-14T08:00:00Z', read: true, kind: 'info' },
+  { id: 'n3', title: 'New platform release', body: '27 Terminal 5.2 is now available in the Download Center.', date: '2026-06-14T08:00:00Z', read: true, kind: 'info' },
 ]
 
 export const downloads: PlatformDownload[] = [
-  { id: 'd1', name: 'Apex Terminal — Windows', platform: 'Windows 10/11', description: 'Full-featured desktop trading terminal with advanced charting.', size: '86 MB', version: '5.2.1', icon: 'desktop' },
-  { id: 'd2', name: 'Apex Terminal — macOS', platform: 'macOS 12+', description: 'Native Apple Silicon build of the desktop terminal.', size: '92 MB', version: '5.2.1', icon: 'desktop' },
-  { id: 'd3', name: 'Apex Mobile — iOS', platform: 'iPhone / iPad', description: 'Trade on the go with biometric login and price alerts.', size: '64 MB', version: '4.8.0', icon: 'mobile' },
-  { id: 'd4', name: 'Apex Mobile — Android', platform: 'Android 9+', description: 'Lightweight mobile app with one-tap order execution.', size: '58 MB', version: '4.8.0', icon: 'mobile' },
+  { id: 'd1', name: '27 Terminal — Windows', platform: 'Windows 10/11', description: 'Full-featured desktop trading terminal with advanced charting.', size: '86 MB', version: '5.2.1', icon: 'desktop' },
+  { id: 'd2', name: '27 Terminal — macOS', platform: 'macOS 12+', description: 'Native Apple Silicon build of the desktop terminal.', size: '92 MB', version: '5.2.1', icon: 'desktop' },
+  { id: 'd3', name: '27 Mobile — iOS', platform: 'iPhone / iPad', description: 'Trade on the go with biometric login and price alerts.', size: '64 MB', version: '4.8.0', icon: 'mobile' },
+  { id: 'd4', name: '27 Mobile — Android', platform: 'Android 9+', description: 'Lightweight mobile app with one-tap order execution.', size: '58 MB', version: '4.8.0', icon: 'mobile' },
   { id: 'd5', name: 'WebTrader', platform: 'Any browser', description: 'Launch the full trading experience directly in your browser.', size: '—', version: 'Live', icon: 'web' },
   { id: 'd6', name: 'Account Terms (PDF)', platform: 'Document', description: 'Client agreement, risk disclosure, and fee schedule.', size: '1.2 MB', version: '2026.1', icon: 'doc' },
 ]
