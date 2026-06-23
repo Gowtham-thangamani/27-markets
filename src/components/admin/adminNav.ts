@@ -4,6 +4,8 @@ import {
   UserPlus,
   LifeBuoy,
   ShieldCheck,
+  Banknote,
+  Wallet,
   Newspaper,
   type LucideIcon,
 } from 'lucide-react'
@@ -20,5 +22,7 @@ export const adminNav: AdminNavItem[] = [
   { label: 'Leads', to: '/admin/leads', icon: UserPlus },
   { label: 'Support', to: '/admin/support', icon: LifeBuoy },
   { label: 'KYC Review', to: '/admin/kyc', icon: ShieldCheck },
+  { label: 'Finance', to: '/admin/finance', icon: Banknote },
+  { label: 'Accounts', to: '/admin/accounts', icon: Wallet },
   { label: 'Blog', to: '/admin/blog', icon: Newspaper },
 ]

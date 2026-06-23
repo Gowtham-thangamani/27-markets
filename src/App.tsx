@@ -9,6 +9,8 @@ import AdminClientsPage from './pages/admin/AdminClientsPage'
 import AdminLeadsPage from './pages/admin/AdminLeadsPage'
 import AdminSupportPage from './pages/admin/AdminSupportPage'
 import AdminKycPage from './pages/admin/AdminKycPage'
+import AdminFinancePage from './pages/admin/AdminFinancePage'
+import AdminAccountsPage from './pages/admin/AdminAccountsPage'
 import AdminBlogListPage from './pages/admin/AdminBlogListPage'
 import AdminBlogEditorPage from './pages/admin/AdminBlogEditorPage'
 
@@ -89,6 +91,8 @@ export default function App() {
         <Route path="leads" element={<AdminLeadsPage />} />
         <Route path="support" element={<AdminSupportPage />} />
         <Route path="kyc" element={<AdminKycPage />} />
+        <Route path="finance" element={<AdminFinancePage />} />
+        <Route path="accounts" element={<AdminAccountsPage />} />
         <Route path="blog" element={<AdminBlogListPage />} />
         <Route path="blog/new" element={<AdminBlogEditorPage />} />
         <Route path="blog/:id" element={<AdminBlogEditorPage />} />
