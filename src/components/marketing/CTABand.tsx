@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui'
 import { Reveal } from '@/components/Reveal'
 import { MarketWave } from '@/components/three/MarketWave'
+import { SignalFlow } from '@/components/marketing/SignalFlow'
 
 export function CTABand() {
   return (
@@ -12,6 +13,7 @@ export function CTABand() {
             <MarketWave />
           </div>
           <div className="pointer-events-none absolute inset-0 bg-radial-red opacity-60" />
+          <SignalFlow className="opacity-40" />
           <div className="relative">
             <h2 className="mx-auto max-w-2xl font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
               Ready to trade beyond limits?

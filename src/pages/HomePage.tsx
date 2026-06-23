@@ -113,6 +113,11 @@ export default function HomePage() {
             ))}
           </motion.div>
         </div>
+
+        {/* Scroll cue */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-2 hidden justify-center lg:flex">
+          <span className="scroll-cue block opacity-50" />
+        </div>
       </section>
 
       {/* LIVE TICKER (real-time, backend SSE) */}

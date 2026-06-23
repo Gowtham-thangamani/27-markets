@@ -54,7 +54,7 @@ function Laptop() {
 function Phone() {
   const screenTex = useMemo(makePhoneScreenTexture, [])
   return (
-    <group position={[1.35, -0.45, 0.9]} rotation={[0.05, -0.45, 0.04]}>
+    <group position={[1.12, -0.45, 0.9]} rotation={[0.05, -0.45, 0.04]}>
       <RoundedBox args={[0.78, 1.6, 0.08]} radius={0.1} smoothness={5}>
         {bodyMaterial()}
       </RoundedBox>
@@ -148,7 +148,7 @@ function ParallaxRig({ children }: { children: React.ReactNode }) {
 export default function HeroScene({ className }: { className?: string }) {
   return (
     <div className={className} aria-hidden>
-      <Canvas camera={{ position: [0, 0.4, 6], fov: 36 }} dpr={[1, 2]} gl={{ antialias: true }}>
+      <Canvas camera={{ position: [0, 0.35, 7], fov: 36 }} dpr={[1, 2]} gl={{ antialias: true }}>
         <ambientLight intensity={0.45} />
         <spotLight position={[4, 6, 5]} angle={0.5} penumbra={0.8} intensity={120} color="#ff6b78" />
         <pointLight position={[-5, -2, 3]} intensity={30} color={RED} />
@@ -158,7 +158,7 @@ export default function HeroScene({ className }: { className?: string }) {
           <Float speed={1.3} rotationIntensity={0.18} floatIntensity={0.5}>
             <Laptop />
           </Float>
-          <Float speed={1.8} rotationIntensity={0.3} floatIntensity={0.9}>
+          <Float speed={1.8} rotationIntensity={0.22} floatIntensity={0.55}>
             <Phone />
           </Float>
           <MarketWave3D />

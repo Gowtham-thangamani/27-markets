@@ -2,6 +2,7 @@ import { ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { fadeUp } from '@/lib/motion'
+import { SignalFlow } from '@/components/marketing/SignalFlow'
 
 interface PageHeaderProps {
   breadcrumb: string[]
@@ -23,6 +24,7 @@ export function PageHeader({ breadcrumb, title, description }: PageHeaderProps) 
     <section className="relative overflow-hidden border-b border-white/[0.06]">
       <div className="grid-bg pointer-events-none absolute inset-0 opacity-30" />
       <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-[40rem] -translate-x-1/2 bg-radial-red opacity-60 blur-2xl" />
+      <SignalFlow className="opacity-50" />
       <div className="container-x relative py-14 sm:py-16">
         <motion.nav
           variants={fadeUp}
