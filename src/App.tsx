@@ -5,12 +5,17 @@ import { AdminLayout } from './layouts/AdminLayout'
 import { RequireAuth } from './components/portal/RequireAuth'
 import { RequireStaff } from './components/admin/RequireStaff'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
+import AdminClientsPage from './pages/admin/AdminClientsPage'
+import AdminLeadsPage from './pages/admin/AdminLeadsPage'
+import AdminSupportPage from './pages/admin/AdminSupportPage'
+import AdminKycPage from './pages/admin/AdminKycPage'
 import AdminBlogListPage from './pages/admin/AdminBlogListPage'
 import AdminBlogEditorPage from './pages/admin/AdminBlogEditorPage'
 
 import HomePage from './pages/HomePage'
 import AboutPage from './pages/AboutPage'
 import MarketsPage from './pages/MarketsPage'
+import PlatformsPage from './pages/PlatformsPage'
 import AccountsPage from './pages/AccountsPage'
 import PartnershipPage from './pages/PartnershipPage'
 import ContactPage from './pages/ContactPage'
@@ -37,6 +42,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/markets" element={<MarketsPage />} />
+        <Route path="/platforms" element={<PlatformsPage />} />
         <Route path="/accounts" element={<AccountsPage />} />
         <Route path="/partnership" element={<PartnershipPage />} />
         <Route path="/contact" element={<ContactPage />} />
@@ -79,6 +85,10 @@ export default function App() {
       >
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboardPage />} />
+        <Route path="clients" element={<AdminClientsPage />} />
+        <Route path="leads" element={<AdminLeadsPage />} />
+        <Route path="support" element={<AdminSupportPage />} />
+        <Route path="kyc" element={<AdminKycPage />} />
         <Route path="blog" element={<AdminBlogListPage />} />
         <Route path="blog/new" element={<AdminBlogEditorPage />} />
         <Route path="blog/:id" element={<AdminBlogEditorPage />} />

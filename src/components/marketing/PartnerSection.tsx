@@ -13,7 +13,7 @@ export function PartnerSection() {
       <div className="container-x grid items-center gap-12 lg:grid-cols-2">
         <div>
           <Reveal>
-            <p className="section-eyebrow mb-3">Partner With Apex</p>
+            <p className="section-eyebrow mb-3">Partner With 27 Markets</p>
             <h2 className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
               Grow Together. <br />
               <span className="text-gradient-red">Succeed Together.</span>

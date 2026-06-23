@@ -9,7 +9,7 @@ import { cn } from '@/lib/cn'
 
 const navItems = [
   { label: 'Trading', to: '/accounts' },
-  { label: 'Platforms', to: '/downloads' },
+  { label: 'Platforms', to: '/platforms' },
   { label: 'Markets', to: '/markets' },
   { label: 'Partnership', to: '/partnership' },
   { label: 'Company', to: '/about' },
@@ -40,7 +40,7 @@ export function Navbar() {
       )}
     >
       <nav className="container-x flex h-16 items-center justify-between gap-4">
-        <Link to="/" aria-label="Apex Markets home">
+        <Link to="/" aria-label="27 Markets home">
           <Logo />
         </Link>
 

@@ -20,7 +20,7 @@ export default function DownloadsPage() {
     <>
       <PageTitle
         title="Download Center"
-        subtitle="Get the Apex trading platforms and account documents."
+        subtitle="Get the 27 Markets trading platforms and account documents."
       />
 
       <motion.div

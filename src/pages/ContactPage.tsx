@@ -8,9 +8,9 @@ import { zodResolver } from '@/lib/zodResolver'
 import { contactSchema, type ContactValues } from '@/lib/validation'
 
 const channels = [
-  { icon: Mail, title: 'Email Us', value: 'support@apexmarkets.io', note: 'We reply within hours' },
+  { icon: Mail, title: 'Email Us', value: 'support@27markets.io', note: 'We reply within hours' },
   { icon: MessageSquare, title: 'Live Chat', value: 'Available 24/5', note: 'Instant assistance' },
-  { icon: Info, title: 'General Inquiries', value: 'info@apexmarkets.io', note: 'Partnerships & press' },
+  { icon: Info, title: 'General Inquiries', value: 'info@27markets.io', note: 'Partnerships & press' },
 ]
 
 export default function ContactPage() {
@@ -114,7 +114,7 @@ export default function ContactPage() {
         />
         <div className="container-x relative flex h-full items-center justify-center text-center">
           <p className="text-sm text-gray-500">
-            Apex Markets · Serving traders in 120+ countries worldwide
+            27 Markets · Serving traders in 120+ countries worldwide
           </p>
         </div>
       </section>

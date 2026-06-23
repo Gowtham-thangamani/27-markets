@@ -5,6 +5,7 @@ import { Button } from '@/components/ui'
 import { Reveal } from '@/components/Reveal'
 import { SectionHeading } from '@/components/SectionHeading'
 import { HeroVisual } from '@/components/marketing/HeroVisual'
+import { LiveTicker } from '@/components/marketing/LiveTicker'
 import { FeatureCard } from '@/components/marketing/FeatureCard'
 import { MarketCard } from '@/components/marketing/MarketCard'
 import { PartnerSection } from '@/components/marketing/PartnerSection'
@@ -110,11 +111,14 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* LIVE TICKER (real-time, backend SSE) */}
+      <LiveTicker />
+
       {/* WHY CHOOSE US */}
       <section className="container-x py-20 sm:py-24">
         <SectionHeading
           align="left"
-          eyebrow="Why Apex Markets"
+          eyebrow="Why 27 Markets"
           title={
             <>
               Built for traders.

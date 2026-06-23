@@ -3,7 +3,7 @@ import { KycStepStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { KycStorageService } from './storage';
-import type { KycStep, SubmitKycDto } from './dto';
+import type { KycStep } from './dto';
 
 const STEP_FIELD: Record<KycStep, 'identityStatus' | 'addressStatus' | 'selfieStatus'> = {
   identity: 'identityStatus',

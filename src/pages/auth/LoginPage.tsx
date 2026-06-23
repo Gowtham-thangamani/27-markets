@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Mail, Lock } from 'lucide-react'
+import { Mail, Lock, KeyRound } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { AuthShell } from '@/layouts/AuthShell'
 import { Button, Input } from '@/components/ui'
@@ -16,6 +17,9 @@ export default function LoginPage() {
   const location = useLocation()
   const from = (location.state as { from?: string })?.from ?? '/portal/dashboard'
 
+  const [needTotp, setNeedTotp] = useState(false)
+  const [totp, setTotp] = useState('')
+
   const {
     register,
     handleSubmit,
@@ -23,14 +27,19 @@ export default function LoginPage() {
   } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) })
 
   const onSubmit = async (values: LoginValues) => {
+    if (needTotp && !/^\d{6}$/.test(totp)) {
+      toast.warning('Enter your code', 'Type the 6-digit code from your authenticator app.')
+      return
+    }
     try {
-      await login(values.email, values.password)
+      await login(values.email, values.password, needTotp ? totp : undefined)
       toast.success('Welcome back', 'You are now signed in to your portal.')
       navigate(from, { replace: true })
     } catch (err) {
       const e = err as ApiError
       if (e.code === 'TwoFactorRequired') {
-        toast.warning('Two-factor required', 'This account has 2FA enabled. Enter your code to continue.')
+        setNeedTotp(true)
+        toast.info('Two-factor required', 'Enter the 6-digit code from your authenticator app.')
       } else {
         toast.error('Login failed', e.message || 'Invalid credentials. Please try again.')
       }
@@ -58,13 +67,29 @@ export default function LoginPage() {
           error={errors.password?.message}
           {...register('password')}
         />
+        {needTotp && (
+          <Input
+            label="Authentication code"
+            inputMode="numeric"
+            placeholder="123456"
+            autoFocus
+            icon={<KeyRound className="h-4 w-4" />}
+            value={totp}
+            onChange={(e) => setTotp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            hint="6-digit code from your authenticator app"
+          />
+        )}
         <div className="flex justify-end">
-          <button type="button" className="text-sm font-medium text-brand-400 hover:text-brand-300">
+          <button
+            type="button"
+            onClick={() => toast.info('Password reset', 'Please contact support@27markets.io to reset your password.')}
+            className="text-sm font-medium text-brand-400 hover:text-brand-300"
+          >
             Forgot Password?
           </button>
         </div>
         <Button type="submit" fullWidth size="lg" loading={isSubmitting}>
-          Login
+          {needTotp ? 'Verify & sign in' : 'Login'}
         </Button>
       </form>
 
@@ -75,9 +100,11 @@ export default function LoginPage() {
         </Link>
       </p>
 
-      <p className="mt-6 rounded-lg border border-white/[0.06] bg-ink-800/50 p-3 text-center text-xs text-gray-500">
-        Demo mode — any email and a 6+ character password will sign you in.
-      </p>
+      <div className="mt-6 rounded-lg border border-white/[0.06] bg-ink-800/50 p-3 text-center text-xs text-gray-500">
+        <p className="font-medium text-gray-400">Demo logins (after seeding)</p>
+        <p className="mt-1">client@27markets.io · admin@27markets.io · agent@27markets.io</p>
+        <p>passwords: Client123! / Admin123! / Agent123!</p>
+      </div>
     </AuthShell>
   )
 }

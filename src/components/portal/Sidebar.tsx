@@ -21,7 +21,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-16 items-center border-b border-white/[0.06] px-5">
-        <NavLink to="/" aria-label="Apex Markets home">
+        <NavLink to="/" aria-label="27 Markets home">
           <Logo size={26} />
         </NavLink>
       </div>

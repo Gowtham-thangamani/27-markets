@@ -1,0 +1,109 @@
+================================================================
+ 27 MARKETS — FULL PLATFORM TECHNOLOGY STACK
+ Website + Client Portal + Backend API
+================================================================
+
+----------------------------------------------------------------
+1. FRONTEND  (website + client portal)   — project root /
+----------------------------------------------------------------
+Build tool        : Vite 5
+Framework         : React 18 + TypeScript
+Routing           : React Router v6
+                    - public marketing routes
+                    - auth-gated /portal/* routes (clients)
+                    - staff-gated /admin/* routes (CRM back-office)
+Styling           : Tailwind CSS (custom black/red design tokens)
+                    + PostCSS + Autoprefixer
+Animation         : Framer Motion
+3D / WebGL        : Three.js via React Three Fiber + Drei
+                    + @react-three/postprocessing (bloom)
+                    (3D hero scene, globe, infinity ribbon, particles)
+                    - device-tier quality scaling (useQuality)
+                    - reduced-motion / no-WebGL static fallbacks
+Charts            : custom SVG/canvas mini-charts (no external lib)
+Icons             : lucide-react
+Forms             : react-hook-form + Zod validation
+State management  : React Context; portal/admin data via the REST API
+                    (support tickets + notifications still client-side)
+API client        : typed fetch wrapper (src/lib/api.ts)
+                    - sends httpOnly auth cookies
+                    - auto token-refresh on 401
+                    - structured ApiError handling
+
+----------------------------------------------------------------
+2. BACKEND  (API)   — /server
+----------------------------------------------------------------
+Framework         : NestJS + TypeScript
+API style         : REST, global "/api" prefix
+ORM               : Prisma
+Database          : PostgreSQL
+Authentication    : JWT in httpOnly cookies
+                    - global JwtAuthGuard (opt out with @Public())
+                    - refresh-token rotation
+Authorization     : Role-based (RolesGuard)
+                    - roles: CLIENT / PARTNER / ADMIN / AGENT
+                    - staff = ADMIN + AGENT (isStaffRole)
+Validation        : class-validator + global ValidationPipe
+Security          : helmet, cookie-parser,
+                    CORS (credentials enabled),
+                    @nestjs/throttler (rate limiting)
+Domain logic      : Double-entry ledger + audit trail
+Safety rail       : TRADING_MODE = SIMULATION
+                    (no real funds move while in simulation)
+Existing modules  : auth, users, accounts, funds, kyc,
+                    ledger, audit, admin, blog, health
+CRM data models   : Lead, LeadNote, ClientNote, Ticket,
+                    TicketMessage, BlogPost (schema in place;
+                    only admin-dashboard + blog endpoints exposed)
+
+----------------------------------------------------------------
+3. DATA & INFRASTRUCTURE
+----------------------------------------------------------------
+Primary database  : PostgreSQL (Docker Compose in dev)
+Schema/migrations : Prisma Migrate
+Configuration     : @nestjs/config with env validation
+Containerization  : Docker Compose (Postgres; backend container-ready)
+
+----------------------------------------------------------------
+4. TOOLING & QUALITY
+----------------------------------------------------------------
+Language          : TypeScript end-to-end (frontend + backend)
+Testing           : Jest (backend specs: auth guards, roles,
+                    health, admin)
+Linting           : ESLint
+Package manager   : npm
+
+----------------------------------------------------------------
+5. CURRENT STATE — REAL vs MOCK
+----------------------------------------------------------------
+Real (backend)    : auth, accounts, funds (ledger), KYC,
+                    admin dashboard, blog
+                    via NestJS + Prisma + PostgreSQL.
+                    Client portal is wired to these endpoints.
+Mock / demo       : public marketing content; support tickets +
+                    notifications (client-side); no live market
+                    data yet. CRM lead/ticket/client endpoints
+                    are modeled but not yet exposed.
+
+----------------------------------------------------------------
+6. PLANNED FEATURE ADDITIONS  (same stack, no new languages)
+----------------------------------------------------------------
+Blog              : NestJS BlogModule DONE (public reads + admin
+                    CRUD). TODO: React /blog listing & detail pages
+                    + admin blog manager UI.
+CRM endpoints     : expose Lead / Ticket / ClientNote controllers
+                    (models already in schema) + build the matching
+                    admin pages (Clients, Leads, KYC review, Support).
+Live market data  : NestJS MarketModule
+                    - provider adapter + cache (Redis)
+                    - REST + SSE / WebSocket (Socket.IO) updates
+                    + React live price / market-overview widgets
+DFM market data   : licensed/authorized provider via backend only
+                    (delayed/labeled until real-time license)
+
+================================================================
+ SUMMARY:
+ TypeScript monorepo-style setup —
+ React + Vite frontend  +  NestJS + Prisma + PostgreSQL backend,
+ JWT-cookie auth, double-entry ledger, simulation safety rail.
+================================================================

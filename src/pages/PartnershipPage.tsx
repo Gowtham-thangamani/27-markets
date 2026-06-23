@@ -20,7 +20,7 @@ const steps = [
 export default function PartnershipPage() {
   return (
     <>
-      <PageHeader breadcrumb={['Home', 'Partnership']} title="Partner with Apex Markets" />
+      <PageHeader breadcrumb={['Home', 'Partnership']} title="Partner with 27 Markets" />
 
       {/* Hero with infinity ribbon */}
       <section className="relative overflow-hidden">

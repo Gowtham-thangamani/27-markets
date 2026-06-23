@@ -83,7 +83,7 @@ export function Topbar({ onOpenSidebar, onOpenAccount }: TopbarProps) {
           align="right"
           trigger={
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 text-sm font-semibold text-brand-300 ring-1 ring-brand-500/30">
-              {initials(user?.name ?? 'Apex Trader')}
+              {initials(user?.name ?? '27 Trader')}
             </span>
           }
         >

@@ -1,4 +1,12 @@
-import { LayoutDashboard, type LucideIcon } from 'lucide-react'
+import {
+  LayoutDashboard,
+  Users,
+  UserPlus,
+  LifeBuoy,
+  ShieldCheck,
+  Newspaper,
+  type LucideIcon,
+} from 'lucide-react'
 
 export interface AdminNavItem {
   label: string
@@ -6,8 +14,11 @@ export interface AdminNavItem {
   icon: LucideIcon
 }
 
-// Phase 2 ships only the Dashboard. Later phases append Clients, Leads, KYC,
-// Finance, Accounts, Support, Partners, Reports, and Staff here.
 export const adminNav: AdminNavItem[] = [
   { label: 'Dashboard', to: '/admin/dashboard', icon: LayoutDashboard },
+  { label: 'Clients', to: '/admin/clients', icon: Users },
+  { label: 'Leads', to: '/admin/leads', icon: UserPlus },
+  { label: 'Support', to: '/admin/support', icon: LifeBuoy },
+  { label: 'KYC Review', to: '/admin/kyc', icon: ShieldCheck },
+  { label: 'Blog', to: '/admin/blog', icon: Newspaper },
 ]

@@ -9,7 +9,7 @@ interface LogoProps {
 }
 
 /** 27 Markets brand mark — rendered from the brand logo image (transparent PNG). */
-export function Logo({ className, size = 38 }: LogoProps) {
+export function Logo({ className, size = 48 }: LogoProps) {
   return (
     <span className={cn('inline-flex items-center', className)}>
       {/* inline height overrides Tailwind preflight `img { height: auto }` */}

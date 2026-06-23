@@ -1,4 +1,5 @@
 import { api } from './api'
+import type { TicketPriority, TicketStatus } from './supportApi'
 
 export interface AdminDashboardSummary {
   totalClients: number
@@ -8,7 +9,115 @@ export interface AdminDashboardSummary {
   openTickets: number
 }
 
-/** Typed CRM admin API surface. Thin wrapper over the shared `api` client. */
+export type KycStepStatus = 'NOT_SUBMITTED' | 'PENDING' | 'APPROVED' | 'REJECTED'
+export type LeadStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'CONVERTED' | 'LOST'
+export type LeadSource = 'DEMO' | 'REGISTER' | 'MANUAL'
+
+export interface StaffMember {
+  id: string
+  firstName: string
+  lastName: string
+  role: 'ADMIN' | 'AGENT'
+}
+
+export interface ClientListItem {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  country: string | null
+  status: string
+  createdAt: string
+  kycProfile: { identityStatus: KycStepStatus; addressStatus: KycStepStatus; selfieStatus: KycStepStatus } | null
+  _count: { tradingAccounts: number }
+}
+
+export interface ClientNote {
+  id: string
+  body: string
+  pinned: boolean
+  createdAt: string
+  author: { firstName: string; lastName: string }
+}
+
+export interface ClientDetail {
+  id: string
+  email: string
+  name: string
+  phone: string | null
+  country: string | null
+  status: string
+  joinedAt: string
+  kyc: { identityStatus: KycStepStatus; addressStatus: KycStepStatus; selfieStatus: KycStepStatus } | null
+  accounts: { id: string; number: string; type: string; mode: string; status: string; balance: string }[]
+  notes: ClientNote[]
+  tickets: { id: string; subject: string; status: TicketStatus; updatedAt: string }[]
+}
+
+export interface Lead {
+  id: string
+  name: string
+  email: string
+  phone: string | null
+  country: string | null
+  source: LeadSource
+  status: LeadStatus
+  assignedToId: string | null
+  assignedTo: { firstName: string; lastName: string } | null
+  createdAt: string
+  _count?: { notes: number }
+}
+
+export interface LeadDetail extends Lead {
+  notes: { id: string; body: string; createdAt: string; author: { firstName: string; lastName: string } }[]
+}
+
+export interface AdminTicketListItem {
+  id: string
+  subject: string
+  category: string
+  priority: TicketPriority
+  status: TicketStatus
+  updatedAt: string
+  user: { firstName: string; lastName: string; email: string }
+  assignedTo: { firstName: string; lastName: string } | null
+  _count: { messages: number }
+}
+
+export interface AdminTicketDetail extends AdminTicketListItem {
+  user: { id: string; firstName: string; lastName: string; email: string }
+  messages: { id: string; body: string; internal: boolean; createdAt: string; author: { firstName: string; lastName: string; role: string } }[]
+}
+
 export const adminApi = {
   getDashboard: () => api.get<AdminDashboardSummary>('/admin/dashboard'),
+  getStaff: () => api.get<StaffMember[]>('/admin/staff'),
+
+  // Clients
+  listClients: (search?: string) =>
+    api.get<ClientListItem[]>(`/admin/clients${search ? `?search=${encodeURIComponent(search)}` : ''}`),
+  getClient: (id: string) => api.get<ClientDetail>(`/admin/clients/${id}`),
+  addClientNote: (id: string, body: string, pinned?: boolean) =>
+    api.post<ClientDetail>(`/admin/clients/${id}/notes`, { body, pinned }),
+
+  // Leads
+  listLeads: (status?: LeadStatus) =>
+    api.get<Lead[]>(`/admin/leads${status ? `?status=${status}` : ''}`),
+  getLead: (id: string) => api.get<LeadDetail>(`/admin/leads/${id}`),
+  updateLead: (id: string, patch: { status?: LeadStatus; assignedToId?: string | null }) =>
+    api.patch<LeadDetail>(`/admin/leads/${id}`, patch),
+  addLeadNote: (id: string, body: string) => api.post<LeadDetail>(`/admin/leads/${id}/notes`, { body }),
+
+  // Tickets
+  listTickets: (status?: TicketStatus) =>
+    api.get<AdminTicketListItem[]>(`/admin/tickets${status ? `?status=${status}` : ''}`),
+  getTicket: (id: string) => api.get<AdminTicketDetail>(`/admin/tickets/${id}`),
+  updateTicket: (id: string, patch: { status?: TicketStatus; priority?: TicketPriority; assignedToId?: string | null }) =>
+    api.patch<AdminTicketDetail>(`/admin/tickets/${id}`, patch),
+  replyTicket: (id: string, body: string, internal?: boolean) =>
+    api.post<AdminTicketDetail>(`/admin/tickets/${id}/reply`, { body, internal }),
+
+  // KYC review (ADMIN)
+  reviewKyc: (userId: string, step: 'identity' | 'address' | 'selfie', status: 'APPROVED' | 'REJECTED' | 'PENDING') =>
+    api.post('/kyc/review', { userId, step, status }),
 }

@@ -1,5 +1,5 @@
 /**
- * Typed fetch client for the Apex Markets API.
+ * Typed fetch client for the 27 Markets API.
  * - Sends/receives httpOnly auth cookies (`credentials: 'include'`).
  * - On a 401, transparently tries one token refresh, then retries the request.
  * - Surfaces a structured ApiError so the UI can show the server's message.

@@ -45,7 +45,7 @@ export function AuthShell({ children, aside }: AuthShellProps) {
               </>
             )}
           </motion.div>
-          <p className="text-xs text-gray-600">© 2026 Apex Markets · Demonstration product</p>
+          <p className="text-xs text-gray-600">© 2026 27 Markets · Demonstration product</p>
         </div>
       </div>
 

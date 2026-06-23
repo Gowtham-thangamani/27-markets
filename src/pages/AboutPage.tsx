@@ -12,7 +12,7 @@ import { aboutValues } from '@/mock/content'
 export default function AboutPage() {
   return (
     <>
-      <PageHeader breadcrumb={['Home', 'About Us']} title="About Apex Markets" />
+      <PageHeader breadcrumb={['Home', 'About Us']} title="About 27 Markets" />
 
       {/* Intro + dramatic visual */}
       <section className="container-x grid items-center gap-12 py-12 lg:grid-cols-2">
@@ -22,7 +22,7 @@ export default function AboutPage() {
             A next-generation broker built on trust
           </h2>
           <p className="mt-4 leading-relaxed text-gray-400">
-            Apex Markets is a next-generation broker built on trust, transparency, and technology.
+            27 Markets is a next-generation broker built on trust, transparency, and technology.
             Our mission is to empower traders and partners with the best trading conditions,
             innovative solutions, and unmatched support.
           </p>

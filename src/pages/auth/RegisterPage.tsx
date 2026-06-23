@@ -84,7 +84,7 @@ export default function RegisterPage() {
       } catch {
         /* non-fatal: they can open one from the portal */
       }
-      toast.success('Account created', 'Welcome to Apex Markets. Complete KYC to start trading.')
+      toast.success('Account created', 'Welcome to 27 Markets. Complete KYC to start trading.')
       navigate('/portal/dashboard', { replace: true })
     } catch (err) {
       const e = err as ApiError

@@ -8,7 +8,7 @@ const columns = [
     links: [
       { label: 'Accounts', to: '/accounts' },
       { label: 'Markets', to: '/markets' },
-      { label: 'Platforms', to: '/downloads' },
+      { label: 'Platforms', to: '/platforms' },
       { label: 'Demo Account', to: '/demo' },
     ],
   },
@@ -17,6 +17,7 @@ const columns = [
     links: [
       { label: 'About Us', to: '/about' },
       { label: 'Partnership', to: '/partnership' },
+      { label: 'Blog', to: '/blog' },
       { label: 'Contact', to: '/contact' },
       { label: 'Client Portal', to: '/portal/dashboard' },
     ],
@@ -89,7 +90,7 @@ export function Footer() {
         <div className="hairline my-10" />
 
         <div className="flex flex-col gap-4 text-xs text-gray-500 lg:flex-row lg:items-center lg:justify-between">
-          <p>© 2026 Apex Markets. All rights reserved.</p>
+          <p>© 2026 27 Markets. All rights reserved.</p>
           <p className="max-w-3xl leading-relaxed">
             Risk warning: CFDs are complex instruments and carry a high risk of losing money
             rapidly due to leverage. This is a demonstration product and not a real brokerage.
