@@ -11,7 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService, type RequestContext } from './auth.service';
-import { RegisterDto, LoginDto, TotpVerifyDto } from './dto';
+import { RegisterDto, LoginDto, TotpVerifyDto, ChangePasswordDto } from './dto';
 import { setAuthCookies, clearAuthCookies, REFRESH_COOKIE_NAME } from './cookies';
 import { CurrentUser, Public } from '../common/decorators';
 import type { Env } from '../config/env.validation';
@@ -69,6 +69,17 @@ export class AuthController {
   @Get('me')
   me(@CurrentUser('id') userId: string) {
     return this.auth.me(userId);
+  }
+
+  @HttpCode(200)
+  @Post('password')
+  async changePassword(
+    @CurrentUser('id') userId: string,
+    @Body() dto: ChangePasswordDto,
+    @Req() req: Request,
+  ) {
+    await this.auth.changePassword(userId, dto.currentPassword, dto.newPassword, ctxFrom(req));
+    return { ok: true };
   }
 
   @Post('2fa/setup')

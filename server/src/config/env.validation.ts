@@ -19,6 +19,15 @@ export const envSchema = z
 
     TOTP_ISSUER: z.string().default('Apex Markets'),
 
+    // ── Market data (Finnhub real-time) ──
+    // Optional: when unset, live market endpoints serve cached/empty and the
+    // upstream WebSocket is not opened (app still boots normally).
+    FINNHUB_API_KEY: z.string().optional(),
+    REDIS_URL: z.string().default('redis://localhost:6379'),
+    MARKET_SYMBOLS: z
+      .string()
+      .default('BINANCE:BTCUSDT,BINANCE:ETHUSDT,OANDA:EUR_USD,OANDA:XAU_USD,AAPL,TSLA'),
+
     TRADING_MODE: z.enum(['SIMULATION', 'LIVE']).default('SIMULATION'),
     ALLOW_LIVE_MODE: z
       .enum(['true', 'false'])

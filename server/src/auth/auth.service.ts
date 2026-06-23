@@ -160,6 +160,25 @@ export class AuthService {
     return this.toPublic(user);
   }
 
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+    ctx: RequestContext,
+  ): Promise<void> {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const ok = await argon2.verify(user.passwordHash, currentPassword).catch(() => false);
+    if (!ok) throw new UnauthorizedException('Current password is incorrect');
+    const passwordHash = await argon2.hash(newPassword, { type: argon2.argon2id });
+    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+    // Invalidate all other sessions after a password change.
+    await this.prisma.session.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    await this.audit.record({ userId, action: 'auth.password.change', ...ctx });
+  }
+
   // ── 2FA ──
 
   async startTwoFactor(userId: string): Promise<{ otpauthUrl: string; qrDataUrl: string }> {

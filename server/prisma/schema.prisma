@@ -61,6 +61,7 @@ model User {
   tickets             Ticket[]        @relation("TicketClient")
   assignedTickets     Ticket[]        @relation("TicketAssignee")
   ticketMessages      TicketMessage[] @relation("TicketMessageAuthor")
+  blogPosts           BlogPost[]      @relation("BlogAuthor")
 
   @@index([email])
 }
@@ -365,4 +366,31 @@ model TicketMessage {
   createdAt DateTime @default(now())
 
   @@index([ticketId])
+}
+
+// ─────────────────────────── Blog / CMS ───────────────────────────
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model BlogPost {
+  id             String     @id @default(cuid())
+  slug           String     @unique // SEO URL, e.g. /blog/how-spreads-work
+  title          String
+  excerpt        String? // short summary for listing cards / meta description fallback
+  contentHtml    String // sanitized rich-text HTML
+  featuredImage  String? // image URL
+  seoTitle       String?
+  seoDescription String?
+  ogImage        String? // social share image URL
+  status         PostStatus @default(DRAFT)
+  publishedAt    DateTime?
+  authorId       String
+  author         User       @relation("BlogAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([status, publishedAt])
 }
