@@ -222,4 +222,5 @@ export const SYSTEM_ACCOUNTS = {
   'SYSTEM:PSP_CLEARING': { name: 'PSP / Bank Clearing', type: LedgerAccountType.ASSET },
   'SYSTEM:WITHDRAWALS_PAYABLE': { name: 'Withdrawals Payable', type: LedgerAccountType.LIABILITY },
   'SYSTEM:DEMO_FUNDING': { name: 'Demo Funding (virtual)', type: LedgerAccountType.EQUITY },
+  'SYSTEM:ADJUSTMENTS': { name: 'Manual Adjustments', type: LedgerAccountType.EQUITY },
 } as const;
