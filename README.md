@@ -4,8 +4,11 @@ A production-grade, responsive **black & red** fintech web app: a public marketi
 website **plus** a secure client portal. Built as a single coherent SPA with original
 branding (the reference design's "27MARKETS" was reinterpreted as **Apex Markets**).
 
-> ⚠️ This is a **front-end demonstration product**. All data is mock/in-memory
-> (persisted to `localStorage`). There is no real backend, payments, or KYC processing.
+> ⚠️ The client **portal is wired to the real backend API** (`server/`) — auth, accounts,
+> funds, and KYC use live endpoints, and **all money runs through the server's double-entry
+> ledger in `SIMULATION` mode** (no real funds, no licensed PSP/custody/LP yet). The marketing
+> site uses static content. Support tickets and notifications remain client-side for now.
+> See `server/README.md` for the backend and the "Before going live" requirements.
 
 ## ✨ Highlights
 
@@ -34,21 +37,32 @@ branding (the reference design's "27MARKETS" was reinterpreted as **Apex Markets
 | Routing        | React Router v6                           |
 | Forms          | react-hook-form + Zod (custom resolver)   |
 | Icons          | lucide-react                              |
-| State          | React Context + localStorage              |
+| State / data   | React Context + REST API (`src/lib/api.ts`) |
 
 ## 🚀 Getting Started
 
+The portal needs the backend running. Start the API first (see `server/README.md`):
+
+```bash
+# in server/ :  docker compose up -d && npm install && npm run prisma:migrate && npm run start:dev
+```
+
+Then the frontend (repo root):
+
 ```bash
 npm install
-npm run dev        # http://localhost:5173
+npm run dev        # http://localhost:5173  (expects API at http://localhost:4000/api)
 npm run build      # type-check + production build → dist/
 npm run preview    # preview the production build
 ```
 
-### Demo login
+Set `VITE_API_URL` in `.env` if the API is not on the default `http://localhost:4000/api`.
 
-Any email + any 6+ character password signs you in (mock auth).
-Or use **Open Account** to run the multi-step onboarding.
+### Sign in
+
+Use **Open Account** to register a new client (real auth against the backend), or
+**Login** with any account you've created. Sessions use httpOnly cookies with silent
+token refresh.
 
 ## 📁 Project Structure
 

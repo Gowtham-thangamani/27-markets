@@ -29,7 +29,10 @@ export function PortalLayout() {
 
   return (
     <PortalUIContext.Provider value={{ openNewAccount: () => setAccountModal(true) }}>
-      <div className="flex h-screen overflow-hidden bg-ink-900">
+      <div className="flex h-dvh-safe overflow-hidden bg-ink-900">
+        <a href="#portal-scroll" className="skip-link">
+          Skip to content
+        </a>
         {/* Desktop sidebar */}
         <aside className="hidden w-64 shrink-0 border-r border-white/[0.06] bg-ink-850 lg:block">
           <SidebarContent />
@@ -65,7 +68,7 @@ export function PortalLayout() {
             onOpenSidebar={() => setMobileOpen(true)}
             onOpenAccount={() => setAccountModal(true)}
           />
-          <main id="portal-scroll" className="flex-1 overflow-y-auto">
+          <main id="portal-scroll" tabIndex={-1} className="flex-1 overflow-y-auto outline-none">
             <div className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8">
               <Outlet />
             </div>

@@ -11,8 +11,11 @@ export function MarketingLayout() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
       <Navbar />
-      <main className="flex-1 pt-16">
+      <main id="main-content" tabIndex={-1} className="flex-1 pt-16 outline-none">
         <Outlet />
       </main>
       <Footer />

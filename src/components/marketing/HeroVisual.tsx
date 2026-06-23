@@ -3,8 +3,9 @@ import { TrendingUp, TrendingDown } from 'lucide-react'
 import type { MouseEvent } from 'react'
 import { MiniChart } from './MiniChart'
 import { MarketWave } from '@/components/three/MarketWave'
-import { LazyParticleField } from '@/components/three/Lazy3D'
+import { LazyParticleField, LazyHeroScene } from '@/components/three/Lazy3D'
 import { useReducedMotion } from '@/lib/hooks'
+import { useQuality } from '@/lib/quality'
 
 const watchlist = [
   { sym: 'EUR/USD', px: '1.0842', chg: '+0.18%', up: true },
@@ -15,6 +16,7 @@ const watchlist = [
 
 export function HeroVisual() {
   const reduced = useReducedMotion()
+  const quality = useQuality()
   const mx = useMotionValue(0)
   const my = useMotionValue(0)
   const rotateY = useSpring(useTransform(mx, [-0.5, 0.5], [8, -8]), { stiffness: 120, damping: 18 })
@@ -32,6 +34,18 @@ export function HeroVisual() {
     my.set(0)
   }
 
+  // Premium path: true 3D scene with bloom — only on the high-power tier.
+  // Phones and reduced-motion users get the lightweight CSS mockup below.
+  if (quality.enable3D && !quality.lowPower) {
+    return (
+      <div className="relative mx-auto aspect-square w-full max-w-xl select-none">
+        <div className="absolute inset-0 -z-10 rounded-full bg-radial-red opacity-80 blur-2xl" />
+        <LazyHeroScene className="absolute inset-0" />
+      </div>
+    )
+  }
+
+  // Fallback: lightweight CSS device mockup (no WebGL).
   return (
     <div
       className="relative mx-auto aspect-square w-full max-w-xl select-none"

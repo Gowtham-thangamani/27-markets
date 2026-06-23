@@ -14,7 +14,7 @@ interface AuthShellProps {
 /** Split-screen shell for login / register / demo with ambient red atmosphere. */
 export function AuthShell({ children, aside }: AuthShellProps) {
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
+    <div className="grid min-h-dvh-safe lg:grid-cols-2">
       {/* Left: ambient brand panel */}
       <div className="relative hidden overflow-hidden bg-ink-850 lg:block">
         <div className="grid-bg absolute inset-0 opacity-30" />

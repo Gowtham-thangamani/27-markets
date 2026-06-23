@@ -85,11 +85,38 @@
   .hairline {
     @apply h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent;
   }
+
+  /* Static fallbacks for 3D scenes (reduced-motion / no-WebGL) */
+  .globe-fallback {
+    background-image: radial-gradient(circle at 50% 50%, rgba(225, 29, 46, 0.2), transparent 62%);
+  }
+  .particles-fallback {
+    background-image: radial-gradient(circle at 30% 40%, rgba(225, 29, 46, 0.1), transparent 60%);
+  }
+
+  /* Visually-hidden, but available to screen readers; becomes visible on focus */
+  .skip-link {
+    @apply sr-only;
+  }
+  .skip-link:focus {
+    @apply not-sr-only fixed left-4 top-4 z-[300] rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white;
+  }
 }
 
 @layer utilities {
   .container-x {
     @apply mx-auto w-full max-w-7xl px-5 sm:px-8;
+  }
+
+  /* Dynamic viewport height with a vh fallback — avoids the iOS Safari
+     address-bar gap where 100vh overshoots the visible area. */
+  .h-dvh-safe {
+    height: 100vh;
+    height: 100dvh;
+  }
+  .min-h-dvh-safe {
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 
   .no-scrollbar::-webkit-scrollbar {
@@ -111,8 +138,16 @@
   }
 }
 .wave-dot {
-  offset-distance: 0%;
-  animation: wave-travel 3.5s ease-in-out 1.5s infinite;
+  /* Hidden by default; only shown where offset-path is supported so older
+     browsers don't render a dot stuck at the origin. */
+  display: none;
+}
+@supports (offset-path: path('M0 0 L1 1')) {
+  .wave-dot {
+    display: block;
+    offset-distance: 0%;
+    animation: wave-travel 3.5s ease-in-out 1.5s infinite;
+  }
 }
 
 /* Respect reduced motion globally */
