@@ -1,11 +1,15 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { MarketingLayout } from './layouts/MarketingLayout'
 import { PortalLayout } from './layouts/PortalLayout'
+import { AdminLayout } from './layouts/AdminLayout'
 import { RequireAuth } from './components/portal/RequireAuth'
+import { RequireStaff } from './components/admin/RequireStaff'
+import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 
 import HomePage from './pages/HomePage'
 import AboutPage from './pages/AboutPage'
 import MarketsPage from './pages/MarketsPage'
+import PlatformsPage from './pages/PlatformsPage'
 import AccountsPage from './pages/AccountsPage'
 import PartnershipPage from './pages/PartnershipPage'
 import ContactPage from './pages/ContactPage'
@@ -30,6 +34,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/markets" element={<MarketsPage />} />
+        <Route path="/platforms" element={<PlatformsPage />} />
         <Route path="/accounts" element={<AccountsPage />} />
         <Route path="/partnership" element={<PartnershipPage />} />
         <Route path="/contact" element={<ContactPage />} />
@@ -57,6 +62,19 @@ export default function App() {
         <Route path="downloads" element={<DownloadsPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="support" element={<SupportPage />} />
+      </Route>
+
+      {/* Secure staff back-office (CRM) */}
+      <Route
+        path="/admin"
+        element={
+          <RequireStaff>
+            <AdminLayout />
+          </RequireStaff>
+        }
+      >
+        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="dashboard" element={<AdminDashboardPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />
