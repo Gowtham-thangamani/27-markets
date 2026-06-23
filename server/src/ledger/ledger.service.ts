@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import {
   JournalKind,
+  JournalStatus,
   LedgerAccountType,
   Prisma,
   PostingDirection,
@@ -26,6 +27,8 @@ export interface PostTransactionInput {
   memo?: string;
   simulated: boolean;
   createdById?: string;
+  /** Defaults to POSTED. Use PENDING for entries that await staff approval. */
+  status?: JournalStatus;
   postings: PostingInput[];
 }
 
@@ -79,6 +82,7 @@ export class LedgerService {
         data: {
           reference: input.reference,
           kind: input.kind,
+          status: input.status ?? JournalStatus.POSTED,
           idempotencyKey: input.idempotencyKey,
           memo: input.memo,
           simulated: input.simulated,
@@ -117,6 +121,67 @@ export class LedgerService {
     }
 
     return CREDIT_NORMAL.has(account.type) ? credit.minus(debit) : debit.minus(credit);
+  }
+
+  /** Confirm a PENDING entry (e.g. an approved withdrawal). Idempotent. */
+  async markPosted(entryId: string) {
+    const entry = await this.prisma.journalEntry.findUnique({ where: { id: entryId } });
+    if (!entry) throw new NotFoundException('Journal entry not found');
+    if (entry.status === JournalStatus.POSTED) return entry;
+    if (entry.status !== JournalStatus.PENDING) {
+      throw new BadRequestException(`Cannot post a ${entry.status} entry`);
+    }
+    return this.prisma.journalEntry.update({
+      where: { id: entryId },
+      data: { status: JournalStatus.POSTED },
+    });
+  }
+
+  /**
+   * Reverse an entry by posting a balanced compensating entry (flipped
+   * directions) and marking the original REVERSED — restoring balances. Used to
+   * reject a held withdrawal. Idempotent on a REVERSED original.
+   */
+  async reverse(
+    entryId: string,
+    opts: { reference: string; idempotencyKey: string; reversedById?: string; memo?: string },
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      const original = await tx.journalEntry.findUnique({
+        where: { id: entryId },
+        include: { postings: true },
+      });
+      if (!original) throw new NotFoundException('Journal entry not found');
+      if (original.status === JournalStatus.REVERSED) return original;
+
+      await tx.journalEntry.create({
+        data: {
+          reference: opts.reference,
+          kind: original.kind,
+          status: JournalStatus.POSTED,
+          idempotencyKey: opts.idempotencyKey,
+          simulated: original.simulated,
+          memo: opts.memo ?? `Reversal of ${original.reference}`,
+          createdById: opts.reversedById,
+          postings: {
+            create: original.postings.map((p) => ({
+              ledgerAccountId: p.ledgerAccountId,
+              direction:
+                p.direction === PostingDirection.DEBIT
+                  ? PostingDirection.CREDIT
+                  : PostingDirection.DEBIT,
+              amount: p.amount,
+              currency: p.currency,
+            })),
+          },
+        },
+      });
+
+      return tx.journalEntry.update({
+        where: { id: entryId },
+        data: { status: JournalStatus.REVERSED },
+      });
+    });
   }
 
   /** Create a ledger account (idempotent on `code`). */
