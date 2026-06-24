@@ -24,3 +24,8 @@ Thumbs.db
 # Playwright QA artifacts
 .playwright-mcp
 *.png
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
