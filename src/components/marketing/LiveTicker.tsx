@@ -35,9 +35,9 @@ export function LiveTicker() {
           return (
             <span key={q.symbol} className="inline-flex shrink-0 items-center gap-2 text-sm">
               <span className="font-medium text-gray-300">{label(q.symbol)}</span>
-              <span className="tabular-nums text-white">{fmt(q.price)}</span>
+              <span className="font-mono tabular-nums text-white">{fmt(q.price)}</span>
               {q.changePct !== undefined && (
-                <span className={cn('text-xs tabular-nums', up ? 'text-success' : 'text-danger')}>
+                <span className={cn('font-mono text-xs tabular-nums', up ? 'text-success' : 'text-danger')}>
                   {up ? '▲' : '▼'}
                   {Math.abs(q.changePct).toFixed(2)}%
                 </span>

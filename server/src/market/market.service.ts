@@ -31,6 +31,8 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
   private symbols: string[] = [];
   private apiKey?: string;
   private readonly mem = new Map<string, Quote>();
+  private readonly binanceMap = new Map<string, string>(); // BTCUSDT -> BINANCE:BTCUSDT
+  private provider: 'finnhub' | 'binance' | 'none' = 'none';
   private readonly updates$ = new Subject<Quote>();
   private reconnectAttempts = 0;
   private reconnectTimer?: NodeJS.Timeout;
@@ -60,10 +62,14 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
     }
 
     if (!this.apiKey) {
-      this.log.warn('FINNHUB_API_KEY not set — live market data disabled (serving cached/empty).');
+      // No Finnhub key → stream crypto from Binance's free public WS (no key).
+      this.log.warn('FINNHUB_API_KEY not set — using Binance public stream (crypto only, no key).');
+      this.provider = 'binance';
+      this.connectBinance();
       return;
     }
 
+    this.provider = 'finnhub';
     void this.seedFromRest();
     this.connectWs();
     // Fallback refresh: REST snapshot every 15s in case the WS is quiet/down.
@@ -99,8 +105,8 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
 
   health() {
     return {
-      provider: 'finnhub',
-      configured: !!this.apiKey,
+      provider: this.provider,
+      configured: this.provider !== 'none',
       wsConnected: this.ws?.readyState === WebSocket.OPEN,
       symbols: this.symbols,
       cached: this.mem.size,
@@ -218,6 +224,62 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
       const delay = Math.min(30_000, 1000 * 2 ** this.reconnectAttempts);
       this.log.warn(`Finnhub WS closed — reconnecting in ${delay}ms`);
       this.reconnectTimer = setTimeout(() => this.connectWs(), delay);
+    });
+  }
+
+  /** No-key fallback: stream crypto from Binance's free public WebSocket. */
+  private connectBinance(): void {
+    if (this.closed) return;
+    const syms = this.symbols
+      .filter((s) => s.startsWith('BINANCE:'))
+      .map((s) => s.slice('BINANCE:'.length));
+    if (syms.length === 0) {
+      this.log.warn('No BINANCE:* symbols configured — live market disabled without a Finnhub key.');
+      return;
+    }
+    for (const s of syms) this.binanceMap.set(s.toUpperCase(), `BINANCE:${s}`);
+
+    const streams = syms.map((s) => `${s.toLowerCase()}@ticker`).join('/');
+    const ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
+    this.ws = ws;
+
+    ws.on('open', () => {
+      this.reconnectAttempts = 0;
+      this.log.log(`Binance WS connected (${syms.length} symbols, no key)`);
+    });
+
+    ws.on('message', (raw: WebSocket.RawData) => {
+      try {
+        // 24hr ticker payload: { data: { s: 'BTCUSDT', c: lastPrice, P: changePct } }
+        const msg = JSON.parse(raw.toString()) as { data?: { s: string; c: string; P: string } };
+        const d = msg.data;
+        if (!d?.s) return;
+        const symbol = this.binanceMap.get(d.s);
+        if (!symbol) return;
+        const price = parseFloat(d.c);
+        const changePct = parseFloat(d.P);
+        if (Number.isFinite(price)) {
+          void this.store({
+            symbol,
+            price,
+            changePct: Number.isFinite(changePct) ? changePct : undefined,
+            asOf: Date.now(),
+            stale: false,
+          });
+        }
+      } catch {
+        /* ignore malformed frames */
+      }
+    });
+
+    ws.on('error', (e) => this.log.warn(`Binance WS error: ${(e as Error).message}`));
+
+    ws.on('close', () => {
+      if (this.closed) return;
+      this.reconnectAttempts += 1;
+      const delay = Math.min(30_000, 1000 * 2 ** this.reconnectAttempts);
+      this.log.warn(`Binance WS closed — reconnecting in ${delay}ms`);
+      this.reconnectTimer = setTimeout(() => this.connectBinance(), delay);
     });
   }
 }

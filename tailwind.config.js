@@ -32,8 +32,10 @@ export default {
         danger: '#ef4444',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['"Space Grotesk"', 'Inter', 'sans-serif'],
+        // Ported from the 27 Markets landing page
+        sans: ['Archivo', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['"Archivo Expanded"', 'Archivo', 'sans-serif'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
       },
       backgroundImage: {
         'grid-faint':

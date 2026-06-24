@@ -45,9 +45,9 @@ export function LiveMarketOverview() {
                   <p className="text-xs text-gray-500">{q.symbol}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-display text-lg font-semibold tabular-nums text-white">{fmtPrice(q.price)}</p>
+                  <p className="font-mono text-lg font-semibold tabular-nums text-white">{fmtPrice(q.price)}</p>
                   {q.changePct !== undefined && (
-                    <p className={cn('text-xs font-medium tabular-nums', up ? 'text-success' : 'text-danger')}>
+                    <p className={cn('font-mono text-xs font-medium tabular-nums', up ? 'text-success' : 'text-danger')}>
                       {up ? '▲' : '▼'} {Math.abs(q.changePct).toFixed(2)}%
                     </p>
                   )}

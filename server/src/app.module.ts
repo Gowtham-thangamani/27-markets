@@ -6,6 +6,7 @@ import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuditModule } from './audit/audit.module';
 import { LedgerModule } from './ledger/ledger.module';
+import { PaymentsModule } from './payments/payments.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { UsersModule } from './users/users.module';
@@ -26,6 +27,7 @@ import { HealthController } from './health/health.controller';
     PrismaModule,
     AuditModule,
     LedgerModule,
+    PaymentsModule,
     AuthModule,
     UsersModule,
     AccountsModule,

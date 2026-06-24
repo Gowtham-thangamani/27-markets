@@ -29,3 +29,7 @@ Thumbs.db
 /test-results/
 /playwright-report/
 /playwright/.cache/
+
+# stray archives
+docs.zip
+*.zip

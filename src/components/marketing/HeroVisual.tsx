@@ -99,7 +99,7 @@ export function HeroVisual() {
                   {watchlist.slice(0, 3).map((w) => (
                     <div key={w.sym} className="mb-1.5">
                       <div className="text-[8px] text-gray-400">{w.sym}</div>
-                      <div className="text-[9px] font-semibold text-white">{w.px}</div>
+                      <div className="font-mono text-[9px] font-semibold text-white">{w.px}</div>
                     </div>
                   ))}
                 </div>
@@ -131,7 +131,7 @@ export function HeroVisual() {
               <div className="mx-auto mt-1 h-1 w-8 rounded-full bg-white/15" />
               <div className="p-2">
                 <div className="text-[8px] text-gray-400">Portfolio</div>
-                <div className="text-xs font-bold text-white">$25,430.50</div>
+                <div className="font-mono text-xs font-bold text-white">$25,430.50</div>
                 <div className="mt-1 flex items-center gap-1 text-[8px] font-medium text-success">
                   <TrendingUp className="h-2.5 w-2.5" /> +2.4% today
                 </div>
@@ -143,7 +143,7 @@ export function HeroVisual() {
                     <div key={w.sym} className="flex items-center justify-between">
                       <span className="text-[8px] text-gray-300">{w.sym}</span>
                       <span
-                        className={`flex items-center gap-0.5 text-[8px] font-medium ${
+                        className={`flex items-center gap-0.5 font-mono text-[8px] font-medium ${
                           w.up ? 'text-success' : 'text-brand-400'
                         }`}
                       >

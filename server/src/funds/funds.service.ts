@@ -1,11 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotImplementedException,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { BadRequestException, ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { JournalKind, JournalStatus, KycStepStatus, PostingDirection } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LedgerService } from '../ledger/ledger.service';
@@ -13,7 +7,7 @@ import { AccountsService } from '../accounts/accounts.service';
 import { AuditService } from '../audit/audit.service';
 import { formatMoney, toMoney } from '../ledger/money';
 import { generateTxReference } from '../common/reference';
-import type { Env } from '../config/env.validation';
+import { PAYMENT_PROVIDER, type PaymentProvider } from '../payments/payment-provider';
 import { DepositDto, WithdrawDto, TransferDto } from './dto';
 
 @Injectable()
@@ -23,28 +17,12 @@ export class FundsService {
     private readonly ledger: LedgerService,
     private readonly accounts: AccountsService,
     private readonly audit: AuditService,
-    private readonly config: ConfigService<Env, true>,
+    @Inject(PAYMENT_PROVIDER) private readonly payments: PaymentProvider,
   ) {}
 
-  private get simulation(): boolean {
-    return this.config.get('TRADING_MODE', { infer: true }) === 'SIMULATION';
-  }
-
-  /**
-   * SAFETY RAIL: real money movement requires a licensed PSP/bank integration
-   * that does not exist yet. Outside SIMULATION we refuse rather than pretend.
-   */
-  private assertCanMoveFunds(): void {
-    if (!this.simulation) {
-      throw new NotImplementedException(
-        'LIVE funding is not available: no licensed payment/custody provider is integrated. ' +
-          'Operate in SIMULATION until licensing and PSP/bank partners are live.',
-      );
-    }
-  }
-
   async deposit(userId: string, dto: DepositDto) {
-    this.assertCanMoveFunds();
+    // SAFETY RAIL: refuses unless a payment provider can actually move funds.
+    this.payments.assertAvailable();
     const amount = toMoney(dto.amount);
     const clientLedgerId = await this.accounts.ledgerAccountIdFor(userId, dto.accountId);
     const clearing = await this.ledger.getSystemAccount('SYSTEM:PSP_CLEARING');
@@ -54,7 +32,7 @@ export class FundsService {
       kind: JournalKind.DEPOSIT,
       reference: generateTxReference(),
       idempotencyKey: dto.idempotencyKey ?? `deposit:${userId}:${randomUUID()}`,
-      simulated: true,
+      simulated: this.payments.simulated,
       createdById: userId,
       memo: `Deposit via ${dto.method}`,
       postings: [
@@ -86,7 +64,7 @@ export class FundsService {
   }
 
   async withdraw(userId: string, dto: WithdrawDto) {
-    this.assertCanMoveFunds();
+    this.payments.assertAvailable();
     await this.assertKycVerified(userId);
     const amount = toMoney(dto.amount);
     const clientLedgerId = await this.accounts.ledgerAccountIdFor(userId, dto.accountId);
@@ -103,7 +81,7 @@ export class FundsService {
       kind: JournalKind.WITHDRAWAL,
       reference: generateTxReference(),
       idempotencyKey: dto.idempotencyKey ?? `withdraw:${userId}:${randomUUID()}`,
-      simulated: true,
+      simulated: this.payments.simulated,
       status: JournalStatus.PENDING,
       createdById: userId,
       memo: `Withdrawal via ${dto.method}`,
@@ -134,7 +112,7 @@ export class FundsService {
       kind: JournalKind.TRANSFER,
       reference: generateTxReference(),
       idempotencyKey: dto.idempotencyKey ?? `transfer:${userId}:${randomUUID()}`,
-      simulated: this.simulation,
+      simulated: this.payments.simulated,
       createdById: userId,
       memo: 'Internal transfer',
       postings: [

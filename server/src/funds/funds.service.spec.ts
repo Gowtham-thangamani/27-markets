@@ -1,7 +1,7 @@
 import { Prisma, JournalStatus, KycStepStatus } from '@prisma/client';
 import { FundsService } from './funds.service';
 
-// Constructor order: (prisma, ledger, accounts, audit, config)
+// Constructor order: (prisma, ledger, accounts, audit, paymentProvider)
 function makeService(overrides: { post?: jest.Mock } = {}) {
   const post = overrides.post ?? jest.fn().mockResolvedValue({ id: 'j1', reference: 'TX-1', status: JournalStatus.PENDING });
   const prisma = {
@@ -20,8 +20,8 @@ function makeService(overrides: { post?: jest.Mock } = {}) {
   } as any;
   const accounts = { ledgerAccountIdFor: jest.fn().mockResolvedValue('client-ledger') } as any;
   const audit = { record: jest.fn().mockResolvedValue(undefined) } as any;
-  const config = { get: jest.fn().mockReturnValue('SIMULATION') } as any;
-  return { service: new FundsService(prisma, ledger, accounts, audit, config), post, audit };
+  const payments = { name: 'simulation', simulated: true, assertAvailable: jest.fn() } as any;
+  return { service: new FundsService(prisma, ledger, accounts, audit, payments), post, audit, payments };
 }
 
 describe('FundsService.withdraw', () => {
