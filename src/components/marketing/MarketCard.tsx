@@ -19,7 +19,7 @@ export function MarketCard({ category }: { category: MarketCategory }) {
               src={asset(image)}
               alt=""
               aria-hidden
-              className="mask-radial-fade h-12 w-12 shrink-0 object-contain drop-shadow-[0_4px_14px_rgba(225,29,46,0.4)]"
+              className="mask-radial-fade h-20 w-20 shrink-0 object-contain drop-shadow-[0_4px_18px_rgba(225,29,46,0.5)]"
             />
           ) : (
             <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/20">

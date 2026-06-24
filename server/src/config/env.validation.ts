@@ -8,7 +8,8 @@ export const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: z.coerce.number().int().positive().default(4000),
-    CLIENT_ORIGIN: z.string().url().default('http://localhost:5173'),
+    // May be a single origin or a comma-separated list (localhost + LAN IP, etc.)
+    CLIENT_ORIGIN: z.string().min(1).default('http://localhost:5173'),
 
     DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
 
@@ -26,7 +27,11 @@ export const envSchema = z
     REDIS_URL: z.string().default('redis://localhost:6379'),
     MARKET_SYMBOLS: z
       .string()
-      .default('BINANCE:BTCUSDT,BINANCE:ETHUSDT,OANDA:EUR_USD,OANDA:XAU_USD,AAPL,TSLA'),
+      .default(
+        'BINANCE:BTCUSDT,BINANCE:ETHUSDT,BINANCE:SOLUSDT,BINANCE:XRPUSDT,' +
+          'OANDA:EUR_USD,OANDA:GBP_USD,OANDA:USD_JPY,OANDA:AUD_USD,' +
+          'OANDA:XAU_USD,OANDA:XAG_USD,AAPL,TSLA,NVDA,AMZN',
+      ),
 
     // ── Payments (PSP) ──
     // Which payment provider backs funding. 'simulation' (default) moves no real

@@ -5,8 +5,11 @@
  * - Surfaces a structured ApiError so the UI can show the server's message.
  */
 
+// In dev, talk to the backend on the same host the page is served from (works
+// for both localhost and a LAN IP). In a build, VITE_API_URL drives it.
 const BASE_URL: string =
-  (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:4000/api'
+  (import.meta.env.VITE_API_URL as string | undefined) ??
+  `${window.location.protocol}//${window.location.hostname}:4000/api`
 
 /** Absolute API base — useful for building direct resource URLs (e.g. file streams). */
 export const API_BASE_URL = BASE_URL

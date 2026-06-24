@@ -4,6 +4,7 @@ import { Input, EmptyState } from '@/components/ui'
 import { cn } from '@/lib/cn'
 import { formatNumber } from '@/lib/format'
 import { instruments } from '@/mock/data'
+import { useLiveQuotes } from '@/lib/useLiveQuotes'
 import type { InstrumentCategory } from '@/lib/types'
 
 const categories: (InstrumentCategory | 'All')[] = [
@@ -19,6 +20,7 @@ const categories: (InstrumentCategory | 'All')[] = [
 export function InstrumentsExplorer({ initialCategory }: { initialCategory?: InstrumentCategory }) {
   const [query, setQuery] = useState('')
   const [active, setActive] = useState<InstrumentCategory | 'All'>(initialCategory ?? 'All')
+  const { quotes } = useLiveQuotes()
 
   const filtered = useMemo(() => {
     return instruments.filter((ins) => {
@@ -75,7 +77,12 @@ export function InstrumentsExplorer({ initialCategory }: { initialCategory?: Ins
         ) : (
           <ul className="divide-y divide-white/[0.04]">
             {filtered.map((ins) => {
-              const up = ins.changePct >= 0
+              // Overlay live data when a feed quote is available for this instrument.
+              const live = ins.feed ? quotes[ins.feed] : undefined
+              const price = live?.price ?? ins.price
+              const changePct = live?.changePct ?? ins.changePct
+              const isLive = !!live && !live.stale
+              const up = changePct >= 0
               return (
                 <li
                   key={ins.symbol}
@@ -86,22 +93,31 @@ export function InstrumentsExplorer({ initialCategory }: { initialCategory?: Ins
                       {ins.symbol.replace('/', '').slice(0, 3)}
                     </span>
                     <div className="min-w-0">
-                      <div className="text-sm font-semibold text-white">{ins.symbol}</div>
+                      <div className="flex items-center gap-1.5 text-sm font-semibold text-white">
+                        {ins.symbol}
+                        {isLive && (
+                          <span
+                            className="h-1.5 w-1.5 animate-pulse rounded-full bg-success"
+                            title="Live"
+                            aria-label="Live price"
+                          />
+                        )}
+                      </div>
                       <div className="truncate text-xs text-gray-500">{ins.name}</div>
                     </div>
                   </div>
-                  <div className="text-right text-sm font-medium text-white">
-                    {formatNumber(ins.price, ins.price < 10 ? 4 : 2)}
+                  <div className="text-right font-mono text-sm font-medium tabular-nums text-white">
+                    {formatNumber(price, price < 10 ? 4 : 2)}
                   </div>
                   <div
                     className={cn(
-                      'flex items-center justify-end gap-1 text-sm font-medium',
+                      'flex items-center justify-end gap-1 font-mono text-sm font-medium tabular-nums',
                       up ? 'text-success' : 'text-brand-400'
                     )}
                   >
                     {up ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
                     {up ? '+' : ''}
-                    {formatNumber(ins.changePct, 2)}%
+                    {formatNumber(changePct, 2)}%
                   </div>
                   <div className="hidden text-right text-sm text-gray-400 sm:block">
                     {formatNumber(ins.spread, 1)}

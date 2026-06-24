@@ -4,10 +4,18 @@ import { cn } from '@/lib/cn'
 const LABELS: Record<string, string> = {
   'BINANCE:BTCUSDT': 'BTC / USD',
   'BINANCE:ETHUSDT': 'ETH / USD',
+  'BINANCE:SOLUSDT': 'SOL / USD',
+  'BINANCE:XRPUSDT': 'XRP / USD',
   'OANDA:EUR_USD': 'EUR / USD',
+  'OANDA:GBP_USD': 'GBP / USD',
+  'OANDA:USD_JPY': 'USD / JPY',
+  'OANDA:AUD_USD': 'AUD / USD',
   'OANDA:XAU_USD': 'Gold (XAU/USD)',
+  'OANDA:XAG_USD': 'Silver (XAG/USD)',
   AAPL: 'Apple',
   TSLA: 'Tesla',
+  NVDA: 'NVIDIA',
+  AMZN: 'Amazon',
 }
 
 function label(sym: string): string {

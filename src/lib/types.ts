@@ -104,4 +104,6 @@ export interface Instrument {
   price: number
   changePct: number
   spread: number
+  /** Provider feed symbol (Finnhub/Binance) for live prices; omitted = no live feed yet. */
+  feed?: string
 }

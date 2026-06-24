@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { marketApi, type Quote } from './marketApi'
 
 const BASE: string =
-  (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:4000/api'
+  (import.meta.env.VITE_API_URL as string | undefined) ??
+  `${window.location.protocol}//${window.location.hostname}:4000/api`
 
 /**
  * Subscribes to the backend's real-time market stream (SSE) with:

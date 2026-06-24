@@ -153,28 +153,34 @@ const mk = (
   category: Instrument['category'],
   price: number,
   changePct: number,
-  spread: number
-): Instrument => ({ symbol, name, category, price, changePct, spread })
+  spread: number,
+  feed?: string
+): Instrument => ({ symbol, name, category, price, changePct, spread, feed })
 
 export const instruments: Instrument[] = [
-  mk('EUR/USD', 'Euro vs US Dollar', 'Forex', 1.0842, 0.18, 0.1),
-  mk('GBP/USD', 'British Pound vs US Dollar', 'Forex', 1.2731, -0.24, 0.3),
-  mk('USD/JPY', 'US Dollar vs Japanese Yen', 'Forex', 156.42, 0.42, 0.2),
-  mk('AUD/USD', 'Australian Dollar vs US Dollar', 'Forex', 0.6612, -0.11, 0.4),
-  mk('XAU/USD', 'Gold Spot', 'Metals', 2348.6, 0.86, 0.8),
-  mk('XAG/USD', 'Silver Spot', 'Metals', 30.42, 1.24, 1.2),
+  mk('EUR/USD', 'Euro vs US Dollar', 'Forex', 1.0842, 0.18, 0.1, 'OANDA:EUR_USD'),
+  mk('GBP/USD', 'British Pound vs US Dollar', 'Forex', 1.2731, -0.24, 0.3, 'OANDA:GBP_USD'),
+  mk('USD/JPY', 'US Dollar vs Japanese Yen', 'Forex', 156.42, 0.42, 0.2, 'OANDA:USD_JPY'),
+  mk('AUD/USD', 'Australian Dollar vs US Dollar', 'Forex', 0.6612, -0.11, 0.4, 'OANDA:AUD_USD'),
+  mk('XAU/USD', 'Gold Spot', 'Metals', 2348.6, 0.86, 0.8, 'OANDA:XAU_USD'),
+  mk('XAG/USD', 'Silver Spot', 'Metals', 30.42, 1.24, 1.2, 'OANDA:XAG_USD'),
   mk('US500', 'S&P 500 Index', 'Indices', 5478.2, 0.34, 0.4),
   mk('US100', 'Nasdaq 100 Index', 'Indices', 19842.5, 0.61, 1.0),
   mk('GER40', 'DAX 40 Index', 'Indices', 18412.0, -0.22, 0.9),
   mk('UKOIL', 'Brent Crude Oil', 'Commodities', 82.14, -0.74, 0.3),
   mk('USOIL', 'WTI Crude Oil', 'Commodities', 78.36, -0.68, 0.3),
   mk('NATGAS', 'Natural Gas', 'Commodities', 2.84, 2.15, 0.5),
-  mk('AAPL', 'Apple Inc.', 'Stocks', 213.4, 0.92, 0.05),
-  mk('TSLA', 'Tesla Inc.', 'Stocks', 184.6, -1.34, 0.08),
-  mk('NVDA', 'NVIDIA Corp.', 'Stocks', 126.8, 2.41, 0.06),
-  mk('AMZN', 'Amazon.com Inc.', 'Stocks', 186.2, 0.48, 0.07),
-  mk('BTC/USD', 'Bitcoin', 'Crypto', 64280.0, 1.86, 18.0),
-  mk('ETH/USD', 'Ethereum', 'Crypto', 3412.0, 2.42, 2.4),
-  mk('SOL/USD', 'Solana', 'Crypto', 142.8, 4.12, 0.6),
-  mk('XRP/USD', 'Ripple', 'Crypto', 0.4821, -0.92, 0.01),
+  mk('AAPL', 'Apple Inc.', 'Stocks', 213.4, 0.92, 0.05, 'AAPL'),
+  mk('TSLA', 'Tesla Inc.', 'Stocks', 184.6, -1.34, 0.08, 'TSLA'),
+  mk('NVDA', 'NVIDIA Corp.', 'Stocks', 126.8, 2.41, 0.06, 'NVDA'),
+  mk('AMZN', 'Amazon.com Inc.', 'Stocks', 186.2, 0.48, 0.07, 'AMZN'),
+  mk('BTC/USD', 'Bitcoin', 'Crypto', 64280.0, 1.86, 18.0, 'BINANCE:BTCUSDT'),
+  mk('ETH/USD', 'Ethereum', 'Crypto', 3412.0, 2.42, 2.4, 'BINANCE:ETHUSDT'),
+  mk('SOL/USD', 'Solana', 'Crypto', 142.8, 4.12, 0.6, 'BINANCE:SOLUSDT'),
+  mk('XRP/USD', 'Ripple', 'Crypto', 0.4821, -0.92, 0.01, 'BINANCE:XRPUSDT'),
 ]
+
+/** All live feed symbols across instruments — used to configure the market stream. */
+export const instrumentFeedSymbols: string[] = instruments
+  .map((i) => i.feed)
+  .filter((f): f is string => !!f)

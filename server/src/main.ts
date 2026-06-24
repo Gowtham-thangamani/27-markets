@@ -20,11 +20,16 @@ async function bootstrap(): Promise<void> {
   app.use(helmet());
   app.use(cookieParser());
 
-  // CORS — allow the React client with credentials (cookies)
-  app.enableCors({
-    origin: config.get('CLIENT_ORIGIN', { infer: true }),
-    credentials: true,
-  });
+  // CORS — allow the React client(s) with credentials (cookies).
+  // In development, reflect any origin (so localhost + any LAN IP/device work,
+  // even when the IP changes). In production, lock to the CLIENT_ORIGIN list.
+  const isDev = config.get('NODE_ENV', { infer: true }) !== 'production';
+  const origins = config
+    .get('CLIENT_ORIGIN', { infer: true })
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+  app.enableCors({ origin: isDev ? true : origins, credentials: true });
 
   // Reject unknown/invalid payloads everywhere
   app.useGlobalPipes(
@@ -41,7 +46,7 @@ async function bootstrap(): Promise<void> {
 
   const port = config.get('PORT', { infer: true });
   const mode = config.get('TRADING_MODE', { infer: true });
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
   logger.log(`Apex Markets API listening on http://localhost:${port}/api`);
   logger.warn(`TRADING_MODE = ${mode}  (no real funds move while SIMULATION)`);

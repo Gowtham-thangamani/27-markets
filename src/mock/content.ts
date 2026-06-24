@@ -101,6 +101,7 @@ export const marketCategories: MarketCategory[] = [
   {
     key: 'Forex',
     icon: Handshake,
+    image: '/icon-forex.png',
     title: 'Forex',
     subtitle: 'Major, minor & exotic currency pairs',
     examples: 'EUR/USD · GBP/USD · USD/JPY',
@@ -108,6 +109,7 @@ export const marketCategories: MarketCategory[] = [
   {
     key: 'Metals',
     icon: Coins,
+    image: '/icon-metals.png',
     title: 'Metals',
     subtitle: 'Precious metals spot trading',
     examples: 'Gold (XAU) · Silver (XAG)',
@@ -115,6 +117,7 @@ export const marketCategories: MarketCategory[] = [
   {
     key: 'Indices',
     icon: LineChart,
+    image: '/icon-indices.png',
     title: 'Indices',
     subtitle: 'Global index cash & futures',
     examples: 'US500 · US100 · GER40',
@@ -122,6 +125,7 @@ export const marketCategories: MarketCategory[] = [
   {
     key: 'Commodities',
     icon: Boxes,
+    image: '/icon-commodities.png',
     title: 'Commodities',
     subtitle: 'Energy, softs & agricultural',
     examples: 'Brent · WTI · NatGas',
@@ -129,6 +133,7 @@ export const marketCategories: MarketCategory[] = [
   {
     key: 'Stocks',
     icon: CandlestickChart,
+    image: '/icon-stocks.png',
     title: 'Stocks',
     subtitle: 'Global share CFDs',
     examples: 'AAPL · TSLA · NVDA',
