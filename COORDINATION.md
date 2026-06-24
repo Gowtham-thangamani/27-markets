@@ -25,8 +25,10 @@ agents shared one working directory and git branches could not isolate them
 - Phase 2 — Admin shell + Dashboard (live KPIs). ✅ done
 - Phase 3 — Clients 360 + notes, KYC review (+ server-side queue, document viewing). ✅ done
 - Phase 4 — Finance (withdrawal approval lifecycle, adjustments) + Accounts admin. ✅ done
-- Phase 5 — Leads (public capture + convert-on-register funnel) + Support desk. 🔄 leads done; support + portal-ticket wiring remaining
-- Phase 6 — Partners stub, Reports, Staff & Settings, Audit-log viewer. ⏳ pending
+- Phase 5 — Leads (public capture + convert-on-register funnel) + Support desk + portal tickets. ✅ done
+- Phase 6 — Partners stub, Reports, Staff & Settings, Audit-log viewer. ✅ done
+
+**All six CRM phases are complete.**
 
 ## Key behaviors to remember
 - SIMULATION rail stays on; no real money movement. Withdrawals are created
