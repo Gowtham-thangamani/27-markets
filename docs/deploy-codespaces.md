@@ -6,7 +6,7 @@ Linux box and gives you a temporary public URL — the right GitHub-native optio
 
 ## Launch (one time, ~2–3 min to build)
 
-1. On the repo page: **Code ▸ Codespaces ▸ Create codespace on `feat/provider-seams`**.
+1. On the repo page: **Code ▸ Codespaces ▸ Create codespace on `main`**.
 2. Wait for the container to build (`.devcontainer/setup.sh` installs deps, generates
    the Prisma client, and writes dev `.env` files with fresh JWT secrets).
 3. In the Codespace terminal, run:
