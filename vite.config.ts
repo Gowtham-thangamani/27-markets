@@ -3,8 +3,9 @@ import react from '@vitejs/plugin-react'
 import path from 'node:path'
 
 export default defineConfig(({ command }) => ({
-  // GitHub Pages serves this project at /27-markets/. Local dev stays at /.
-  base: command === 'build' ? '/27-markets/' : '/',
+  // GitHub Pages serves this project at /27-markets/. Vercel + local dev serve
+  // at root /. Vercel sets process.env.VERCEL=1 during its build.
+  base: process.env.VERCEL ? '/' : command === 'build' ? '/27-markets/' : '/',
   plugins: [react()],
   resolve: {
     alias: {

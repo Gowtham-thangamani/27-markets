@@ -158,26 +158,56 @@ const mk = (
 ): Instrument => ({ symbol, name, category, price, changePct, spread, feed })
 
 export const instruments: Instrument[] = [
+  // ── Forex (live via OANDA) ──
   mk('EUR/USD', 'Euro vs US Dollar', 'Forex', 1.0842, 0.18, 0.1, 'OANDA:EUR_USD'),
   mk('GBP/USD', 'British Pound vs US Dollar', 'Forex', 1.2731, -0.24, 0.3, 'OANDA:GBP_USD'),
   mk('USD/JPY', 'US Dollar vs Japanese Yen', 'Forex', 156.42, 0.42, 0.2, 'OANDA:USD_JPY'),
   mk('AUD/USD', 'Australian Dollar vs US Dollar', 'Forex', 0.6612, -0.11, 0.4, 'OANDA:AUD_USD'),
+  mk('USD/CAD', 'US Dollar vs Canadian Dollar', 'Forex', 1.3674, 0.09, 0.3, 'OANDA:USD_CAD'),
+  mk('USD/CHF', 'US Dollar vs Swiss Franc', 'Forex', 0.8932, -0.07, 0.3, 'OANDA:USD_CHF'),
+  mk('NZD/USD', 'NZ Dollar vs US Dollar', 'Forex', 0.6124, 0.21, 0.5, 'OANDA:NZD_USD'),
+  mk('EUR/JPY', 'Euro vs Japanese Yen', 'Forex', 169.58, 0.31, 0.4, 'OANDA:EUR_JPY'),
+  mk('EUR/GBP', 'Euro vs British Pound', 'Forex', 0.8515, -0.05, 0.4, 'OANDA:EUR_GBP'),
+  mk('GBP/JPY', 'British Pound vs Japanese Yen', 'Forex', 199.12, 0.52, 0.6, 'OANDA:GBP_JPY'),
+  // ── Metals (live via OANDA) ──
   mk('XAU/USD', 'Gold Spot', 'Metals', 2348.6, 0.86, 0.8, 'OANDA:XAU_USD'),
   mk('XAG/USD', 'Silver Spot', 'Metals', 30.42, 1.24, 1.2, 'OANDA:XAG_USD'),
+  mk('XPT/USD', 'Platinum Spot', 'Metals', 962.4, 0.44, 2.0, 'OANDA:XPT_USD'),
+  mk('XPD/USD', 'Palladium Spot', 'Metals', 1024.8, -0.62, 2.5, 'OANDA:XPD_USD'),
+  // ── Indices (indicative — no free real-time feed) ──
   mk('US500', 'S&P 500 Index', 'Indices', 5478.2, 0.34, 0.4),
   mk('US100', 'Nasdaq 100 Index', 'Indices', 19842.5, 0.61, 1.0),
+  mk('US30', 'Dow Jones 30', 'Indices', 38502.0, 0.18, 2.0),
   mk('GER40', 'DAX 40 Index', 'Indices', 18412.0, -0.22, 0.9),
+  mk('UK100', 'FTSE 100 Index', 'Indices', 8214.5, 0.12, 1.0),
+  mk('JP225', 'Nikkei 225 Index', 'Indices', 39102.0, 0.74, 5.0),
+  mk('FRA40', 'CAC 40 Index', 'Indices', 7642.0, -0.18, 1.0),
+  mk('AUS200', 'ASX 200 Index', 'Indices', 7812.0, 0.26, 1.5),
+  // ── Commodities (indicative — no free real-time feed) ──
   mk('UKOIL', 'Brent Crude Oil', 'Commodities', 82.14, -0.74, 0.3),
   mk('USOIL', 'WTI Crude Oil', 'Commodities', 78.36, -0.68, 0.3),
   mk('NATGAS', 'Natural Gas', 'Commodities', 2.84, 2.15, 0.5),
+  mk('COPPER', 'Copper', 'Commodities', 4.52, 0.34, 0.4),
+  mk('WHEAT', 'Wheat', 'Commodities', 598.2, -0.42, 1.0),
+  mk('COFFEE', 'Coffee', 'Commodities', 242.6, 1.12, 1.2),
+  // ── Stocks (live via Finnhub) ──
   mk('AAPL', 'Apple Inc.', 'Stocks', 213.4, 0.92, 0.05, 'AAPL'),
   mk('TSLA', 'Tesla Inc.', 'Stocks', 184.6, -1.34, 0.08, 'TSLA'),
   mk('NVDA', 'NVIDIA Corp.', 'Stocks', 126.8, 2.41, 0.06, 'NVDA'),
   mk('AMZN', 'Amazon.com Inc.', 'Stocks', 186.2, 0.48, 0.07, 'AMZN'),
+  mk('MSFT', 'Microsoft Corp.', 'Stocks', 441.6, 0.36, 0.05, 'MSFT'),
+  mk('GOOGL', 'Alphabet Inc.', 'Stocks', 178.4, 0.54, 0.06, 'GOOGL'),
+  mk('META', 'Meta Platforms', 'Stocks', 504.2, 1.18, 0.07, 'META'),
+  mk('AMD', 'Advanced Micro Devices', 'Stocks', 162.3, -0.84, 0.07, 'AMD'),
+  // ── Crypto (live via Binance) ──
   mk('BTC/USD', 'Bitcoin', 'Crypto', 64280.0, 1.86, 18.0, 'BINANCE:BTCUSDT'),
   mk('ETH/USD', 'Ethereum', 'Crypto', 3412.0, 2.42, 2.4, 'BINANCE:ETHUSDT'),
   mk('SOL/USD', 'Solana', 'Crypto', 142.8, 4.12, 0.6, 'BINANCE:SOLUSDT'),
   mk('XRP/USD', 'Ripple', 'Crypto', 0.4821, -0.92, 0.01, 'BINANCE:XRPUSDT'),
+  mk('ADA/USD', 'Cardano', 'Crypto', 0.4512, 1.34, 0.01, 'BINANCE:ADAUSDT'),
+  mk('DOGE/USD', 'Dogecoin', 'Crypto', 0.1284, 3.21, 0.005, 'BINANCE:DOGEUSDT'),
+  mk('LTC/USD', 'Litecoin', 'Crypto', 84.2, 0.92, 0.2, 'BINANCE:LTCUSDT'),
+  mk('LINK/USD', 'Chainlink', 'Crypto', 14.62, 2.18, 0.05, 'BINANCE:LINKUSDT'),
 ]
 
 /** All live feed symbols across instruments — used to configure the market stream. */

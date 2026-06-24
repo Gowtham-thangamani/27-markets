@@ -27,9 +27,23 @@ function fmt(p: number): string {
   return p.toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d })
 }
 
+// Curated symbols for the homepage strip.
+const TICKER = [
+  'BINANCE:BTCUSDT',
+  'BINANCE:ETHUSDT',
+  'BINANCE:SOLUSDT',
+  'BINANCE:XRPUSDT',
+  'OANDA:EUR_USD',
+  'OANDA:GBP_USD',
+  'OANDA:USD_JPY',
+  'OANDA:XAU_USD',
+  'AAPL',
+  'NVDA',
+]
+
 /** Slim real-time price strip for the homepage hero. Renders nothing until data arrives. */
 export function LiveTicker() {
-  const { list } = useLiveQuotes()
+  const { list } = useLiveQuotes(TICKER)
   if (list.length === 0) return null
 
   return (

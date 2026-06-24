@@ -27,9 +27,22 @@ function fmtPrice(p: number): string {
   return p.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits })
 }
 
+// Curated highlights for the overview grid (the full set lives in the explorer below).
+const HIGHLIGHTS = [
+  'BINANCE:BTCUSDT',
+  'BINANCE:ETHUSDT',
+  'BINANCE:SOLUSDT',
+  'OANDA:EUR_USD',
+  'OANDA:GBP_USD',
+  'OANDA:XAU_USD',
+  'AAPL',
+  'TSLA',
+  'NVDA',
+]
+
 /** Real-time market overview grid, powered by the backend SSE stream. */
 export function LiveMarketOverview() {
-  const { list, connected } = useLiveQuotes()
+  const { list, connected } = useLiveQuotes(HIGHLIGHTS)
 
   return (
     <div>

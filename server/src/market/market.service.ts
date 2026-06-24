@@ -72,8 +72,10 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
     this.provider = 'finnhub';
     void this.seedFromRest();
     this.connectWs();
-    // Fallback refresh: REST snapshot every 15s in case the WS is quiet/down.
-    this.pollTimer = setInterval(() => void this.seedFromRest(), 15_000);
+    // Fallback refresh: REST snapshot periodically in case the WS is quiet/down.
+    // Kept at 60s so a large symbol set stays within Finnhub's 60 calls/min free tier
+    // (live updates come from the WebSocket, not this poll).
+    this.pollTimer = setInterval(() => void this.seedFromRest(), 60_000);
   }
 
   onModuleDestroy(): void {
