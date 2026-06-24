@@ -1,0 +1,31 @@
+# Render Blueprint — one "Apply" provisions the API + a Postgres database.
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: 27markets-api
+    runtime: docker
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: 27markets-db
+          property: connectionString
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      # Frontend origin allowed by CORS (the GitHub Pages site).
+      - key: CLIENT_ORIGIN
+        value: https://gowtham-thangamani.github.io
+      - key: TRADING_MODE
+        value: SIMULATION
+
+databases:
+  - name: 27markets-db
+    plan: free

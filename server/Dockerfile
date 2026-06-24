@@ -1,0 +1,22 @@
+# Backend (NestJS + Prisma) production image for Render/Railway/Fly.
+FROM node:20-slim AS base
+# Prisma needs openssl at runtime
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+
+# Install ALL deps (Prisma CLI + ts-node are needed for migrate/seed at start)
+COPY package*.json ./
+RUN npm ci
+
+# Generate client + build
+COPY prisma ./prisma
+RUN npx prisma generate
+COPY . .
+RUN npm run build
+
+ENV NODE_ENV=production
+# Render/Railway inject PORT; the app reads process.env.PORT.
+EXPOSE 4000
+
+# Apply migrations, seed demo data (idempotent, non-fatal), then start.
+CMD npx prisma migrate deploy && (npm run db:seed || true) && node dist/main.js

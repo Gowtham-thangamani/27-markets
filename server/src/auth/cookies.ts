@@ -17,10 +17,12 @@ export function setAuthCookies(
   const accessTtl = config.get('ACCESS_TOKEN_TTL', { infer: true });
   const refreshTtl = config.get('REFRESH_TOKEN_TTL', { infer: true });
 
+  // Cross-site in production (frontend on Pages, API on a different host) needs
+  // SameSite=None + Secure; locally (same-site) Lax over http is fine.
   const base = {
     httpOnly: true as const,
     secure: isProd,
-    sameSite: 'lax' as const,
+    sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
     path: '/',
   };
 
