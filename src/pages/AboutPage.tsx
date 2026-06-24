@@ -2,11 +2,11 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui'
 import { Reveal } from '@/components/Reveal'
-import { SectionHeading } from '@/components/SectionHeading'
 import { StatCard } from '@/components/StatCard'
 import { CTABand } from '@/components/marketing/CTABand'
 import { PageHeader } from '@/components/marketing/PageHeader'
 import { fadeUp, staggerContainer } from '@/lib/motion'
+import { asset } from '@/lib/asset'
 import { aboutValues } from '@/mock/content'
 
 export default function AboutPage() {
@@ -36,25 +36,11 @@ export default function AboutPage() {
         </Reveal>
 
         <Reveal>
-          <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/[0.06]">
-            {/* Dramatic red architectural glow */}
-            <div className="absolute inset-0 bg-ink-850" />
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  'linear-gradient(135deg, transparent 30%, rgba(225,29,46,0.25) 50%, transparent 70%), radial-gradient(circle at 70% 30%, rgba(225,29,46,0.3), transparent 50%)',
-              }}
-            />
-            <div className="absolute inset-0 grid-bg opacity-40" />
-            {/* Angular "architecture" shapes */}
-            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 300" fill="none">
-              <path d="M200 40 L320 260 L80 260 Z" stroke="#e11d2e" strokeWidth="1.5" opacity="0.5" />
-              <path d="M200 90 L280 260 L120 260 Z" stroke="#e11d2e" strokeWidth="1" opacity="0.3" />
-              <path d="M200 40 L200 260" stroke="#ff5663" strokeWidth="1" opacity="0.4" />
-            </svg>
-            <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(225,29,46,0.2)]" />
-          </div>
+          <img
+            src={asset('hero-trading.png')}
+            alt="27 Markets — bull market strength"
+            className="w-full select-none drop-shadow-[0_30px_90px_rgba(225,29,46,0.3)]"
+          />
         </Reveal>
       </section>
 
@@ -90,12 +76,45 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <SectionHeading
-        className="py-8"
-        eyebrow="Trusted Worldwide"
-        title="Engineered for performance and trust"
-        description="Segregated funds, transparent pricing, and a relentless focus on execution quality."
-      />
+      {/* Institutional trust band */}
+      <section className="relative my-8 overflow-hidden">
+        <div className="relative mx-auto max-w-[1600px]">
+          <img
+            src={asset('building.png')}
+            alt=""
+            aria-hidden
+            className="h-[340px] w-full object-cover object-top animate-[kenburns_20s_ease-in-out_infinite] sm:h-[420px] lg:h-[480px]"
+          />
+          {/* Moving red light sweep across the facade */}
+          <span className="building-sweep" aria-hidden />
+          {/* Vignette + fade to black so the red neon edges glow and it blends into the page */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                'radial-gradient(125% 100% at 55% 25%, transparent 28%, rgba(5,5,5,0.9) 100%)',
+            }}
+          />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-ink-900 via-ink-900/70 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-ink-900 to-transparent" />
+
+          {/* Text overlay */}
+          <div className="absolute inset-0 flex items-center">
+            <div className="container-x">
+              <Reveal>
+                <p className="section-eyebrow mb-3">Trusted Worldwide</p>
+                <h2 className="max-w-xl font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
+                  Engineered for performance and trust
+                </h2>
+                <p className="mt-4 max-w-md leading-relaxed text-gray-300">
+                  Segregated funds, transparent pricing, and a relentless focus on execution
+                  quality.
+                </p>
+              </Reveal>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <CTABand />
     </>

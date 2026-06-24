@@ -1,4 +1,5 @@
 import { cn } from '@/lib/cn'
+import { asset } from '@/lib/asset'
 
 interface LogoProps {
   className?: string
@@ -14,7 +15,7 @@ export function Logo({ className, size = 48 }: LogoProps) {
     <span className={cn('inline-flex items-center', className)}>
       {/* inline height overrides Tailwind preflight `img { height: auto }` */}
       <img
-        src="/logo.png"
+        src={asset('logo.png')}
         alt="27 Markets"
         style={{ height: size, width: 'auto' }}
         className="select-none drop-shadow-[0_0_8px_rgba(225,29,46,0.4)]"

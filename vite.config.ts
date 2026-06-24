@@ -2,7 +2,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'node:path'
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  // GitHub Pages serves this project at /27-markets/. Local dev stays at /.
+  base: command === 'build' ? '/27-markets/' : '/',
   plugins: [react()],
   resolve: {
     alias: {
@@ -32,4 +34,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))

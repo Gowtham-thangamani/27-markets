@@ -144,6 +144,38 @@
     background: linear-gradient(to bottom, var(--red), transparent);
     animation: scroll-cue 2.4s var(--ease) infinite;
   }
+
+  /* Globe: breathing red glow (follows the image's alpha, so no box). */
+  .globe-pulse {
+    animation: globe-pulse 5s var(--ease) infinite;
+  }
+  /* A soft red light streak that sweeps diagonally across an image band. */
+  .building-sweep {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(115deg, transparent 44%, rgba(255, 80, 90, 0.18) 50%, transparent 56%);
+    background-size: 220% 100%;
+    mix-blend-mode: screen;
+    animation: globe-sweep 7s linear infinite;
+  }
+  /* A light streak that sweeps across — masked to the globe shape. */
+  .globe-sweep {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent 42%, rgba(255, 150, 160, 0.45) 50%, transparent 58%);
+    background-size: 250% 100%;
+    /* mask-image is set inline (base-path aware); sizing stays here */
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    mix-blend-mode: screen;
+    animation: globe-sweep 6s linear infinite;
+  }
 }
 
 @layer utilities {
@@ -160,6 +192,12 @@
   .min-h-dvh-safe {
     min-height: 100vh;
     min-height: 100dvh;
+  }
+
+  /* Fade a rectangular image into a soft circle (kills boxy render backgrounds). */
+  .mask-radial-fade {
+    -webkit-mask-image: radial-gradient(circle closest-side, #000 84%, transparent 100%);
+    mask-image: radial-gradient(circle closest-side, #000 84%, transparent 100%);
   }
 
   .no-scrollbar::-webkit-scrollbar {
@@ -251,6 +289,38 @@
   100% {
     transform: scaleY(0);
     transform-origin: bottom;
+  }
+}
+@keyframes globe-pulse {
+  0%,
+  100% {
+    filter: brightness(1) drop-shadow(0 0 24px rgba(225, 29, 46, 0.18));
+  }
+  50% {
+    filter: brightness(1.14) drop-shadow(0 0 46px rgba(225, 29, 46, 0.4));
+  }
+}
+@keyframes globe-sweep {
+  0% {
+    background-position: 200% 0;
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    background-position: -60% 0;
+    opacity: 0.15;
+  }
+}
+/* Slow Ken-Burns zoom for background imagery. */
+@keyframes kenburns {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
   }
 }
 

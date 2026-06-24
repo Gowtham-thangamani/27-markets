@@ -3,13 +3,13 @@ import { Check } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui'
 import { Reveal } from '@/components/Reveal'
-import { LazyGlobe } from '@/components/three/Lazy3D'
 import { partnerBenefits } from '@/mock/content'
 import { fadeUp, staggerContainer } from '@/lib/motion'
+import { asset } from '@/lib/asset'
 
 export function PartnerSection() {
   return (
-    <section className="relative overflow-hidden py-20 sm:py-28">
+    <section className="relative overflow-hidden py-12 sm:py-16">
       <div className="container-x grid items-center gap-12 lg:grid-cols-2">
         <div>
           <Reveal>
@@ -52,9 +52,20 @@ export function PartnerSection() {
         </div>
 
         <Reveal className="relative">
-          <div className="relative mx-auto aspect-square w-full max-w-md">
-            <LazyGlobe className="absolute inset-0" />
-            <div className="pointer-events-none absolute inset-0 rounded-full shadow-[inset_0_0_80px_rgba(225,29,46,0.15)]" />
+          <div className="relative mx-auto w-full max-w-2xl lg:scale-110">
+            <img
+              src={asset('globe.png')}
+              alt="27 Markets global trading network"
+              className="globe-pulse w-full select-none"
+            />
+            <span
+              className="globe-sweep"
+              aria-hidden
+              style={{
+                WebkitMaskImage: `url(${asset('globe.png')})`,
+                maskImage: `url(${asset('globe.png')})`,
+              }}
+            />
           </div>
         </Reveal>
       </div>

@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui'
 import { Reveal } from '@/components/Reveal'
 import { SectionHeading } from '@/components/SectionHeading'
-import { HeroVisual } from '@/components/marketing/HeroVisual'
 import { LiveTicker } from '@/components/marketing/LiveTicker'
 import { SignalFlow } from '@/components/marketing/SignalFlow'
 import { FeatureCard } from '@/components/marketing/FeatureCard'
@@ -12,6 +11,7 @@ import { MarketCard } from '@/components/marketing/MarketCard'
 import { PartnerSection } from '@/components/marketing/PartnerSection'
 import { CTABand } from '@/components/marketing/CTABand'
 import { fadeUp, staggerContainer, slideInLeft } from '@/lib/motion'
+import { asset } from '@/lib/asset'
 import { whyFeatures, marketCategories } from '@/mock/content'
 
 const heroStats = [
@@ -31,7 +31,7 @@ export default function HomePage() {
         <div className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[60rem] -translate-x-1/2 bg-radial-red opacity-70 blur-2xl" />
         <SignalFlow className="opacity-60" />
 
-        <div className="container-x relative grid items-center gap-10 py-16 lg:grid-cols-2 lg:py-24">
+        <div className="container-x relative grid items-center gap-10 py-6 lg:grid-cols-[1fr_1.3fr] lg:py-10">
           <motion.div
             variants={staggerContainer}
             initial="hidden"
@@ -82,7 +82,11 @@ export default function HomePage() {
 
           <motion.div variants={slideInLeft} initial="hidden" animate="show" className="relative">
             <div className="drift">
-              <HeroVisual />
+              <img
+                src={asset('hero-platform.png')}
+                alt="27 Markets trading platform on laptop and mobile"
+                className="w-full select-none drop-shadow-[0_30px_90px_rgba(225,29,46,0.25)] lg:scale-105"
+              />
             </div>
           </motion.div>
         </div>
@@ -148,6 +152,46 @@ export default function HomePage() {
             <FeatureCard key={f.title} {...f} />
           ))}
         </motion.div>
+      </section>
+
+      {/* GROWTH HIGHLIGHT */}
+      <section className="container-x py-16 sm:py-20">
+        <div className="grid items-center gap-10 lg:grid-cols-2">
+          <Reveal>
+            <img
+              src={asset('growth-coins.png')}
+              alt="Growing returns"
+              className="mx-auto w-full max-w-md select-none drop-shadow-[0_24px_70px_rgba(225,29,46,0.3)]"
+            />
+          </Reveal>
+          <Reveal>
+            <p className="section-eyebrow mb-3">Built for growth</p>
+            <h2 className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
+              Keep more of every move
+            </h2>
+            <p className="mt-4 max-w-lg leading-relaxed text-gray-400">
+              Tight spreads, fast execution, and transparent pricing mean more of every winning
+              trade stays in your account. Scale your strategy with leverage up to 1:500 across
+              100+ global markets.
+            </p>
+            <ul className="mt-6 space-y-3 text-sm text-gray-300">
+              <li className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-500" /> Spreads from 0.0 pips
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-500" /> Sub-30ms execution, no dealing desk
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-500" /> Transparent pricing — no hidden fees
+              </li>
+            </ul>
+            <Link to="/accounts" className="mt-7 inline-block">
+              <Button className="gap-2">
+                Explore accounts <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </Reveal>
+        </div>
       </section>
 
       {/* PARTNER */}

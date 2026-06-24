@@ -90,6 +90,8 @@ export const partnerBenefits: PartnerBenefit[] = [
 export interface MarketCategory {
   key: InstrumentCategory
   icon: LucideIcon
+  /** Optional image used instead of the lucide icon (e.g. the Bitcoin coin). */
+  image?: string
   title: string
   subtitle: string
   examples: string
@@ -134,6 +136,7 @@ export const marketCategories: MarketCategory[] = [
   {
     key: 'Crypto',
     icon: Bitcoin,
+    image: '/bitcoin-coin.png',
     title: 'Crypto CFDs',
     subtitle: 'Top cryptocurrencies with competitive spreads',
     examples: 'BTC · ETH · SOL',
