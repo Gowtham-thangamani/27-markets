@@ -7,9 +7,31 @@ import { AdminFinanceController } from './admin-finance.controller';
 import { AdminFinanceService } from './admin-finance.service';
 import { AdminAccountsController } from './admin-accounts.controller';
 import { AdminAccountsService } from './admin-accounts.service';
+import { AdminReportsController } from './admin-reports.controller';
+import { AdminReportsService } from './admin-reports.service';
+import { AdminStaffController } from './admin-staff.controller';
+import { AdminStaffService } from './admin-staff.service';
+import { AdminPartnersController } from './admin-partners.controller';
+import { AdminPartnersService } from './admin-partners.service';
 
 @Module({
-  controllers: [AdminController, AdminCrmController, AdminFinanceController, AdminAccountsController],
-  providers: [AdminDashboardService, AdminCrmService, AdminFinanceService, AdminAccountsService],
+  controllers: [
+    AdminController,
+    AdminCrmController,
+    AdminFinanceController,
+    AdminAccountsController,
+    AdminReportsController,
+    AdminStaffController,
+    AdminPartnersController,
+  ],
+  providers: [
+    AdminDashboardService,
+    AdminCrmService,
+    AdminFinanceService,
+    AdminAccountsService,
+    AdminReportsService,
+    AdminStaffService,
+    AdminPartnersService,
+  ],
 })
 export class AdminModule {}
