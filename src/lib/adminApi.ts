@@ -97,6 +97,46 @@ export interface AdminTicketDetail extends AdminTicketListItem {
   messages: { id: string; body: string; internal: boolean; createdAt: string; author: { firstName: string; lastName: string; role: string } }[]
 }
 
+export type StaffRole = 'ADMIN' | 'AGENT'
+
+export interface ReportsSummary {
+  deposits: string
+  withdrawals: string
+  netFlow: string
+  totalClients: number
+  funnel: Record<LeadStatus, number>
+}
+
+export interface TeamMember {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  role: StaffRole
+  status: string
+  createdAt: string
+}
+
+export interface AuditEntry {
+  id: string
+  action: string
+  entity: string | null
+  entityId: string | null
+  metadata: unknown
+  createdAt: string
+  user: { firstName: string; lastName: string; email: string } | null
+}
+
+export interface PartnerItem {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  country: string | null
+  status: string
+  createdAt: string
+}
+
 export const adminApi = {
   getDashboard: () => api.get<AdminDashboardSummary>('/admin/dashboard'),
   getStaff: () => api.get<StaffMember[]>('/admin/staff'),
@@ -131,4 +171,17 @@ export const adminApi = {
   kycDocumentUrl: (id: string) => `${API_BASE_URL}/kyc/document/${id}`,
   reviewKyc: (userId: string, step: 'identity' | 'address' | 'selfie', status: 'APPROVED' | 'REJECTED' | 'PENDING') =>
     api.post('/kyc/review', { userId, step, status }),
+
+  // Reports (Admin full, Agent read)
+  getReports: () => api.get<ReportsSummary>('/admin/reports'),
+
+  // Staff & audit (Admin only)
+  listTeam: () => api.get<TeamMember[]>('/admin/team'),
+  setStaffRole: (id: string, role: StaffRole) =>
+    api.patch<{ id: string; role: StaffRole }>(`/admin/team/${id}/role`, { role }),
+  getAuditLog: (action?: string) =>
+    api.get<AuditEntry[]>(`/admin/audit${action ? `?action=${encodeURIComponent(action)}` : ''}`),
+
+  // Partners (read-only stub)
+  listPartners: () => api.get<PartnerItem[]>('/admin/partners'),
 }
