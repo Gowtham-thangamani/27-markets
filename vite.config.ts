@@ -9,6 +9,20 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    host: true,
+    // Allow Codespaces / tunnel hosts to load the dev server.
+    allowedHosts: ['.app.github.dev', '.github.dev', 'localhost'],
+    // Same-origin API: the browser calls /api on the frontend origin and Vite
+    // proxies to the backend, so auth cookies stay first-party (works on a
+    // single public Codespaces port without SameSite=None/CORS changes).
+    proxy: {
+      '/api': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      },
+    },
+  },
   build: {
     rollupOptions: {
       output: {
