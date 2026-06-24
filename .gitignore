@@ -33,3 +33,7 @@ Thumbs.db
 # stray archives
 docs.zip
 *.zip
+
+# TS/Vite build artifacts (generated)
+*.tsbuildinfo
+vite.config.js
