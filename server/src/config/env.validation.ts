@@ -28,6 +28,13 @@ export const envSchema = z
       .string()
       .default('BINANCE:BTCUSDT,BINANCE:ETHUSDT,OANDA:EUR_USD,OANDA:XAU_USD,AAPL,TSLA'),
 
+    // ── Payments (PSP) ──
+    // Which payment provider backs funding. 'simulation' (default) moves no real
+    // money; 'stripe' enables the Stripe adapter (requires keys + LIVE gating).
+    PSP_PROVIDER: z.enum(['simulation', 'stripe']).default('simulation'),
+    STRIPE_SECRET_KEY: z.string().optional(),
+    STRIPE_WEBHOOK_SECRET: z.string().optional(),
+
     TRADING_MODE: z.enum(['SIMULATION', 'LIVE']).default('SIMULATION'),
     ALLOW_LIVE_MODE: z
       .enum(['true', 'false'])

@@ -9,7 +9,8 @@ import { AllExceptionsFilter } from './common/all-exceptions.filter';
 import type { Env } from './config/env.validation';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: false });
+  // rawBody: true exposes req.rawBody so the Stripe webhook can verify signatures.
+  const app = await NestFactory.create(AppModule, { bufferLogs: false, rawBody: true });
   const config = app.get(ConfigService<Env, true>);
   const logger = new Logger('Bootstrap');
 
