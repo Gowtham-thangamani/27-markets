@@ -183,6 +183,12 @@
     @apply mx-auto w-full max-w-7xl px-5 sm:px-8;
   }
 
+  /* Full-bleed: spans the viewport width with comfortable edge padding that
+     grows on large screens. Used by the hero so it fills wide monitors. */
+  .container-bleed {
+    @apply mx-auto w-full px-5 sm:px-8 lg:px-12 2xl:px-20;
+  }
+
   /* Dynamic viewport height with a vh fallback — avoids the iOS Safari
      address-bar gap where 100vh overshoots the visible area. */
   .h-dvh-safe {

@@ -39,7 +39,7 @@ export function Navbar() {
           : 'border-b border-transparent bg-transparent'
       )}
     >
-      <nav className="container-x flex h-16 items-center justify-between gap-4">
+      <nav className="container-bleed flex h-16 items-center justify-between gap-4">
         <Link to="/" aria-label="27 Markets home">
           <Logo />
         </Link>
@@ -109,7 +109,7 @@ export function Navbar() {
             transition={{ duration: 0.25 }}
             className="overflow-hidden border-t border-white/[0.06] bg-ink-900/95 backdrop-blur-xl lg:hidden"
           >
-            <div className="container-x space-y-1 py-4">
+            <div className="container-bleed space-y-1 py-4">
               {navItems.map((item) => (
                 <NavLink
                   key={item.label}

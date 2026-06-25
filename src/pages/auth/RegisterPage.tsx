@@ -9,13 +9,13 @@ import { useToast } from '@/context/ToastContext'
 import { registerStep1, registerStep2, registerStep3 } from '@/lib/validation'
 import { api, ApiError } from '@/lib/api'
 import { accountTypeToApi } from '@/lib/apiMappers'
+import { countries } from '@/lib/countries'
 import { cn } from '@/lib/cn'
 
 type Errors = Record<string, string>
 
 const steps = ['Your details', 'Account setup', 'Security']
 
-const countries = ['United Arab Emirates', 'United Kingdom', 'Germany', 'Singapore', 'Australia', 'Canada']
 const accountTypes: Array<'Standard' | 'Raw Spread' | 'VIP'> = ['Standard', 'Raw Spread', 'VIP']
 
 export default function RegisterPage() {

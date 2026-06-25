@@ -31,7 +31,7 @@ export default function HomePage() {
         <div className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[60rem] -translate-x-1/2 bg-radial-red opacity-70 blur-2xl" />
         <SignalFlow className="opacity-60" />
 
-        <div className="container-x relative grid items-center gap-10 py-6 lg:grid-cols-[1fr_1.3fr] lg:py-10">
+        <div className="container-bleed relative grid items-center gap-8 py-6 sm:grid-cols-[1fr_1.1fr] sm:gap-10 sm:py-10">
           <motion.div
             variants={staggerContainer}
             initial="hidden"
@@ -48,7 +48,7 @@ export default function HomePage() {
 
             <motion.h1
               variants={fadeUp}
-              className="mt-5 font-display text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl"
+              className="mt-5 font-display text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-7xl"
             >
               Trade
               <br />
@@ -81,7 +81,7 @@ export default function HomePage() {
           </motion.div>
 
           <motion.div variants={slideInLeft} initial="hidden" animate="show" className="relative">
-            <div className="drift">
+            <div className="drift mx-auto max-w-sm sm:max-w-none">
               <img
                 src={asset('hero-platform.png')}
                 alt="27 Markets trading platform on laptop and mobile"
@@ -92,7 +92,7 @@ export default function HomePage() {
         </div>
 
         {/* STATS STRIP */}
-        <div className="container-x relative z-10 pb-14">
+        <div className="container-bleed relative z-10 pb-14">
           <motion.div
             variants={staggerContainer}
             initial="hidden"
