@@ -93,6 +93,7 @@ function DepositTab() {
   const [amount, setAmount] = useState('')
   const [asset, setAsset] = useState('')
   const [instructions, setInstructions] = useState<string | null>(null)
+  const [qr, setQr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(async () => {
@@ -118,6 +119,7 @@ function DepositTab() {
     setAmount('')
     setAsset(m.assets?.[0]?.symbol ?? '')
     setInstructions(null) // shown only after a request is submitted
+    setQr(null)
   }
 
   const submit = async () => {
@@ -133,13 +135,14 @@ function DepositTab() {
         setActive(null)
         return
       }
-      const res = await api.post<{ instructions?: string }>('/funds/deposit/request', {
+      const res = await api.post<{ instructions?: string; qr?: string | null }>('/funds/deposit/request', {
         accountId,
         method: active!.type,
         asset: active!.type === 'crypto' ? asset : undefined,
         amount,
       })
       setInstructions(res?.instructions ?? null)
+      setQr(res?.qr ?? null)
       toast.success('Deposit requested', 'Send the funds using the instructions; finance will confirm receipt.')
       await load()
     } catch (e) {
@@ -224,7 +227,13 @@ function DepositTab() {
           {instructions && (
             <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-warning">Payment instructions</p>
-              <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-sm text-gray-200">{instructions}</pre>
+              {qr && (
+                <div className="mt-2 flex flex-col items-center gap-1">
+                  <img src={qr} alt="Deposit address QR" className="h-40 w-40 rounded-lg bg-white p-2" />
+                  <span className="text-[11px] text-gray-400">Scan with your wallet app</span>
+                </div>
+              )}
+              <pre className="mt-2 whitespace-pre-wrap break-words font-mono text-sm text-gray-200">{instructions}</pre>
               <p className="mt-2 text-xs text-gray-400">Your account is credited once finance confirms the funds arrived.</p>
             </div>
           )}
@@ -246,24 +255,59 @@ function DepositTab() {
 }
 
 function WithdrawTab() {
-  const { accounts, withdraw, transactions } = usePortalData()
+  const { accounts, transactions, refresh } = usePortalData()
   const toast = useToast()
   const liveAccounts = accounts.filter((a) => a.mode === 'Live')
   const pendingWithdrawals = transactions.filter((t) => t.kind === 'Withdrawal' && t.status === 'Pending')
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<DepositValues>({ resolver: zodResolver(depositSchema) })
 
-  const onSubmit = async (values: DepositValues) => {
+  const [accountId, setAccountId] = useState('')
+  const [amount, setAmount] = useState('')
+  const [method, setMethod] = useState<'bank' | 'crypto'>('bank')
+  const [accountName, setAccountName] = useState('')
+  const [accountNumber, setAccountNumber] = useState('')
+  const [bankName, setBankName] = useState('')
+  const [swift, setSwift] = useState('')
+  const [walletAddress, setWalletAddress] = useState('')
+  const [network, setNetwork] = useState('USDT-TRC20')
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    if (!accountId && liveAccounts[0]) setAccountId(liveAccounts[0].id)
+  }, [liveAccounts, accountId])
+
+  const submit = async () => {
+    if (!accountId || !(Number(amount) > 0)) {
+      toast.warning('Check the form', 'Pick an account and a positive amount.')
+      return
+    }
+    if (method === 'bank' && (!accountName || !accountNumber)) {
+      toast.warning('Bank details required', 'Enter the account holder name and IBAN / account number.')
+      return
+    }
+    if (method === 'crypto' && !walletAddress) {
+      toast.warning('Wallet required', 'Enter the wallet address to receive the payout.')
+      return
+    }
+    setBusy(true)
     try {
-      await withdraw({ accountId: values.account, amount: values.amount, method: 'Bank Transfer' })
-      toast.success('Withdrawal requested', 'Your request is pending review.')
-      reset()
-    } catch (err) {
-      toast.error('Withdrawal failed', (err as Error).message)
+      await api.post('/funds/withdraw', {
+        accountId,
+        amount,
+        method: method === 'crypto' ? 'Crypto' : 'Bank Transfer',
+        ...(method === 'bank' ? { accountName, accountNumber, bankName, swift } : { walletAddress, network }),
+      })
+      toast.success('Withdrawal requested', 'Your request is pending finance review.')
+      setAmount('')
+      setAccountName('')
+      setAccountNumber('')
+      setBankName('')
+      setSwift('')
+      setWalletAddress('')
+      await refresh()
+    } catch (e) {
+      toast.error('Withdrawal failed', (e as Error).message)
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -274,36 +318,51 @@ function WithdrawTab() {
       <p className="mt-1 text-sm text-gray-400">
         Withdrawals are reviewed by our finance team before payout. Funds are held while your request is pending.
       </p>
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-5 space-y-4" noValidate>
+      <div className="mt-5 space-y-4">
         <Select
           label="From account"
           placeholder="Select account"
-          options={liveAccounts.map((a) => ({
-            value: a.id,
-            label: `${a.number} — ${formatCurrency(a.balance)}`,
-          }))}
-          error={errors.account?.message}
-          {...register('account')}
+          value={accountId}
+          options={liveAccounts.map((a) => ({ value: a.id, label: `${a.number} — ${formatCurrency(a.balance)}` }))}
+          onChange={(e) => setAccountId(e.target.value)}
         />
-        <Input
-          label="Amount (USD)"
-          type="number"
-          placeholder="500"
-          error={errors.amount?.message}
-          {...register('amount')}
-        />
+        <Input label="Amount (USD)" type="number" placeholder="500" value={amount} onChange={(e) => setAmount(e.target.value)} />
         <Select
-          label="Withdrawal method"
+          label="Withdraw to"
+          value={method}
           options={[
-            { value: 'bank', label: 'Bank Transfer' },
-            { value: 'card', label: 'Credit / Debit Card' },
-            { value: 'crypto', label: 'Crypto (USDT)' },
+            { value: 'bank', label: 'Bank Account' },
+            { value: 'crypto', label: 'Crypto Wallet (USDT)' },
           ]}
+          onChange={(e) => setMethod(e.target.value as 'bank' | 'crypto')}
         />
-        <Button type="submit" fullWidth loading={isSubmitting}>
+        {method === 'bank' ? (
+          <>
+            <Input label="Account holder name" placeholder="Jordan Avery" value={accountName} onChange={(e) => setAccountName(e.target.value)} />
+            <Input label="IBAN / account number" placeholder="AE07 0331 ..." value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} />
+            <Input label="Bank name" placeholder="Emirates NBD" value={bankName} onChange={(e) => setBankName(e.target.value)} />
+            <Input label="SWIFT / BIC" placeholder="EBILAEAD" value={swift} onChange={(e) => setSwift(e.target.value)} />
+          </>
+        ) : (
+          <>
+            <Input label="Wallet address" placeholder="Txxxxxxxx / 0x..." value={walletAddress} onChange={(e) => setWalletAddress(e.target.value)} />
+            <Select
+              label="Network"
+              value={network}
+              options={[
+                { value: 'USDT-TRC20', label: 'USDT · TRC20' },
+                { value: 'USDT-ERC20', label: 'USDT · ERC20' },
+                { value: 'BTC', label: 'Bitcoin' },
+                { value: 'ETH', label: 'Ethereum' },
+              ]}
+              onChange={(e) => setNetwork(e.target.value)}
+            />
+          </>
+        )}
+        <Button type="button" fullWidth loading={busy} onClick={submit}>
           Request Withdrawal
         </Button>
-      </form>
+      </div>
       </div>
 
       {/* Pending-withdrawal tracker + status legend */}

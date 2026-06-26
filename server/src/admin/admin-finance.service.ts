@@ -128,9 +128,14 @@ export class AdminFinanceService {
     });
   }
 
-  /** Withdrawals awaiting finance approval. */
-  pendingWithdrawals() {
-    return this.listByKindStatus(JournalKind.WITHDRAWAL, JournalStatus.PENDING);
+  /** Withdrawals awaiting finance approval, with their payout destination. */
+  async pendingWithdrawals() {
+    const list = await this.listByKindStatus(JournalKind.WITHDRAWAL, JournalStatus.PENDING);
+    const details = await this.prisma.withdrawalDetail.findMany({
+      where: { journalEntryId: { in: list.map((e) => e.id) } },
+    });
+    const byId = new Map(details.map((d) => [d.journalEntryId, d]));
+    return list.map((e) => ({ ...e, destination: byId.get(e.id) ?? null }));
   }
 
   /** Recent completed deposits. */

@@ -495,3 +495,20 @@ model DepositRequest {
   @@index([userId])
   @@index([status])
 }
+
+// ─────────────────────────── Withdrawal destination ───────────────────────────
+// Where an approved withdrawal is paid out. Captured at request time so finance
+// (or the payout provider) sends funds to the right bank account / wallet.
+
+model WithdrawalDetail {
+  id             String   @id @default(cuid())
+  journalEntryId String   @unique // the PENDING withdrawal journal entry
+  method         String // bank | crypto
+  accountName    String?
+  accountNumber  String? // IBAN / account number
+  bankName       String?
+  swift          String?
+  walletAddress  String?
+  network        String?
+  createdAt      DateTime @default(now())
+}

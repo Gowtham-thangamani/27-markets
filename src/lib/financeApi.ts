@@ -1,5 +1,15 @@
 import { api } from './api'
 
+export interface WithdrawalDestination {
+  method: string
+  accountName: string | null
+  accountNumber: string | null
+  bankName: string | null
+  swift: string | null
+  walletAddress: string | null
+  network: string | null
+}
+
 export interface FinanceTxn {
   id: string
   reference: string
@@ -9,6 +19,7 @@ export interface FinanceTxn {
   createdAt: string
   accountNumber: string | null
   client: { id: string; name: string; email: string } | null
+  destination?: WithdrawalDestination | null
 }
 
 export interface AdminAccount {

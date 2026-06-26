@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as QRCode from 'qrcode';
 import { JournalKind, JournalStatus, KycStepStatus, PostingDirection } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LedgerService } from '../ledger/ledger.service';
@@ -91,13 +92,18 @@ export class FundsService {
 
     const { bank, assets } = this.depositInstructions();
     let instructions: string;
+    let address: string | null = null;
+    let qr: string | null = null;
     if (dto.method === 'bank') {
       if (!bank) throw new BadRequestException('Bank transfer is not available.');
       instructions = bank;
     } else {
       const asset = assets.find((a) => a.symbol === dto.asset);
       if (!asset) throw new BadRequestException('Unsupported or unavailable crypto asset.');
+      address = asset.address;
       instructions = `Send ${asset.symbol} to:\n${asset.address}`;
+      // Scannable QR of the wallet address (scan with a wallet app).
+      qr = await QRCode.toDataURL(asset.address, { margin: 1, width: 220 });
     }
 
     const reference = generateTxReference();
@@ -105,7 +111,7 @@ export class FundsService {
       data: { userId, accountId: dto.accountId, method: dto.method, asset: dto.asset ?? null, amount: dto.amount, reference, status: 'PENDING' },
     });
     await this.audit.record({ userId, action: 'funds.deposit.request', entity: 'DepositRequest', entityId: req.id, metadata: { method: dto.method, asset: dto.asset, amount: dto.amount } });
-    return { reference, status: 'PENDING' as const, method: dto.method, amount: formatMoney(toMoney(dto.amount)), instructions };
+    return { reference, status: 'PENDING' as const, method: dto.method, amount: formatMoney(toMoney(dto.amount)), instructions, address, qr };
   }
 
   /** A client's recent deposit requests (bank/crypto), newest first. */
@@ -167,6 +173,14 @@ export class FundsService {
       throw new BadRequestException('Insufficient balance for this withdrawal');
     }
 
+    // Capture + validate the payout destination so finance pays the right place.
+    const destMethod: 'bank' | 'crypto' = dto.walletAddress ? 'crypto' : 'bank';
+    if (destMethod === 'crypto') {
+      if (!dto.walletAddress) throw new BadRequestException('A wallet address is required for crypto withdrawals.');
+    } else if (!dto.accountName || !dto.accountNumber) {
+      throw new BadRequestException('Account holder name and account number/IBAN are required for bank withdrawals.');
+    }
+
     const payable = await this.ledger.getSystemAccount('SYSTEM:WITHDRAWALS_PAYABLE');
     // Created PENDING: the posting holds the balance immediately, but the payout
     // awaits finance approval (markPosted) or rejection (reverse).
@@ -184,7 +198,20 @@ export class FundsService {
       ],
     });
 
-    await this.audit.record({ userId, action: 'funds.withdraw', entity: 'JournalEntry', entityId: entry.id, metadata: { amount: dto.amount, method: dto.method, simulated: true, status: entry.status } });
+    await this.prisma.withdrawalDetail.create({
+      data: {
+        journalEntryId: entry.id,
+        method: destMethod,
+        accountName: dto.accountName ?? null,
+        accountNumber: dto.accountNumber ?? null,
+        bankName: dto.bankName ?? null,
+        swift: dto.swift ?? null,
+        walletAddress: dto.walletAddress ?? null,
+        network: dto.network ?? null,
+      },
+    });
+
+    await this.audit.record({ userId, action: 'funds.withdraw', entity: 'JournalEntry', entityId: entry.id, metadata: { amount: dto.amount, method: dto.method, destMethod, simulated: true, status: entry.status } });
     return { reference: entry.reference, status: entry.status, simulated: true, amount: formatMoney(amount) };
   }
 

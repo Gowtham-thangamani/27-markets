@@ -12,6 +12,7 @@ function makeService(overrides: { post?: jest.Mock } = {}) {
         selfieStatus: KycStepStatus.APPROVED,
       }),
     },
+    withdrawalDetail: { create: jest.fn().mockResolvedValue({}) },
   } as any;
   const ledger = {
     balanceOf: jest.fn().mockResolvedValue(new Prisma.Decimal(1000)),
@@ -29,7 +30,7 @@ describe('FundsService.withdraw', () => {
   it('creates the withdrawal entry as PENDING (held, awaiting approval)', async () => {
     const { service, post } = makeService();
 
-    const result = await service.withdraw('user1', { accountId: 'acc1', amount: '100', method: 'bank' } as any);
+    const result = await service.withdraw('user1', { accountId: 'acc1', amount: '100', method: 'bank', accountName: 'Jordan Avery', accountNumber: 'AE07 0331 1111 2222' } as any);
 
     expect(post).toHaveBeenCalledTimes(1);
     expect(post.mock.calls[0][0].status).toBe(JournalStatus.PENDING);

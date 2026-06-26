@@ -45,6 +45,14 @@ export class WithdrawDto {
   @IsString()
   method!: string;
 
+  // Payout destination (bank or crypto). Captured so finance pays the right place.
+  @IsOptional() @IsString() accountName?: string;
+  @IsOptional() @IsString() accountNumber?: string; // IBAN / account number
+  @IsOptional() @IsString() bankName?: string;
+  @IsOptional() @IsString() swift?: string;
+  @IsOptional() @IsString() walletAddress?: string;
+  @IsOptional() @IsString() network?: string;
+
   @IsOptional()
   @IsString()
   idempotencyKey?: string;

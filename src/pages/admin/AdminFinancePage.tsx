@@ -95,6 +95,13 @@ export default function AdminFinancePage() {
                       <div className="text-xs text-gray-500">
                         {w.client?.email} · {w.accountNumber ?? '—'} · {formatDateTime(w.createdAt)}
                       </div>
+                      {w.destination && (
+                        <div className="mt-1 text-xs text-brand-300">
+                          {w.destination.method === 'crypto'
+                            ? `Pay → ${w.destination.network ?? 'crypto'}: ${w.destination.walletAddress}`
+                            : `Pay → ${w.destination.accountName} · ${w.destination.accountNumber}${w.destination.bankName ? ` · ${w.destination.bankName}` : ''}${w.destination.swift ? ` · ${w.destination.swift}` : ''}`}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
