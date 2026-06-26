@@ -40,6 +40,7 @@ export const envSchema = z
     EXECUTION_PROVIDER: z.enum(['simulation', 'mt5']).default('simulation'),
     MT5_GATEWAY_URL: z.string().optional(),
     MT5_API_KEY: z.string().optional(),
+    MT5_ACCOUNT_ID: z.string().optional(),
 
     // ── Payments (PSP) ──
     // Which payment provider backs funding. 'simulation' (default) moves no real

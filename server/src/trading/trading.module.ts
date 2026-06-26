@@ -5,6 +5,7 @@ import { MarketModule } from '../market/market.module';
 import { TradingController } from './trading.controller';
 import { TradingService } from './trading.service';
 import { PendingOrderWatcher } from './pending-order.watcher';
+import { Mt5GatewayClient } from './mt5-gateway.client';
 import {
   EXECUTION_PROVIDER,
   SimulationExecutionProvider,
@@ -23,6 +24,7 @@ import {
   providers: [
     TradingService,
     PendingOrderWatcher,
+    Mt5GatewayClient,
     SimulationExecutionProvider,
     Mt5ExecutionProvider,
     {

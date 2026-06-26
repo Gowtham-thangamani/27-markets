@@ -25,6 +25,11 @@ export class TradingController {
     return this.trading.getMargin(userId, accountId);
   }
 
+  @Get('venue')
+  venue() {
+    return this.trading.venue();
+  }
+
   @HttpCode(200)
   @Post('orders/:id/modify')
   modify(@CurrentUser('id') userId: string, @Param('id') id: string, @Body() dto: ModifyOrderDto) {

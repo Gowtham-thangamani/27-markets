@@ -1,8 +1,13 @@
-import { BadRequestException, Injectable, NotImplementedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import {
+  BadRequestException,
+  Injectable,
+  NotImplementedException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import type { OrderSide } from '@prisma/client';
 import { MarketService } from '../market/market.service';
-import type { Env } from '../config/env.validation';
+import { Mt5GatewayClient } from './mt5-gateway.client';
+import { toMt5Symbol } from './mt5-symbols';
 
 /** DI token for the active execution backend. */
 export const EXECUTION_PROVIDER = Symbol('EXECUTION_PROVIDER');
@@ -49,19 +54,19 @@ export class SimulationExecutionProvider implements ExecutionProvider {
 }
 
 /**
- * MetaTrader 5 white-label adapter (SKELETON). Routes real orders to the MT5
- * gateway once a licensed server + credentials are configured. Until then it
- * refuses — real trades must not execute without the venue.
+ * MetaTrader 5 white-label adapter. Routes real market orders to the configured
+ * MT5 gateway and returns the executed price. Inactive until MT5_GATEWAY_URL is
+ * set — real trades must never execute without a venue.
  */
 @Injectable()
 export class Mt5ExecutionProvider implements ExecutionProvider {
   readonly name = 'mt5';
   readonly simulated = false;
 
-  constructor(private readonly config: ConfigService<Env, true>) {}
+  constructor(private readonly gateway: Mt5GatewayClient) {}
 
   assertAvailable(): void {
-    if (!this.config.get('MT5_GATEWAY_URL', { infer: true })) {
+    if (!this.gateway.configured) {
       throw new NotImplementedException(
         'MT5 execution is not configured (MT5_GATEWAY_URL missing). Connect a licensed ' +
           'MetaTrader 5 white-label gateway before enabling live trading.',
@@ -69,10 +74,16 @@ export class Mt5ExecutionProvider implements ExecutionProvider {
     }
   }
 
-  async fill(): Promise<Fill> {
-    // TODO(go-live): POST the order to the MT5 gateway and return the real fill.
-    throw new NotImplementedException(
-      'MT5 execution adapter is not implemented yet — connect the MT5 white-label gateway.',
-    );
+  async fill(symbol: string, side: OrderSide, quantity: number): Promise<Fill> {
+    this.assertAvailable();
+    const deal = await this.gateway.placeMarketOrder({
+      symbol: toMt5Symbol(symbol),
+      side: side as 'BUY' | 'SELL',
+      volume: quantity,
+    });
+    if (!deal || !(deal.price > 0)) {
+      throw new ServiceUnavailableException(`MT5 gateway returned no fill price for ${symbol}.`);
+    }
+    return { price: deal.price, simulated: false };
   }
 }

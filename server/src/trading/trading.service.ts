@@ -557,6 +557,11 @@ export class TradingService {
     return this.getMargin(userId, accountId);
   }
 
+  /** Which execution venue is active (simulation vs MT5) — for ops/verification. */
+  venue() {
+    return { name: this.exec.name, simulated: this.exec.simulated };
+  }
+
   // ── Queries ──────────────────────────────────────────────────────────────
 
   listOrders(userId: string) {
