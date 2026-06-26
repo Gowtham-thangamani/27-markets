@@ -21,7 +21,8 @@ function makeService(overrides: { post?: jest.Mock } = {}) {
   const accounts = { ledgerAccountIdFor: jest.fn().mockResolvedValue('client-ledger') } as any;
   const audit = { record: jest.fn().mockResolvedValue(undefined) } as any;
   const payments = { name: 'simulation', simulated: true, assertAvailable: jest.fn() } as any;
-  return { service: new FundsService(prisma, ledger, accounts, audit, payments), post, audit, payments };
+  const config = { get: jest.fn().mockReturnValue('http://localhost:5173') } as any;
+  return { service: new FundsService(prisma, ledger, accounts, audit, payments, config), post, audit, payments };
 }
 
 describe('FundsService.withdraw', () => {

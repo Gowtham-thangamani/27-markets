@@ -18,6 +18,13 @@ export class FundsController {
     return this.funds.deposit(userId, dto);
   }
 
+  /** Begin a deposit via the PSP — returns a checkout URL (or credits inline in simulation). */
+  @HttpCode(200)
+  @Post('deposit/checkout')
+  depositCheckout(@CurrentUser('id') userId: string, @Body() dto: DepositDto) {
+    return this.funds.depositCheckout(userId, dto);
+  }
+
   @HttpCode(200)
   @Post('withdraw')
   withdraw(@CurrentUser('id') userId: string, @Body() dto: WithdrawDto) {

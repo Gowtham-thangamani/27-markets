@@ -1,11 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { JournalKind, JournalStatus, PostingDirection } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LedgerService } from '../ledger/ledger.service';
 import { AuditService } from '../audit/audit.service';
 import { formatMoney, toMoney } from '../ledger/money';
 import { generateTxReference } from '../common/reference';
+import { PAYMENT_PROVIDER, type PaymentProvider } from '../payments/payment-provider';
 import type { AdjustmentDto } from './admin-finance.dto';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class AdminFinanceService {
     private readonly prisma: PrismaService,
     private readonly ledger: LedgerService,
     private readonly audit: AuditService,
+    @Inject(PAYMENT_PROVIDER) private readonly payments: PaymentProvider,
   ) {}
 
   private async listByKindStatus(kind: JournalKind, status: JournalStatus) {
@@ -58,7 +60,10 @@ export class AdminFinanceService {
   }
 
   private async loadPendingWithdrawal(entryId: string) {
-    const entry = await this.prisma.journalEntry.findUnique({ where: { id: entryId } });
+    const entry = await this.prisma.journalEntry.findUnique({
+      where: { id: entryId },
+      include: { postings: { include: { ledgerAccount: true } } },
+    });
     if (!entry || entry.kind !== JournalKind.WITHDRAWAL) {
       throw new NotFoundException('Withdrawal not found');
     }
@@ -69,15 +74,30 @@ export class AdminFinanceService {
   }
 
   async approveWithdrawal(adminId: string, entryId: string) {
-    await this.loadPendingWithdrawal(entryId);
+    const entry = await this.loadPendingWithdrawal(entryId);
+
+    // The client-facing leg is the DEBIT on the user-owned ledger account.
+    const clientLeg = entry.postings?.find((p) => p.ledgerAccount.userId);
+    const amountMinor = clientLeg ? Math.round(Number(clientLeg.amount) * 100) : 0;
+    const currency = clientLeg?.currency ?? 'USD';
+
+    // Send the payout FIRST — if it fails, the withdrawal stays pending (not posted).
+    const payout = await this.payments.payout({
+      reference: entry.reference,
+      amountMinor,
+      currency,
+      metadata: { entryId },
+    });
+
     await this.ledger.markPosted(entryId);
     await this.audit.record({
       userId: adminId,
       action: 'finance.withdrawal.approve',
       entity: 'JournalEntry',
       entityId: entryId,
+      metadata: { payoutId: payout.payoutId, payoutStatus: payout.status, simulated: payout.simulated },
     });
-    return { ok: true, status: JournalStatus.POSTED };
+    return { ok: true, status: JournalStatus.POSTED, payout };
   }
 
   async rejectWithdrawal(adminId: string, entryId: string, reason?: string) {

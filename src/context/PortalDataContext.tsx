@@ -128,7 +128,17 @@ export function PortalDataProvider({ children }: { children: ReactNode }) {
 
   const deposit = useCallback(
     async ({ accountId, amount, method }: MoneyInput) => {
-      await api.post('/funds/deposit', { accountId, amount: String(amount), method })
+      // With a hosted PSP (Stripe) the backend returns a checkout URL to redirect to;
+      // in simulation it credits inline and returns no URL.
+      const res = await api.post<{ checkoutUrl?: string }>('/funds/deposit/checkout', {
+        accountId,
+        amount: String(amount),
+        method,
+      })
+      if (res?.checkoutUrl) {
+        window.location.href = res.checkoutUrl
+        return
+      }
       await refresh()
     },
     [refresh],

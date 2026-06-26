@@ -18,4 +18,20 @@ describe('StripePaymentProvider', () => {
     const p = new StripePaymentProvider(cfg({ STRIPE_SECRET_KEY: 'sk_test_123' }));
     expect(() => p.assertAvailable()).not.toThrow();
   });
+
+  it('createDepositCheckout returns the session url', async () => {
+    const p = new StripePaymentProvider(cfg({ STRIPE_SECRET_KEY: 'sk_test_123' }));
+    (p as any).client = { checkout: { sessions: { create: jest.fn().mockResolvedValue({ id: 'cs_1', url: 'https://pay' }) } } };
+    const res = await p.createDepositCheckout({ userId: 'u', tradingAccountId: 'a', amountMinor: 1000, currency: 'USD', successUrl: 's', cancelUrl: 'c' });
+    expect(res).toEqual({ url: 'https://pay' });
+  });
+
+  it('payout creates a Stripe payout and returns its id', async () => {
+    const p = new StripePaymentProvider(cfg({ STRIPE_SECRET_KEY: 'sk_test_123' }));
+    const create = jest.fn().mockResolvedValue({ id: 'po_1', status: 'pending' });
+    (p as any).client = { payouts: { create } };
+    const res = await p.payout({ reference: 'TX-1', amountMinor: 5000, currency: 'USD', metadata: {} });
+    expect(res).toEqual({ payoutId: 'po_1', status: 'pending', simulated: false });
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ amount: 5000, currency: 'usd' }));
+  });
 });

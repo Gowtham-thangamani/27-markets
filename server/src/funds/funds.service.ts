@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JournalKind, JournalStatus, KycStepStatus, PostingDirection } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LedgerService } from '../ledger/ledger.service';
@@ -8,6 +9,7 @@ import { AuditService } from '../audit/audit.service';
 import { formatMoney, toMoney } from '../ledger/money';
 import { generateTxReference } from '../common/reference';
 import { PAYMENT_PROVIDER, type PaymentProvider } from '../payments/payment-provider';
+import type { Env } from '../config/env.validation';
 import { DepositDto, WithdrawDto, TransferDto } from './dto';
 
 @Injectable()
@@ -18,7 +20,35 @@ export class FundsService {
     private readonly accounts: AccountsService,
     private readonly audit: AuditService,
     @Inject(PAYMENT_PROVIDER) private readonly payments: PaymentProvider,
+    private readonly config: ConfigService<Env, true>,
   ) {}
+
+  /**
+   * Begin a deposit. With a hosted PSP (Stripe) this returns a checkout URL the
+   * client is redirected to; the webhook credits the deposit on success. In
+   * SIMULATION the provider has no redirect, so we credit inline (legacy path).
+   */
+  async depositCheckout(userId: string, dto: DepositDto) {
+    this.payments.assertAvailable();
+    // Validates ownership of the target account.
+    await this.accounts.ledgerAccountIdFor(userId, dto.accountId);
+
+    const origin = (this.config.get('CLIENT_ORIGIN', { infer: true }).split(',')[0] || '').trim() || 'http://localhost:5173';
+    const checkout = await this.payments.createDepositCheckout({
+      userId,
+      tradingAccountId: dto.accountId,
+      amountMinor: Math.round(Number(dto.amount) * 100),
+      currency: 'USD',
+      successUrl: `${origin}/portal/funds?deposit=success`,
+      cancelUrl: `${origin}/portal/funds?deposit=cancelled`,
+    });
+
+    if (!checkout.url) {
+      // Simulation / inline-credit providers: post the deposit immediately.
+      return this.deposit(userId, dto);
+    }
+    return { checkoutUrl: checkout.url };
+  }
 
   async deposit(userId: string, dto: DepositDto) {
     // SAFETY RAIL: refuses unless a payment provider can actually move funds.

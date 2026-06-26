@@ -2,17 +2,7 @@ import { Injectable, NotImplementedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import type { Env } from '../config/env.validation';
-import type { PaymentProvider } from './payment-provider';
-
-export interface DepositCheckoutInput {
-  userId: string;
-  tradingAccountId: string;
-  /** Amount in the currency's smallest unit (e.g. cents). */
-  amountMinor: number;
-  currency: string;
-  successUrl: string;
-  cancelUrl: string;
-}
+import type { DepositCheckoutRequest, PaymentProvider, PayoutRequest, PayoutResult } from './payment-provider';
 
 /**
  * Stripe adapter behind the PaymentProvider seam. SKELETON / sandbox-ready:
@@ -46,7 +36,7 @@ export class StripePaymentProvider implements PaymentProvider {
   }
 
   /** Create a Checkout Session for a deposit. The webhook confirms + credits it. */
-  async createDepositCheckout(input: DepositCheckoutInput): Promise<{ id: string; url: string | null }> {
+  async createDepositCheckout(input: DepositCheckoutRequest): Promise<{ url: string | null }> {
     const session = await this.stripe.checkout.sessions.create({
       mode: 'payment',
       success_url: input.successUrl,
@@ -63,7 +53,24 @@ export class StripePaymentProvider implements PaymentProvider {
       ],
       metadata: { userId: input.userId, tradingAccountId: input.tradingAccountId },
     });
-    return { id: session.id, url: session.url };
+    return { url: session.url };
+  }
+
+  /**
+   * Pay out an approved withdrawal. Uses Stripe Payouts (platform balance →
+   * platform bank). NOTE: paying the END CLIENT directly requires Stripe Connect
+   * transfers to their connected/bank account — wire that destination here once
+   * onboarding is in place; this is the integration point.
+   */
+  async payout(req: PayoutRequest): Promise<PayoutResult> {
+    this.assertAvailable();
+    const p = await this.stripe.payouts.create({
+      amount: req.amountMinor,
+      currency: req.currency.toLowerCase(),
+      metadata: req.metadata,
+      statement_descriptor: 'Withdrawal',
+    });
+    return { payoutId: p.id, status: p.status, simulated: false };
   }
 
   /** Verify + parse an incoming webhook using the signing secret. */
