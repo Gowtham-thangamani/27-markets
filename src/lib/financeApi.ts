@@ -24,10 +24,25 @@ export interface AdminAccount {
   owner: { id: string; name: string; email: string }
 }
 
+export interface DepositRequestRow {
+  id: string
+  reference: string
+  method: string
+  asset: string | null
+  amount: string
+  createdAt: string
+  client: { id: string; name: string; email: string } | null
+}
+
 /** Typed CRM finance + accounts admin API (reuses the shared `api` client). */
 export const financeApi = {
   pendingWithdrawals: () => api.get<FinanceTxn[]>('/admin/finance/withdrawals'),
   deposits: () => api.get<FinanceTxn[]>('/admin/finance/deposits'),
+  depositRequests: () => api.get<DepositRequestRow[]>('/admin/finance/deposit-requests'),
+  approveDepositRequest: (id: string) =>
+    api.post<{ ok: boolean; status: string; reference: string }>(`/admin/finance/deposit-requests/${id}/approve`),
+  rejectDepositRequest: (id: string, reason?: string) =>
+    api.post<{ ok: boolean; status: string }>(`/admin/finance/deposit-requests/${id}/reject`, { reason }),
   approveWithdrawal: (id: string) =>
     api.post<{ ok: boolean; status: string }>(`/admin/finance/withdrawals/${id}/approve`),
   rejectWithdrawal: (id: string, reason?: string) =>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -17,6 +17,7 @@ import { PageTitle } from '@/components/portal/PageTitle'
 import { statusTone } from '@/components/portal/statusTone'
 import { usePortalData } from '@/context/PortalDataContext'
 import { useToast } from '@/context/ToastContext'
+import { api } from '@/lib/api'
 import { zodResolver } from '@/lib/zodResolver'
 import { depositSchema, transferSchema } from '@/lib/validation'
 import { formatCurrency, formatDateTime } from '@/lib/format'
@@ -28,19 +29,6 @@ const tabs: TabItem[] = [
   { id: 'withdraw', label: 'Withdraw', icon: <ArrowUpFromLine className="h-4 w-4" /> },
   { id: 'transfer', label: 'Internal Transfer', icon: <ArrowLeftRight className="h-4 w-4" /> },
   { id: 'history', label: 'Transaction History', icon: <History className="h-4 w-4" /> },
-]
-
-interface Method {
-  id: string
-  icon: LucideIcon
-  name: string
-  descriptor: string
-}
-const methods: Method[] = [
-  { id: 'bank', icon: Landmark, name: 'Bank Transfer', descriptor: '1–3 business days' },
-  { id: 'card', icon: CreditCard, name: 'Credit / Debit Card', descriptor: 'Instant' },
-  { id: 'ewallet', icon: Wallet, name: 'E-Wallets', descriptor: 'Instant · Skrill, Neteller' },
-  { id: 'crypto', icon: Bitcoin, name: 'Crypto', descriptor: 'Instant · BTC, ETH, USDT' },
 ]
 
 type DepositValues = z.infer<typeof depositSchema>
@@ -70,27 +58,94 @@ export default function FundsPage() {
   )
 }
 
+interface DepositMethod {
+  id: string
+  label: string
+  type: 'card' | 'bank' | 'crypto' | 'ewallet'
+  status: 'live' | 'manual' | 'unavailable'
+  note?: string
+  instructions?: string | null
+  assets?: { symbol: string; address: string }[]
+}
+interface DepositRequestRow {
+  id: string
+  reference: string
+  method: string
+  asset: string | null
+  amount: string
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  createdAt: string
+}
+const METHOD_ICON: Record<string, LucideIcon> = { bank: Landmark, card: CreditCard, ewallet: Wallet, crypto: Bitcoin }
+const methodStatusBadge = (s: DepositMethod['status']) =>
+  s === 'live' ? { tone: 'success' as const, label: 'Live' } : s === 'manual' ? { tone: 'warning' as const, label: 'Manual review' } : { tone: 'neutral' as const, label: 'Unavailable' }
+const reqStatusTone = (s: DepositRequestRow['status']) => (s === 'APPROVED' ? 'success' : s === 'REJECTED' ? 'danger' : 'warning')
+
 function DepositTab() {
   const { accounts, deposit } = usePortalData()
   const toast = useToast()
-  const [active, setActive] = useState<Method | null>(null)
   const liveAccounts = accounts.filter((a) => a.mode === 'Live')
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<DepositValues>({ resolver: zodResolver(depositSchema) })
+  const [methods, setMethods] = useState<DepositMethod[]>([])
+  const [requests, setRequests] = useState<DepositRequestRow[]>([])
+  const [active, setActive] = useState<DepositMethod | null>(null)
+  const [accountId, setAccountId] = useState('')
+  const [amount, setAmount] = useState('')
+  const [asset, setAsset] = useState('')
+  const [instructions, setInstructions] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
 
-  const onSubmit = async (values: DepositValues) => {
+  const load = useCallback(async () => {
     try {
-      await deposit({ accountId: values.account, amount: values.amount, method: active?.name ?? 'Bank Transfer' })
-      toast.success('Deposit successful', `${formatCurrency(values.amount)} credited (simulation).`)
-      reset()
-      setActive(null)
-    } catch (err) {
-      toast.error('Deposit failed', (err as Error).message)
+      const [m, r] = await Promise.all([
+        api.get<DepositMethod[]>('/funds/deposit/methods'),
+        api.get<DepositRequestRow[]>('/funds/deposit/requests'),
+      ])
+      setMethods(m)
+      setRequests(r)
+    } catch {
+      /* best-effort */
+    }
+  }, [])
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  const open = (m: DepositMethod) => {
+    if (m.status === 'unavailable') return
+    setActive(m)
+    setAccountId(liveAccounts[0]?.id ?? '')
+    setAmount('')
+    setAsset(m.assets?.[0]?.symbol ?? '')
+    setInstructions(null) // shown only after a request is submitted
+  }
+
+  const submit = async () => {
+    if (!accountId || !(Number(amount) > 0)) {
+      toast.warning('Check the form', 'Pick an account and a positive amount.')
+      return
+    }
+    setBusy(true)
+    try {
+      if (active!.type === 'card') {
+        await deposit({ accountId, amount, method: 'Card' }) // redirects to Stripe, or credits inline in simulation
+        toast.success('Deposit submitted', 'Card deposit processing.')
+        setActive(null)
+        return
+      }
+      const res = await api.post<{ instructions?: string }>('/funds/deposit/request', {
+        accountId,
+        method: active!.type,
+        asset: active!.type === 'crypto' ? asset : undefined,
+        amount,
+      })
+      setInstructions(res?.instructions ?? null)
+      toast.success('Deposit requested', 'Send the funds using the instructions; finance will confirm receipt.')
+      await load()
+    } catch (e) {
+      toast.error('Deposit failed', (e as Error).message)
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -99,58 +154,92 @@ function DepositTab() {
       <div className="glass-panel p-5">
         <h2 className="font-display text-lg font-semibold text-white">Deposit Methods</h2>
         <div className="mt-4 space-y-3">
-          {methods.map((m) => (
-            <div
-              key={m.id}
-              className="flex items-center justify-between gap-4 rounded-xl border border-white/[0.06] bg-ink-800/50 p-4 transition-colors hover:border-brand-500/30"
-            >
-              <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/20">
-                  <m.icon className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="font-medium text-white">{m.name}</p>
-                  <p className="text-xs text-gray-500">{m.descriptor}</p>
+          {(methods.length ? methods : []).map((m) => {
+            const Icon = METHOD_ICON[m.id] ?? Landmark
+            const badge = methodStatusBadge(m.status)
+            return (
+              <div key={m.id} className="flex items-center justify-between gap-4 rounded-xl border border-white/[0.06] bg-ink-800/50 p-4 transition-colors hover:border-brand-500/30">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/20">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="font-medium text-white">{m.label}</p>
+                    <p className="text-xs text-gray-500">{m.note}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge tone={badge.tone}>{badge.label}</Badge>
+                  <Button size="sm" disabled={m.status === 'unavailable'} onClick={() => open(m)}>
+                    Deposit
+                  </Button>
                 </div>
               </div>
-              <Button size="sm" onClick={() => setActive(m)}>
-                Deposit
-              </Button>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
+
+      {requests.length > 0 && (
+        <div className="glass-panel mt-4 p-5">
+          <h3 className="font-display text-base font-semibold text-white">Your deposit requests</h3>
+          <div className="mt-3 space-y-2">
+            {requests.slice(0, 6).map((r) => (
+              <div key={r.id} className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-ink-800/40 px-4 py-2.5 text-sm">
+                <div>
+                  <span className="text-white">{formatCurrency(Number(r.amount))}</span>
+                  <span className="ml-2 text-xs text-gray-500">{r.method}{r.asset ? ` · ${r.asset}` : ''} · {formatDateTime(r.createdAt)}</span>
+                </div>
+                <Badge tone={reqStatusTone(r.status)}>{r.status === 'PENDING' ? 'Awaiting confirmation' : r.status === 'APPROVED' ? 'Credited' : 'Rejected'}</Badge>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Modal
         open={!!active}
         onClose={() => setActive(null)}
-        title={`Deposit via ${active?.name ?? ''}`}
-        description="Funds are credited instantly in demo mode."
+        title={`Deposit via ${active?.label ?? ''}`}
+        description={active?.type === 'card' ? 'You will be redirected to a secure checkout.' : 'Submit a request, then send the funds — finance confirms receipt before crediting.'}
       >
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <div className="space-y-4">
           <Select
             label="Deposit to account"
             placeholder="Select account"
+            value={accountId}
             options={liveAccounts.map((a) => ({ value: a.id, label: `${a.number} — ${a.type}` }))}
-            error={errors.account?.message}
-            {...register('account')}
+            onChange={(e) => setAccountId(e.target.value)}
           />
-          <Input
-            label="Amount (USD)"
-            type="number"
-            placeholder="1000"
-            error={errors.amount?.message}
-            {...register('amount')}
-          />
+          {active?.type === 'crypto' && (
+            <Select
+              label="Asset"
+              value={asset}
+              options={(active.assets ?? []).map((a) => ({ value: a.symbol, label: a.symbol }))}
+              onChange={(e) => setAsset(e.target.value)}
+            />
+          )}
+          <Input label="Amount (USD)" type="number" placeholder="1000" value={amount} onChange={(e) => setAmount(e.target.value)} />
+
+          {instructions && (
+            <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-warning">Payment instructions</p>
+              <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-sm text-gray-200">{instructions}</pre>
+              <p className="mt-2 text-xs text-gray-400">Your account is credited once finance confirms the funds arrived.</p>
+            </div>
+          )}
+
           <div className="flex gap-3 pt-1">
             <Button type="button" variant="outline" fullWidth onClick={() => setActive(null)}>
-              Cancel
+              {instructions ? 'Done' : 'Cancel'}
             </Button>
-            <Button type="submit" fullWidth loading={isSubmitting}>
-              Confirm Deposit
-            </Button>
+            {!instructions && (
+              <Button type="button" fullWidth loading={busy} onClick={submit}>
+                {active?.type === 'card' ? 'Continue to payment' : 'Submit request'}
+              </Button>
+            )}
           </div>
-        </form>
+        </div>
       </Modal>
     </>
   )
