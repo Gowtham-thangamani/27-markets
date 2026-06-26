@@ -452,6 +452,8 @@ model Position {
   quantity    Decimal        @db.Decimal(18, 8)
   entryPrice  Decimal        @db.Decimal(18, 8)
   exitPrice   Decimal?       @db.Decimal(18, 8)
+  takeProfit  Decimal?       @db.Decimal(18, 8)
+  stopLoss    Decimal?       @db.Decimal(18, 8)
   realizedPnl Decimal?       @db.Decimal(18, 2)
   status      PositionStatus @default(OPEN)
   openedAt    DateTime       @default(now())

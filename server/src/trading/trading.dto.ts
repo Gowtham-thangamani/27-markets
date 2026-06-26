@@ -31,3 +31,22 @@ export class ListPositionsQuery {
   @IsEnum(PositionStatus)
   status?: PositionStatus;
 }
+
+export class ClosePositionDto {
+  // Omit or pass the full size for a full close; a smaller value closes partially.
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  quantity?: number;
+}
+
+export class SetProtectionDto {
+  // null clears the level; a number sets it; undefined leaves it unchanged.
+  @IsOptional()
+  @IsNumber()
+  takeProfit?: number | null;
+
+  @IsOptional()
+  @IsNumber()
+  stopLoss?: number | null;
+}

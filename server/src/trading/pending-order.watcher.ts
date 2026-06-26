@@ -21,10 +21,10 @@ export class PendingOrderWatcher implements OnModuleInit, OnModuleDestroy {
   onModuleInit(): void {
     this.sub = this.market.stream.subscribe((q) => {
       void this.trading
-        .triggerPendingForQuote(q.symbol, q.price)
-        .catch((e) => this.logger.error(`trigger failed for ${q.symbol}: ${(e as Error).message}`));
+        .processTick(q.symbol, q.price)
+        .catch((e) => this.logger.error(`tick processing failed for ${q.symbol}: ${(e as Error).message}`));
     });
-    this.logger.log('Watching live ticks for pending limit/stop orders.');
+    this.logger.log('Watching live ticks: pending orders, TP/SL, and stop-out.');
   }
 
   onModuleDestroy(): void {
