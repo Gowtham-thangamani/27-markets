@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { TrendingUp, LineChart } from 'lucide-react'
+import { TrendingUp, LineChart, Clock } from 'lucide-react'
 import { Badge, Button, EmptyState, Input, Select, SkeletonRows } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
 import { usePortalUI } from '@/layouts/PortalLayout'
@@ -7,9 +7,17 @@ import { usePortalData } from '@/context/PortalDataContext'
 import { useToast } from '@/context/ToastContext'
 import { useLiveQuotes } from '@/lib/useLiveQuotes'
 import { ApiError } from '@/lib/api'
-import { tradingApi, type OrderSide, type Order, type Position } from '@/lib/tradingApi'
+import { tradingApi, type OrderSide, type OrderType, type OrderStatus, type Order, type Position } from '@/lib/tradingApi'
 import { formatCurrency } from '@/lib/format'
 import { cn } from '@/lib/cn'
+
+const ORDER_TYPES: { value: OrderType; label: string }[] = [
+  { value: 'MARKET', label: 'Market' },
+  { value: 'LIMIT', label: 'Limit' },
+  { value: 'STOP', label: 'Stop' },
+]
+const statusTone = (s: OrderStatus): 'success' | 'warning' | 'danger' | 'neutral' =>
+  s === 'FILLED' ? 'success' : s === 'PENDING' ? 'warning' : s === 'REJECTED' ? 'danger' : 'neutral'
 
 const INSTRUMENTS = [
   { sym: 'BINANCE:BTCUSDT', label: 'BTC / USD' },
@@ -38,6 +46,11 @@ export default function TradePage() {
   const [symbol, setSymbol] = useState(INSTRUMENTS[0].sym)
   const [side, setSide] = useState<OrderSide>('BUY')
   const [quantity, setQuantity] = useState('0.10')
+  const [orderType, setOrderType] = useState<OrderType>('MARKET')
+  const [trigger, setTrigger] = useState('')
+
+  const pendingOrders = useMemo(() => orders.filter((o) => o.status === 'PENDING'), [orders])
+  const historyOrders = useMemo(() => orders.filter((o) => o.status !== 'PENDING'), [orders])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -61,17 +74,46 @@ export default function TradePage() {
 
   const place = async () => {
     const qty = Number(quantity)
+    const trig = Number(trigger)
     if (!accountId || !(qty > 0)) {
       toast.warning('Check the order', 'Pick a demo account and a positive quantity.')
       return
     }
+    if (orderType !== 'MARKET' && !(trig > 0)) {
+      toast.warning('Set a trigger price', `A ${orderType.toLowerCase()} order needs a trigger price.`)
+      return
+    }
     setBusy('place')
     try {
-      await tradingApi.placeOrder({ accountId, symbol, side, quantity: qty })
-      toast.success('Order filled', `${side} ${qty} ${symLabel(symbol)}`)
+      const res = await tradingApi.placeOrder({
+        accountId,
+        symbol,
+        side,
+        quantity: qty,
+        type: orderType,
+        triggerPrice: orderType === 'MARKET' ? undefined : trig,
+      })
+      if ('status' in res && res.status === 'PENDING') {
+        toast.success('Order placed', `${orderType} ${side} ${qty} ${symLabel(symbol)} @ ${fmtNum(trig)} — pending`)
+      } else {
+        toast.success('Order filled', `${side} ${qty} ${symLabel(symbol)}`)
+      }
       await load()
     } catch (e) {
       toast.error('Order rejected', e instanceof ApiError ? e.message : (e as Error).message)
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const cancel = async (id: string) => {
+    setBusy(id)
+    try {
+      await tradingApi.cancelOrder(id)
+      toast.success('Order cancelled', 'The pending order was cancelled.')
+      await load()
+    } catch (e) {
+      toast.error('Could not cancel', (e as Error).message)
     } finally {
       setBusy(null)
     }
@@ -143,7 +185,34 @@ export default function TradePage() {
               options={demoAccounts.map((a) => ({ value: a.id, label: `${a.number} · ${formatCurrency(a.balance)}` }))}
               onChange={(e) => setAccountId(e.target.value)}
             />
+            <div>
+              <span className="mb-1.5 block text-sm font-medium text-gray-300">Order type</span>
+              <div className="grid grid-cols-3 gap-2">
+                {ORDER_TYPES.map((t) => (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => setOrderType(t.value)}
+                    className={cn(
+                      'rounded-lg py-2 text-xs font-semibold transition',
+                      orderType === t.value ? 'bg-brand-500/20 text-brand-300 ring-1 ring-brand-500/40' : 'bg-ink-800 text-gray-400',
+                    )}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <Input label="Quantity" type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+            {orderType !== 'MARKET' && (
+              <Input
+                label={`Trigger price (${orderType === 'LIMIT' ? 'limit' : 'stop'})`}
+                type="number"
+                value={trigger}
+                placeholder={livePrice ? fmtNum(livePrice) : '0.00'}
+                onChange={(e) => setTrigger(e.target.value)}
+              />
+            )}
             <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-ink-800/50 px-3 py-2 text-sm">
               <span className="text-gray-400">Market price</span>
               <span className="font-mono tabular-nums text-white">{livePrice ? fmtNum(livePrice) : '—'}</span>
@@ -154,7 +223,9 @@ export default function TradePage() {
               onClick={place}
               className={side === 'SELL' ? 'bg-danger hover:bg-danger/90' : undefined}
             >
-              {side === 'BUY' ? 'Buy' : 'Sell'} {symLabel(symbol)}
+              {orderType === 'MARKET'
+                ? `${side === 'BUY' ? 'Buy' : 'Sell'} ${symLabel(symbol)}`
+                : `Place ${orderType.toLowerCase()} order`}
             </Button>
           </div>
         </div>
@@ -217,11 +288,54 @@ export default function TradePage() {
             )}
           </div>
 
+          {pendingOrders.length > 0 && (
+            <div className="glass-panel overflow-hidden p-0">
+              <div className="flex items-center gap-2 border-b border-white/[0.06] p-5">
+                <Clock className="h-4 w-4 text-warning" />
+                <h3 className="font-display text-base font-semibold text-white">Pending Orders</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] text-sm">
+                  <thead>
+                    <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
+                      <th className="px-5 py-3 font-medium">Instrument</th>
+                      <th className="px-5 py-3 font-medium">Type</th>
+                      <th className="px-5 py-3 font-medium">Side</th>
+                      <th className="px-5 py-3 text-right font-medium">Qty</th>
+                      <th className="px-5 py-3 text-right font-medium">Trigger</th>
+                      <th className="px-5 py-3 text-right font-medium">Market</th>
+                      <th className="px-5 py-3 font-medium">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.04]">
+                    {pendingOrders.map((o) => (
+                      <tr key={o.id}>
+                        <td className="px-5 py-3 text-white">{symLabel(o.symbol)}</td>
+                        <td className="px-5 py-3"><Badge tone="neutral">{o.type}</Badge></td>
+                        <td className="px-5 py-3">
+                          <span className={o.side === 'BUY' ? 'text-success' : 'text-danger'}>{o.side}</span>
+                        </td>
+                        <td className="px-5 py-3 text-right tabular-nums text-gray-300">{Number(o.quantity)}</td>
+                        <td className="px-5 py-3 text-right tabular-nums text-warning">{o.triggerPrice ? fmtNum(Number(o.triggerPrice)) : '—'}</td>
+                        <td className="px-5 py-3 text-right tabular-nums text-white">{quotes[o.symbol]?.price ? fmtNum(quotes[o.symbol].price) : '—'}</td>
+                        <td className="px-5 py-3">
+                          <Button size="sm" variant="outline" loading={busy === o.id} onClick={() => cancel(o.id)}>
+                            Cancel
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           <div className="glass-panel overflow-hidden p-0">
             <div className="border-b border-white/[0.06] p-5">
               <h3 className="font-display text-base font-semibold text-white">Order History</h3>
             </div>
-            {orders.length === 0 ? (
+            {historyOrders.length === 0 ? (
               <p className="p-6 text-center text-sm text-gray-500">No orders yet.</p>
             ) : (
               <div className="overflow-x-auto">
@@ -236,7 +350,7 @@ export default function TradePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/[0.04]">
-                    {orders.slice(0, 12).map((o) => (
+                    {historyOrders.slice(0, 12).map((o) => (
                       <tr key={o.id}>
                         <td className="px-5 py-3 text-gray-200">{symLabel(o.symbol)}</td>
                         <td className="px-5 py-3">
@@ -244,7 +358,7 @@ export default function TradePage() {
                         </td>
                         <td className="px-5 py-3 text-right tabular-nums text-gray-300">{Number(o.quantity)}</td>
                         <td className="px-5 py-3 text-right tabular-nums text-white">{fmtNum(Number(o.price))}</td>
-                        <td className="px-5 py-3"><Badge tone="success">{o.status}</Badge></td>
+                        <td className="px-5 py-3"><Badge tone={statusTone(o.status)}>{o.status}</Badge></td>
                       </tr>
                     ))}
                   </tbody>
