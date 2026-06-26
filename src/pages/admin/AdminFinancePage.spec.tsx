@@ -12,8 +12,11 @@ vi.mock('@/lib/financeApi', () => ({
       },
     ]),
     deposits: vi.fn().mockResolvedValue([]),
+    depositRequests: vi.fn().mockResolvedValue([]),
     approveWithdrawal: vi.fn(),
     rejectWithdrawal: vi.fn(),
+    approveDepositRequest: vi.fn(),
+    rejectDepositRequest: vi.fn(),
   },
 }))
 vi.mock('@/context/ToastContext', () => ({
