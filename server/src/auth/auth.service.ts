@@ -10,6 +10,7 @@ import * as QRCode from 'qrcode';
 import type { User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { CryptoService } from '../common/crypto.service';
 import { LeadsService } from '../leads/leads.service';
 import { TokensService } from './tokens.service';
 import { RegisterDto, LoginDto } from './dto';
@@ -42,6 +43,7 @@ export class AuthService {
     private readonly audit: AuditService,
     private readonly leads: LeadsService,
     private readonly config: ConfigService<Env, true>,
+    private readonly crypto: CryptoService,
   ) {}
 
   toPublic(user: User): PublicUser {
@@ -105,7 +107,8 @@ export class AuthService {
       if (!dto.totp) {
         throw new UnauthorizedException({ message: 'Two-factor code required', error: 'TwoFactorRequired' });
       }
-      const valid = authenticator.verify({ token: dto.totp, secret: user.twoFactorSecret ?? '' });
+      const secret = user.twoFactorSecret ? this.crypto.decrypt(user.twoFactorSecret) : '';
+      const valid = authenticator.verify({ token: dto.totp, secret });
       if (!valid) throw new UnauthorizedException('Invalid two-factor code');
     }
 
@@ -194,7 +197,7 @@ export class AuthService {
   async startTwoFactor(userId: string): Promise<{ otpauthUrl: string; qrDataUrl: string }> {
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
     const secret = authenticator.generateSecret();
-    await this.prisma.user.update({ where: { id: userId }, data: { twoFactorSecret: secret } });
+    await this.prisma.user.update({ where: { id: userId }, data: { twoFactorSecret: this.crypto.encrypt(secret) } });
     const issuer = this.config.get('TOTP_ISSUER', { infer: true });
     const otpauthUrl = authenticator.keyuri(user.email, issuer, secret);
     const qrDataUrl = await QRCode.toDataURL(otpauthUrl);
@@ -204,7 +207,7 @@ export class AuthService {
   async enableTwoFactor(userId: string, code: string, ctx: RequestContext): Promise<void> {
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
     if (!user.twoFactorSecret) throw new UnauthorizedException('Start 2FA setup first');
-    const valid = authenticator.verify({ token: code, secret: user.twoFactorSecret });
+    const valid = authenticator.verify({ token: code, secret: this.crypto.decrypt(user.twoFactorSecret) });
     if (!valid) throw new UnauthorizedException('Invalid two-factor code');
     await this.prisma.user.update({ where: { id: userId }, data: { twoFactorEnabled: true } });
     await this.audit.record({ userId, action: 'auth.2fa.enabled', ...ctx });

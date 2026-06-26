@@ -3,6 +3,9 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { validateEnv } from './config/env.validation';
+import { CryptoModule } from './common/crypto.module';
+import { LoggingInterceptor } from './common/logging.interceptor';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuditModule } from './audit/audit.module';
 import { LedgerModule } from './ledger/ledger.module';
@@ -25,6 +28,7 @@ import { HealthController } from './health/health.controller';
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
+    CryptoModule,
     PrismaModule,
     AuditModule,
     LedgerModule,
@@ -47,6 +51,8 @@ import { HealthController } from './health/health.controller';
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     // Baseline rate limiting on every route.
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // PII-safe request logging (method/path/status/duration/userId — never bodies).
+    { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
   ],
 })
 export class AppModule {}

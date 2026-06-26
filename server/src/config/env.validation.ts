@@ -15,6 +15,8 @@ export const envSchema = z
 
     JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be >= 32 chars'),
     JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be >= 32 chars'),
+    // Encrypts sensitive fields at rest (e.g. 2FA secrets). Optional in dev.
+    ENCRYPTION_KEY: z.string().min(16, 'ENCRYPTION_KEY must be >= 16 chars').optional(),
     ACCESS_TOKEN_TTL: z.coerce.number().int().positive().default(900),
     REFRESH_TOKEN_TTL: z.coerce.number().int().positive().default(604800),
 
