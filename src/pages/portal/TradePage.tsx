@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { TrendingUp, LineChart, Clock } from 'lucide-react'
-import { Badge, Button, EmptyState, Input, Select, SkeletonRows } from '@/components/ui'
+import { TrendingUp, LineChart, Clock, SlidersHorizontal } from 'lucide-react'
+import { Badge, Button, EmptyState, Input, Modal, Select, SkeletonRows } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
 import { usePortalUI } from '@/layouts/PortalLayout'
 import { usePortalData } from '@/context/PortalDataContext'
@@ -49,8 +49,15 @@ export default function TradePage() {
   const [orderType, setOrderType] = useState<OrderType>('MARKET')
   const [trigger, setTrigger] = useState('')
 
+  // Manage-position modal (TP/SL + partial close)
+  const [manageId, setManageId] = useState<string | null>(null)
+  const [tp, setTp] = useState('')
+  const [sl, setSl] = useState('')
+  const [partial, setPartial] = useState('')
+
   const pendingOrders = useMemo(() => orders.filter((o) => o.status === 'PENDING'), [orders])
   const historyOrders = useMemo(() => orders.filter((o) => o.status !== 'PENDING'), [orders])
+  const managePos = useMemo(() => positions.find((p) => p.id === manageId) ?? null, [positions, manageId])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -101,6 +108,49 @@ export default function TradePage() {
       await load()
     } catch (e) {
       toast.error('Order rejected', e instanceof ApiError ? e.message : (e as Error).message)
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const openManage = (p: Position) => {
+    setManageId(p.id)
+    setTp(p.takeProfit ? String(Number(p.takeProfit)) : '')
+    setSl(p.stopLoss ? String(Number(p.stopLoss)) : '')
+    setPartial(String(Number(p.quantity)))
+  }
+
+  const saveProtection = async () => {
+    if (!manageId) return
+    setBusy('protect')
+    try {
+      await tradingApi.setProtection(manageId, {
+        takeProfit: tp ? Number(tp) : null,
+        stopLoss: sl ? Number(sl) : null,
+      })
+      toast.success('Protection updated', 'Take-profit / stop-loss saved.')
+      await load()
+    } catch (e) {
+      toast.error('Could not save', (e as Error).message)
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const closeManaged = async () => {
+    if (!manageId || !managePos) return
+    const full = Number(managePos.quantity)
+    const qty = Number(partial)
+    const partialQty = qty > 0 && qty < full ? qty : undefined
+    setBusy('closeManaged')
+    try {
+      const res = await tradingApi.closePosition(manageId, partialQty)
+      const pnl = Number(res.realizedPnl ?? 0)
+      toast.success(partialQty ? 'Partially closed' : 'Position closed', `Realized P&L ${pnl >= 0 ? '+' : ''}${fmtNum(pnl)} USD`)
+      await load()
+      if (!partialQty) setManageId(null)
+    } catch (e) {
+      toast.error('Could not close', (e as Error).message)
     } finally {
       setBusy(null)
     }
@@ -264,7 +314,16 @@ export default function TradePage() {
                       const up = (pnl ?? 0) >= 0
                       return (
                         <tr key={p.id}>
-                          <td className="px-5 py-3 text-white">{symLabel(p.symbol)}</td>
+                          <td className="px-5 py-3">
+                            <div className="text-white">{symLabel(p.symbol)}</div>
+                            {(p.takeProfit || p.stopLoss) && (
+                              <div className="mt-0.5 text-[11px] tabular-nums text-gray-500">
+                                {p.takeProfit && <span className="text-success">TP {fmtNum(Number(p.takeProfit))}</span>}
+                                {p.takeProfit && p.stopLoss && ' · '}
+                                {p.stopLoss && <span className="text-danger">SL {fmtNum(Number(p.stopLoss))}</span>}
+                              </div>
+                            )}
+                          </td>
                           <td className="px-5 py-3">
                             <Badge tone={p.side === 'BUY' ? 'success' : 'danger'}>{p.side}</Badge>
                           </td>
@@ -274,10 +333,15 @@ export default function TradePage() {
                           <td className={cn('px-5 py-3 text-right font-mono tabular-nums', pnl === undefined ? 'text-gray-500' : up ? 'text-success' : 'text-danger')}>
                             {pnl === undefined ? '—' : `${up ? '+' : ''}${fmtNum(pnl)}`}
                           </td>
-                          <td className="px-5 py-3 text-right">
-                            <Button size="sm" variant="outline" loading={busy === p.id} onClick={() => close(p.id)}>
-                              Close
-                            </Button>
+                          <td className="px-5 py-3">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button size="sm" variant="outline" aria-label="Manage position" onClick={() => openManage(p)}>
+                                <SlidersHorizontal className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button size="sm" variant="outline" loading={busy === p.id} onClick={() => close(p.id)}>
+                                Close
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       )
@@ -368,6 +432,49 @@ export default function TradePage() {
           </div>
         </div>
       </div>
+
+      {managePos && (
+        <Modal
+          open={!!manageId}
+          onClose={() => setManageId(null)}
+          title={`Manage ${symLabel(managePos.symbol)}`}
+          description={`${managePos.side} ${Number(managePos.quantity)} @ ${fmtNum(Number(managePos.entryPrice))}`}
+        >
+          <div className="space-y-5">
+            <div>
+              <h4 className="mb-2 text-sm font-semibold text-white">Protection</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Take profit" type="number" value={tp} placeholder="none" onChange={(e) => setTp(e.target.value)} />
+                <Input label="Stop loss" type="number" value={sl} placeholder="none" onChange={(e) => setSl(e.target.value)} />
+              </div>
+              <Button className="mt-3" fullWidth variant="outline" loading={busy === 'protect'} onClick={saveProtection}>
+                Save take-profit / stop-loss
+              </Button>
+            </div>
+
+            <div className="h-px bg-white/[0.06]" />
+
+            <div>
+              <h4 className="mb-2 text-sm font-semibold text-white">Close</h4>
+              <Input
+                label={`Quantity (max ${Number(managePos.quantity)})`}
+                type="number"
+                value={partial}
+                onChange={(e) => setPartial(e.target.value)}
+              />
+              <Button className="mt-3" fullWidth loading={busy === 'closeManaged'} onClick={closeManaged}>
+                {Number(partial) > 0 && Number(partial) < Number(managePos.quantity)
+                  ? `Close ${Number(partial)} of ${Number(managePos.quantity)}`
+                  : 'Close full position'}
+              </Button>
+            </div>
+
+            <p className="text-center text-[11px] text-gray-500">
+              Take-profit, stop-loss, and margin stop-out are enforced automatically against the live price.
+            </p>
+          </div>
+        </Modal>
+      )}
     </>
   )
 }

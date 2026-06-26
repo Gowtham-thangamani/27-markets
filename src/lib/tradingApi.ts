@@ -14,6 +14,8 @@ export interface Position {
   quantity: string
   entryPrice: string
   exitPrice: string | null
+  takeProfit: string | null
+  stopLoss: string | null
   realizedPnl: string | null
   status: PositionStatus
   openedAt: string
@@ -45,6 +47,9 @@ export const tradingApi = {
   listOrders: () => api.get<Order[]>('/trading/orders'),
   listPositions: (status?: PositionStatus) =>
     api.get<Position[]>(`/trading/positions${status ? `?status=${status}` : ''}`),
-  closePosition: (id: string) => api.post<Position>(`/trading/positions/${id}/close`),
+  closePosition: (id: string, quantity?: number) =>
+    api.post<Position>(`/trading/positions/${id}/close`, quantity != null ? { quantity } : {}),
+  setProtection: (id: string, body: { takeProfit?: number | null; stopLoss?: number | null }) =>
+    api.post<Position>(`/trading/positions/${id}/protection`, body),
   cancelOrder: (id: string) => api.post<Order>(`/trading/orders/${id}/cancel`),
 }
