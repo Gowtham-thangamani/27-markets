@@ -31,6 +31,9 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
   private symbols: string[] = [];
   private apiKey?: string;
   private readonly mem = new Map<string, Quote>();
+  // Rolling raw-tick buffer per symbol, aggregated on demand into OHLC candles.
+  private readonly history = new Map<string, Array<{ t: number; p: number }>>();
+  private readonly HISTORY_CAP = 5000;
   private readonly binanceMap = new Map<string, string>(); // BTCUSDT -> BINANCE:BTCUSDT
   private provider: 'finnhub' | 'binance' | 'none' = 'none';
   private readonly updates$ = new Subject<Quote>();
@@ -139,8 +142,45 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
     return null;
   }
 
+  /** Append a raw tick to the rolling per-symbol buffer (capped). */
+  private pushHistory(symbol: string, t: number, p: number): void {
+    let arr = this.history.get(symbol);
+    if (!arr) {
+      arr = [];
+      this.history.set(symbol, arr);
+    }
+    arr.push({ t, p });
+    if (arr.length > this.HISTORY_CAP) arr.splice(0, arr.length - this.HISTORY_CAP);
+  }
+
+  /** Aggregate buffered ticks into OHLC candles (bucketSec-wide), newest `limit`. */
+  getCandles(
+    symbol: string,
+    bucketSec = 60,
+    limit = 120,
+  ): Array<{ time: number; open: number; high: number; low: number; close: number }> {
+    const arr = this.history.get(symbol) ?? [];
+    const bucketMs = Math.max(1, bucketSec) * 1000;
+    const buckets = new Map<number, { o: number; h: number; l: number; c: number }>();
+    for (const { t, p } of arr) {
+      const bt = Math.floor(t / bucketMs) * bucketMs;
+      const e = buckets.get(bt);
+      if (!e) buckets.set(bt, { o: p, h: p, l: p, c: p });
+      else {
+        e.h = Math.max(e.h, p);
+        e.l = Math.min(e.l, p);
+        e.c = p;
+      }
+    }
+    return [...buckets.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .slice(-limit)
+      .map(([bt, e]) => ({ time: Math.floor(bt / 1000), open: e.o, high: e.h, low: e.l, close: e.c }));
+  }
+
   private async store(q: Quote): Promise<void> {
     this.mem.set(q.symbol, q);
+    this.pushHistory(q.symbol, q.asOf, q.price);
     this.updates$.next(q);
     if (this.redis && this.redis.status === 'ready') {
       try {
