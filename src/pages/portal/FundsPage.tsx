@@ -200,6 +200,8 @@ function DepositTab() {
         </div>
       )}
 
+      <SavedCards />
+
       <Modal
         open={!!active}
         onClose={() => setActive(null)}
@@ -251,6 +253,153 @@ function DepositTab() {
         </div>
       </Modal>
     </>
+  )
+}
+
+interface SavedCardRow {
+  id: string
+  brand: string
+  last4: string
+  expMonth: number
+  expYear: number
+  isDefault: boolean
+}
+
+function SavedCards() {
+  const { accounts } = usePortalData()
+  const toast = useToast()
+  const live = accounts.filter((a) => a.mode === 'Live')
+  const [cards, setCards] = useState<SavedCardRow[]>([])
+  const [adding, setAdding] = useState(false)
+  const [depCard, setDepCard] = useState<SavedCardRow | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [brand, setBrand] = useState('visa')
+  const [last4, setLast4] = useState('')
+  const [exp, setExp] = useState('')
+  const [accountId, setAccountId] = useState('')
+  const [amount, setAmount] = useState('')
+
+  const load = useCallback(async () => {
+    try {
+      setCards(await api.get<SavedCardRow[]>('/funds/cards'))
+    } catch {
+      /* best-effort */
+    }
+  }, [])
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  const addCard = async () => {
+    const m = exp.match(/^(\d{1,2})\/(\d{2})$/)
+    if (!/^\d{4}$/.test(last4) || !m) {
+      toast.warning('Check the card', 'Enter the last 4 digits and expiry as MM/YY.')
+      return
+    }
+    setBusy(true)
+    try {
+      await api.post('/funds/cards', { brand, last4, expMonth: Number(m[1]), expYear: 2000 + Number(m[2]) })
+      toast.success('Card saved', `${brand.toUpperCase()} ••${last4}`)
+      setAdding(false)
+      setLast4('')
+      setExp('')
+      await load()
+    } catch (e) {
+      toast.error('Could not save card', (e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const removeCard = async (id: string) => {
+    try {
+      await api.del(`/funds/cards/${id}`)
+      await load()
+    } catch (e) {
+      toast.error('Could not remove', (e as Error).message)
+    }
+  }
+
+  const openDeposit = (c: SavedCardRow) => {
+    setDepCard(c)
+    setAccountId(live[0]?.id ?? '')
+    setAmount('')
+  }
+  const doDeposit = async () => {
+    if (!accountId || !(Number(amount) > 0)) {
+      toast.warning('Check the form', 'Pick an account and a positive amount.')
+      return
+    }
+    setBusy(true)
+    try {
+      await api.post(`/funds/cards/${depCard!.id}/deposit`, { accountId, amount })
+      toast.success('Deposit submitted', `Card ••${depCard!.last4} · ${formatCurrency(Number(amount))}`)
+      setDepCard(null)
+      await load()
+    } catch (e) {
+      toast.error('Deposit failed', (e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="glass-panel mt-4 p-5">
+      <div className="flex items-center justify-between">
+        <h3 className="font-display text-base font-semibold text-white">Saved Cards</h3>
+        <Button size="sm" variant="outline" onClick={() => setAdding(true)}>+ Add card</Button>
+      </div>
+      {cards.length === 0 ? (
+        <p className="mt-3 text-sm text-gray-500">No saved cards. Add one for one‑click deposits.</p>
+      ) : (
+        <div className="mt-3 space-y-2">
+          {cards.map((c) => (
+            <div key={c.id} className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-ink-800/50 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <CreditCard className="h-5 w-5 text-brand-400" />
+                <div>
+                  <p className="font-medium capitalize text-white">
+                    {c.brand} •••• {c.last4}
+                    {c.isDefault && <span className="ml-2 text-[11px] uppercase text-gray-500">default</span>}
+                  </p>
+                  <p className="text-xs text-gray-500">Expires {String(c.expMonth).padStart(2, '0')}/{c.expYear}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={() => openDeposit(c)}>Deposit</Button>
+                <Button size="sm" variant="outline" onClick={() => removeCard(c.id)}>Remove</Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      <p className="mt-3 text-[11px] text-gray-500">
+        We never store your full card number — only the brand, last 4 digits, and expiry. Cards are tokenized by the payment processor.
+      </p>
+
+      <Modal open={adding} onClose={() => setAdding(false)} title="Add a card" description="Saved securely for one‑click deposits.">
+        <div className="space-y-3">
+          <Select
+            label="Brand"
+            value={brand}
+            options={[{ value: 'visa', label: 'Visa' }, { value: 'mastercard', label: 'Mastercard' }, { value: 'amex', label: 'Amex' }, { value: 'discover', label: 'Discover' }]}
+            onChange={(e) => setBrand(e.target.value)}
+          />
+          <Input label="Card number (last 4 digits)" placeholder="4242" value={last4} onChange={(e) => setLast4(e.target.value.replace(/\D/g, '').slice(0, 4))} />
+          <Input label="Expiry (MM/YY)" placeholder="12/30" value={exp} onChange={(e) => setExp(e.target.value)} />
+          <Button fullWidth loading={busy} onClick={addCard}>Save card</Button>
+          <p className="text-center text-[11px] text-gray-500">Demo: enter only the last 4 digits. Live uses the processor's secure card field (Stripe).</p>
+        </div>
+      </Modal>
+
+      <Modal open={!!depCard} onClose={() => setDepCard(null)} title={`Deposit · ${depCard?.brand ?? ''} ••${depCard?.last4 ?? ''}`} description="Charge your saved card.">
+        <div className="space-y-3">
+          <Select label="Deposit to account" value={accountId} options={live.map((a) => ({ value: a.id, label: `${a.number} — ${a.type}` }))} onChange={(e) => setAccountId(e.target.value)} />
+          <Input label="Amount (USD)" type="number" placeholder="500" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          <Button fullWidth loading={busy} onClick={doDeposit}>Deposit</Button>
+        </div>
+      </Modal>
+    </div>
   )
 }
 
