@@ -55,7 +55,8 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4" noValidate>
         <Input
-          label="Email or Username"
+          label="Email"
+          type="email"
           placeholder="you@example.com"
           icon={<Mail className="h-4 w-4" />}
           error={errors.email?.message}
