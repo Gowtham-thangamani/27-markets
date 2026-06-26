@@ -65,6 +65,7 @@ model User {
   orders              Order[]
   positions           Position[]
   depositRequests     DepositRequest[]
+  savedCards          SavedCard[]
 
   @@index([email])
 }
@@ -511,4 +512,24 @@ model WithdrawalDetail {
   walletAddress  String?
   network        String?
   createdAt      DateTime @default(now())
+}
+
+// ─────────────────────────── Saved cards (tokenized) ───────────────────────────
+// PCI-SAFE: the raw card number/CVV is NEVER stored. The card is tokenized by the
+// PSP (Stripe) and we keep only display metadata + the PSP token references.
+
+model SavedCard {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brand              String // visa | mastercard | amex …
+  last4              String
+  expMonth           Int
+  expYear            Int
+  pspCustomerId      String? // Stripe customer id
+  pspPaymentMethodId String? // Stripe PaymentMethod token (null = demo, no real charge)
+  isDefault          Boolean  @default(false)
+  createdAt          DateTime @default(now())
+
+  @@index([userId])
 }
