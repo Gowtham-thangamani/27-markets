@@ -22,10 +22,10 @@ interface AuthContextValue {
   user: UserProfile | null
   isAuthenticated: boolean
   loading: boolean
-  login: (email: string, password: string, totp?: string) => Promise<void>
+  login: (email: string, password: string, totp?: string) => Promise<UserProfile>
   register: (payload: RegisterPayload) => Promise<void>
   logout: () => Promise<void>
-  refreshUser: () => Promise<void>
+  refreshUser: () => Promise<UserProfile>
   updateProfile: (patch: ProfilePatch) => Promise<void>
 }
 
@@ -37,7 +37,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     const u = await api.get<ApiUser>('/users/me')
-    setUser(mapUser(u))
+    const mapped = mapUser(u)
+    setUser(mapped)
+    return mapped
   }, [])
 
   // Bootstrap: restore an existing session (the api client auto-refreshes if
@@ -62,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(
     async (email: string, password: string, totp?: string) => {
       await api.post('/auth/login', { email, password, ...(totp ? { totp } : {}) })
-      await refreshUser()
+      return refreshUser()
     },
     [refreshUser],
   )

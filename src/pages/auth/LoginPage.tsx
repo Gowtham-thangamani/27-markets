@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
 import { zodResolver } from '@/lib/zodResolver'
 import { loginSchema, type LoginValues } from '@/lib/validation'
+import { isStaffRole } from '@/lib/roles'
 import { ApiError } from '@/lib/api'
 
 export default function LoginPage() {
@@ -15,7 +16,7 @@ export default function LoginPage() {
   const toast = useToast()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as { from?: string })?.from ?? '/portal/dashboard'
+  const explicitFrom = (location.state as { from?: string })?.from
 
   const [needTotp, setNeedTotp] = useState(false)
   const [totp, setTotp] = useState('')
@@ -32,9 +33,10 @@ export default function LoginPage() {
       return
     }
     try {
-      await login(values.email, values.password, needTotp ? totp : undefined)
-      toast.success('Welcome back', 'You are now signed in to your portal.')
-      navigate(from, { replace: true })
+      const user = await login(values.email, values.password, needTotp ? totp : undefined)
+      const dest = explicitFrom ?? (isStaffRole(user.role) ? '/admin/dashboard' : '/portal/dashboard')
+      toast.success('Welcome back', isStaffRole(user.role) ? 'Signed in to the CRM.' : 'You are now signed in to your portal.')
+      navigate(dest, { replace: true })
     } catch (err) {
       const e = err as ApiError
       if (e.code === 'TwoFactorRequired') {
