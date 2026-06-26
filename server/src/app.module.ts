@@ -17,6 +17,7 @@ import { AdminModule } from './admin/admin.module';
 import { BlogModule } from './blog/blog.module';
 import { SupportModule } from './support/support.module';
 import { MarketModule } from './market/market.module';
+import { TradingModule } from './trading/trading.module';
 import { LeadsModule } from './leads/leads.module';
 import { HealthController } from './health/health.controller';
 
@@ -37,6 +38,7 @@ import { HealthController } from './health/health.controller';
     BlogModule,
     SupportModule,
     MarketModule,
+    TradingModule,
     LeadsModule,
   ],
   controllers: [HealthController],

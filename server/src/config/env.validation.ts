@@ -34,6 +34,13 @@ export const envSchema = z
           'AAPL,TSLA,NVDA,AMZN,MSFT,GOOGL,META,AMD',
       ),
 
+    // ── Execution (trading) ──
+    // 'simulation' (default) fills at the live market price on demo accounts;
+    // 'mt5' routes to a licensed MetaTrader 5 white-label gateway (requires creds).
+    EXECUTION_PROVIDER: z.enum(['simulation', 'mt5']).default('simulation'),
+    MT5_GATEWAY_URL: z.string().optional(),
+    MT5_API_KEY: z.string().optional(),
+
     // ── Payments (PSP) ──
     // Which payment provider backs funding. 'simulation' (default) moves no real
     // money; 'stripe' enables the Stripe adapter (requires keys + LIVE gating).

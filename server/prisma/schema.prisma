@@ -62,6 +62,8 @@ model User {
   assignedTickets     Ticket[]        @relation("TicketAssignee")
   ticketMessages      TicketMessage[] @relation("TicketMessageAuthor")
   blogPosts           BlogPost[]      @relation("BlogAuthor")
+  orders              Order[]
+  positions           Position[]
 
   @@index([email])
 }
@@ -393,4 +395,63 @@ model BlogPost {
   updatedAt      DateTime   @updatedAt
 
   @@index([status, publishedAt])
+}
+
+// ─────────────────────────── Trading (demo / MT5-ready) ───────────────────────────
+
+enum OrderSide {
+  BUY
+  SELL
+}
+
+enum OrderType {
+  MARKET
+}
+
+enum OrderStatus {
+  FILLED
+  REJECTED
+  CANCELLED
+}
+
+enum PositionStatus {
+  OPEN
+  CLOSED
+}
+
+model Order {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId String
+  symbol    String
+  side      OrderSide
+  type      OrderType   @default(MARKET)
+  quantity  Decimal     @db.Decimal(18, 8)
+  price     Decimal     @db.Decimal(18, 8)
+  status    OrderStatus @default(FILLED)
+  simulated Boolean     @default(true)
+  createdAt DateTime    @default(now())
+
+  @@index([userId])
+  @@index([accountId])
+}
+
+model Position {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId   String
+  symbol      String
+  side        OrderSide
+  quantity    Decimal        @db.Decimal(18, 8)
+  entryPrice  Decimal        @db.Decimal(18, 8)
+  exitPrice   Decimal?       @db.Decimal(18, 8)
+  realizedPnl Decimal?       @db.Decimal(18, 2)
+  status      PositionStatus @default(OPEN)
+  openedAt    DateTime       @default(now())
+  closedAt    DateTime?
+
+  @@index([userId])
+  @@index([accountId, status])
 }
