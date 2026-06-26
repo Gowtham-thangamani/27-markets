@@ -1,4 +1,4 @@
-import { IsNumberString, IsOptional, IsString, Matches } from 'class-validator';
+import { IsIn, IsNumberString, IsOptional, IsString, Matches } from 'class-validator';
 
 const AMOUNT = /^\d{1,12}(\.\d{1,2})?$/;
 
@@ -16,6 +16,22 @@ export class DepositDto {
   @IsOptional()
   @IsString()
   idempotencyKey?: string;
+}
+
+export class RequestDepositDto {
+  @IsString()
+  accountId!: string;
+
+  @IsIn(['card', 'bank', 'crypto'])
+  method!: 'card' | 'bank' | 'crypto';
+
+  @IsOptional()
+  @IsString()
+  asset?: string; // BTC | ETH | USDT (crypto only)
+
+  @IsNumberString()
+  @Matches(AMOUNT, { message: 'Amount must be a positive value with up to 2 decimals' })
+  amount!: string;
 }
 
 export class WithdrawDto {

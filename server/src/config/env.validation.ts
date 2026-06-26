@@ -60,6 +60,13 @@ export const envSchema = z
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
 
+    // Manual deposit rails (no PSP). When set, the method is offered to clients;
+    // funds arrive off-platform and finance confirms receipt before crediting.
+    BANK_DEPOSIT_DETAILS: z.string().optional(),
+    CRYPTO_BTC_ADDRESS: z.string().optional(),
+    CRYPTO_ETH_ADDRESS: z.string().optional(),
+    CRYPTO_USDT_ADDRESS: z.string().optional(),
+
     TRADING_MODE: z.enum(['SIMULATION', 'LIVE']).default('SIMULATION'),
     ALLOW_LIVE_MODE: z
       .enum(['true', 'false'])

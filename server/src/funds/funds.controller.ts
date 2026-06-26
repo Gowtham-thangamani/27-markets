@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
 import { FundsService } from './funds.service';
-import { DepositDto, WithdrawDto, TransferDto } from './dto';
+import { DepositDto, RequestDepositDto, WithdrawDto, TransferDto } from './dto';
 import { CurrentUser } from '../common/decorators';
 
 @Controller('funds')
@@ -10,6 +10,23 @@ export class FundsController {
   @Get('history')
   history(@CurrentUser('id') userId: string) {
     return this.funds.history(userId);
+  }
+
+  @Get('deposit/methods')
+  depositMethods() {
+    return this.funds.depositMethods();
+  }
+
+  @Get('deposit/requests')
+  depositRequests(@CurrentUser('id') userId: string) {
+    return this.funds.myDepositRequests(userId);
+  }
+
+  /** Start a deposit on a chosen rail (card → checkout; bank/crypto → request + instructions). */
+  @HttpCode(200)
+  @Post('deposit/request')
+  requestDeposit(@CurrentUser('id') userId: string, @Body() dto: RequestDepositDto) {
+    return this.funds.requestDeposit(userId, dto);
   }
 
   @HttpCode(200)

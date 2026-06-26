@@ -22,6 +22,23 @@ export class AdminFinanceController {
     return this.finance.deposits();
   }
 
+  @Get('deposit-requests')
+  depositRequests() {
+    return this.finance.pendingDepositRequests();
+  }
+
+  @HttpCode(200)
+  @Post('deposit-requests/:id/approve')
+  approveDeposit(@CurrentUser('id') adminId: string, @Param('id') id: string) {
+    return this.finance.approveDepositRequest(adminId, id);
+  }
+
+  @HttpCode(200)
+  @Post('deposit-requests/:id/reject')
+  rejectDeposit(@CurrentUser('id') adminId: string, @Param('id') id: string, @Body() dto: RejectWithdrawalDto) {
+    return this.finance.rejectDepositRequest(adminId, id, dto.reason);
+  }
+
   @HttpCode(200)
   @Post('withdrawals/:id/approve')
   approve(@CurrentUser('id') adminId: string, @Param('id') id: string) {

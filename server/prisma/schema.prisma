@@ -64,6 +64,7 @@ model User {
   blogPosts           BlogPost[]      @relation("BlogAuthor")
   orders              Order[]
   positions           Position[]
+  depositRequests     DepositRequest[]
 
   @@index([email])
 }
@@ -461,4 +462,36 @@ model Position {
 
   @@index([userId])
   @@index([accountId, status])
+}
+
+// ─────────────────────────── Deposit requests (manual rails) ───────────────────────────
+// Bank/crypto deposits: the client signals intent, real funds arrive off-platform,
+// finance confirms receipt, and ONLY THEN is the deposit posted to the ledger.
+// (Card deposits go straight through the PSP/Stripe + webhook instead.)
+
+enum DepositRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model DepositRequest {
+  id             String               @id @default(cuid())
+  userId         String
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId      String
+  method         String // bank | crypto
+  asset          String? // for crypto: BTC | ETH | USDT
+  amount         Decimal              @db.Decimal(18, 2)
+  currency       String               @default("USD")
+  reference      String               @unique
+  status         DepositRequestStatus @default(PENDING)
+  proofKey       String? // optional uploaded proof (object storage key)
+  journalEntryId String? // set when approved + posted
+  reviewedById   String?
+  reviewedAt     DateTime?
+  createdAt      DateTime             @default(now())
+
+  @@index([userId])
+  @@index([status])
 }

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JournalKind, JournalStatus, PostingDirection } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LedgerService } from '../ledger/ledger.service';
@@ -7,6 +8,7 @@ import { AuditService } from '../audit/audit.service';
 import { formatMoney, toMoney } from '../ledger/money';
 import { generateTxReference } from '../common/reference';
 import { PAYMENT_PROVIDER, type PaymentProvider } from '../payments/payment-provider';
+import type { Env } from '../config/env.validation';
 import type { AdjustmentDto } from './admin-finance.dto';
 
 @Injectable()
@@ -16,7 +18,84 @@ export class AdminFinanceService {
     private readonly ledger: LedgerService,
     private readonly audit: AuditService,
     @Inject(PAYMENT_PROVIDER) private readonly payments: PaymentProvider,
+    private readonly config: ConfigService<Env, true>,
   ) {}
+
+  // ── Deposit requests (manual bank/crypto rails) ──
+
+  /** Deposit requests awaiting finance confirmation of received funds. */
+  async pendingDepositRequests() {
+    const reqs = await this.prisma.depositRequest.findMany({
+      where: { status: 'PENDING' },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+      include: { user: true },
+    });
+    return reqs.map((r) => ({
+      id: r.id,
+      reference: r.reference,
+      method: r.method,
+      asset: r.asset,
+      amount: formatMoney(toMoney(r.amount.toString())),
+      createdAt: r.createdAt,
+      client: r.user ? { id: r.user.id, name: `${r.user.firstName} ${r.user.lastName}`, email: r.user.email } : null,
+    }));
+  }
+
+  /** Confirm receipt → post the real deposit to the client ledger. */
+  async approveDepositRequest(adminId: string, requestId: string) {
+    const req = await this.prisma.depositRequest.findUnique({ where: { id: requestId } });
+    if (!req) throw new NotFoundException('Deposit request not found');
+    if (req.status !== 'PENDING') throw new BadRequestException('Deposit request is not pending');
+
+    const account = await this.prisma.tradingAccount.findUnique({
+      where: { id: req.accountId },
+      include: { ledgerAccount: true },
+    });
+    if (!account?.ledgerAccount) throw new NotFoundException('Target account not found');
+
+    const clearing = await this.ledger.getSystemAccount('SYSTEM:PSP_CLEARING');
+    const amount = toMoney(req.amount.toString());
+    const simulated = this.config.get('TRADING_MODE', { infer: true }) !== 'LIVE';
+
+    const entry = await this.ledger.post({
+      kind: JournalKind.DEPOSIT,
+      reference: generateTxReference(),
+      idempotencyKey: `deposit-req:${req.id}`,
+      simulated,
+      createdById: req.userId,
+      memo: `Deposit via ${req.method}${req.asset ? ` (${req.asset})` : ''} — confirmed`,
+      postings: [
+        { ledgerAccountId: clearing.id, direction: PostingDirection.DEBIT, amount },
+        { ledgerAccountId: account.ledgerAccount.id, direction: PostingDirection.CREDIT, amount },
+      ],
+    });
+
+    await this.prisma.depositRequest.update({
+      where: { id: req.id },
+      data: { status: 'APPROVED', journalEntryId: entry.id, reviewedById: adminId, reviewedAt: new Date() },
+    });
+    await this.audit.record({
+      userId: adminId,
+      action: 'finance.deposit.approve',
+      entity: 'DepositRequest',
+      entityId: req.id,
+      metadata: { amount: req.amount.toString(), method: req.method, simulated },
+    });
+    return { ok: true, status: 'APPROVED', reference: entry.reference };
+  }
+
+  async rejectDepositRequest(adminId: string, requestId: string, reason?: string) {
+    const req = await this.prisma.depositRequest.findUnique({ where: { id: requestId } });
+    if (!req) throw new NotFoundException('Deposit request not found');
+    if (req.status !== 'PENDING') throw new BadRequestException('Deposit request is not pending');
+    await this.prisma.depositRequest.update({
+      where: { id: req.id },
+      data: { status: 'REJECTED', reviewedById: adminId, reviewedAt: new Date() },
+    });
+    await this.audit.record({ userId: adminId, action: 'finance.deposit.reject', entity: 'DepositRequest', entityId: req.id, metadata: { reason } });
+    return { ok: true, status: 'REJECTED' };
+  }
 
   private async listByKindStatus(kind: JournalKind, status: JournalStatus) {
     const entries = await this.prisma.journalEntry.findMany({

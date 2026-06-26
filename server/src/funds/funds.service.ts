@@ -10,7 +10,7 @@ import { formatMoney, toMoney } from '../ledger/money';
 import { generateTxReference } from '../common/reference';
 import { PAYMENT_PROVIDER, type PaymentProvider } from '../payments/payment-provider';
 import type { Env } from '../config/env.validation';
-import { DepositDto, WithdrawDto, TransferDto } from './dto';
+import { DepositDto, RequestDepositDto, WithdrawDto, TransferDto } from './dto';
 
 @Injectable()
 export class FundsService {
@@ -48,6 +48,69 @@ export class FundsService {
       return this.deposit(userId, dto);
     }
     return { checkoutUrl: checkout.url };
+  }
+
+  /** Configured deposit instructions (bank details, crypto addresses). */
+  private depositInstructions() {
+    const bank = this.config.get('BANK_DEPOSIT_DETAILS', { infer: true }) ?? null;
+    const assets = (
+      [
+        ['BTC', this.config.get('CRYPTO_BTC_ADDRESS', { infer: true })],
+        ['ETH', this.config.get('CRYPTO_ETH_ADDRESS', { infer: true })],
+        ['USDT', this.config.get('CRYPTO_USDT_ADDRESS', { infer: true })],
+      ] as const
+    )
+      .filter(([, address]) => !!address)
+      .map(([symbol, address]) => ({ symbol, address: address as string }));
+    return { bank, assets };
+  }
+
+  /** The deposit rails on offer and whether each is live/manual/unavailable. */
+  depositMethods() {
+    const cardLive = this.payments.name === 'stripe';
+    const { bank, assets } = this.depositInstructions();
+    return [
+      { id: 'card', label: 'Credit / Debit Card', type: 'card', status: cardLive ? 'live' : 'unavailable', note: cardLive ? 'Instant · Visa/Mastercard' : 'Connect Stripe to enable' },
+      { id: 'bank', label: 'Bank Transfer', type: 'bank', status: bank ? 'manual' : 'unavailable', note: '1–3 business days', instructions: bank },
+      { id: 'crypto', label: 'Crypto', type: 'crypto', status: assets.length ? 'manual' : 'unavailable', note: 'BTC · ETH · USDT', assets },
+      { id: 'ewallet', label: 'E-Wallets', type: 'ewallet', status: 'unavailable', note: 'Skrill / Neteller — provider pending' },
+    ];
+  }
+
+  /**
+   * Start a deposit on the chosen rail. Card → hosted PSP checkout. Bank/crypto →
+   * a deposit REQUEST: the client gets pay-in instructions, real funds arrive
+   * off-platform, and finance confirms receipt before the ledger is credited.
+   */
+  async requestDeposit(userId: string, dto: RequestDepositDto) {
+    await this.accounts.ledgerAccountIdFor(userId, dto.accountId); // validates ownership
+
+    if (dto.method === 'card') {
+      return this.depositCheckout(userId, { accountId: dto.accountId, amount: dto.amount, method: 'Card' } as DepositDto);
+    }
+
+    const { bank, assets } = this.depositInstructions();
+    let instructions: string;
+    if (dto.method === 'bank') {
+      if (!bank) throw new BadRequestException('Bank transfer is not available.');
+      instructions = bank;
+    } else {
+      const asset = assets.find((a) => a.symbol === dto.asset);
+      if (!asset) throw new BadRequestException('Unsupported or unavailable crypto asset.');
+      instructions = `Send ${asset.symbol} to:\n${asset.address}`;
+    }
+
+    const reference = generateTxReference();
+    const req = await this.prisma.depositRequest.create({
+      data: { userId, accountId: dto.accountId, method: dto.method, asset: dto.asset ?? null, amount: dto.amount, reference, status: 'PENDING' },
+    });
+    await this.audit.record({ userId, action: 'funds.deposit.request', entity: 'DepositRequest', entityId: req.id, metadata: { method: dto.method, asset: dto.asset, amount: dto.amount } });
+    return { reference, status: 'PENDING' as const, method: dto.method, amount: formatMoney(toMoney(dto.amount)), instructions };
+  }
+
+  /** A client's recent deposit requests (bank/crypto), newest first. */
+  myDepositRequests(userId: string) {
+    return this.prisma.depositRequest.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 50 });
   }
 
   async deposit(userId: string, dto: DepositDto) {
