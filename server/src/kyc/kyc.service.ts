@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { KycStepStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { KycStorageService } from './storage';
+import { STORAGE_PROVIDER, type StorageProvider } from './storage-provider';
 import type { KycStep } from './dto';
 
 const STEP_FIELD: Record<KycStep, 'identityStatus' | 'addressStatus' | 'selfieStatus'> = {
@@ -23,7 +23,7 @@ export class KycService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
-    private readonly storage: KycStorageService,
+    @Inject(STORAGE_PROVIDER) private readonly storage: StorageProvider,
   ) {}
 
   /** True when all three KYC steps are approved (gates LIVE withdrawals). */
@@ -75,7 +75,7 @@ export class KycService {
       create: { userId },
     });
 
-    const storageKey = await this.storage.save(userId, file.originalname, file.buffer);
+    const storageKey = await this.storage.save(userId, file.originalname, file.buffer, file.mimetype);
 
     await this.prisma.$transaction([
       this.prisma.kycProfile.update({

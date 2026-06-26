@@ -44,6 +44,15 @@ export const envSchema = z
     MT5_API_KEY: z.string().optional(),
     MT5_ACCOUNT_ID: z.string().optional(),
 
+    // ── Document storage (KYC) ──
+    // 'local' (default) stores on disk; 's3' uses an S3-compatible bucket
+    // (AWS, R2, MinIO) with server-side encryption. Creds via the AWS default chain.
+    STORAGE_PROVIDER: z.enum(['local', 's3']).default('local'),
+    S3_BUCKET: z.string().optional(),
+    S3_REGION: z.string().optional(),
+    S3_ENDPOINT: z.string().optional(),
+    S3_PREFIX: z.string().optional(),
+
     // ── Payments (PSP) ──
     // Which payment provider backs funding. 'simulation' (default) moves no real
     // money; 'stripe' enables the Stripe adapter (requires keys + LIVE gating).
