@@ -20,6 +20,7 @@ import { useToast } from '@/context/ToastContext'
 import { zodResolver } from '@/lib/zodResolver'
 import { depositSchema, transferSchema } from '@/lib/validation'
 import { formatCurrency, formatDateTime } from '@/lib/format'
+import { fundingStatusLabel } from '@/lib/fundingStatus'
 import { z } from 'zod'
 
 const tabs: TabItem[] = [
@@ -156,9 +157,10 @@ function DepositTab() {
 }
 
 function WithdrawTab() {
-  const { accounts, withdraw } = usePortalData()
+  const { accounts, withdraw, transactions } = usePortalData()
   const toast = useToast()
   const liveAccounts = accounts.filter((a) => a.mode === 'Live')
+  const pendingWithdrawals = transactions.filter((t) => t.kind === 'Withdrawal' && t.status === 'Pending')
   const {
     register,
     handleSubmit,
@@ -177,9 +179,12 @@ function WithdrawTab() {
   }
 
   return (
-    <div className="glass-panel max-w-lg p-6">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,28rem)_1fr]">
+      <div className="glass-panel p-6">
       <h2 className="font-display text-lg font-semibold text-white">Withdraw Funds</h2>
-      <p className="mt-1 text-sm text-gray-400">Withdrawals are processed to your verified method.</p>
+      <p className="mt-1 text-sm text-gray-400">
+        Withdrawals are reviewed by our finance team before payout. Funds are held while your request is pending.
+      </p>
       <form onSubmit={handleSubmit(onSubmit)} className="mt-5 space-y-4" noValidate>
         <Select
           label="From account"
@@ -210,6 +215,42 @@ function WithdrawTab() {
           Request Withdrawal
         </Button>
       </form>
+      </div>
+
+      {/* Pending-withdrawal tracker + status legend */}
+      <div className="space-y-4">
+        <div className="glass-panel p-5">
+          <h3 className="font-display text-base font-semibold text-white">Your withdrawal requests</h3>
+          {pendingWithdrawals.length === 0 ? (
+            <p className="mt-2 text-sm text-gray-500">No withdrawals awaiting approval.</p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {pendingWithdrawals.map((t) => (
+                <li
+                  key={t.id}
+                  className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-ink-800/50 px-4 py-3"
+                >
+                  <div>
+                    <p className="font-medium text-white">{formatCurrency(t.amount)}</p>
+                    <p className="text-xs text-gray-500">{formatDateTime(t.date)} · {t.method}</p>
+                  </div>
+                  <Badge tone="warning" dot>
+                    {fundingStatusLabel(t.kind, t.status)}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="rounded-xl border border-white/[0.06] bg-ink-800/40 p-4 text-sm text-gray-400">
+          <p className="font-medium text-gray-300">What the statuses mean</p>
+          <ul className="mt-2 space-y-1.5">
+            <li><span className="text-warning">Pending approval</span> — submitted; finance is reviewing it.</li>
+            <li><span className="text-success">Paid</span> — approved and sent to your method.</li>
+            <li><span className="text-danger">Rejected</span> — declined; the held funds are returned to your balance.</li>
+          </ul>
+        </div>
+      </div>
     </div>
   )
 }
@@ -283,7 +324,7 @@ function HistoryTab() {
                 <td className="px-5 py-3.5 text-gray-400">{formatDateTime(t.date)}</td>
                 <td className="px-5 py-3.5 text-right">
                   <Badge tone={statusTone(t.status)} dot>
-                    {t.status}
+                    {fundingStatusLabel(t.kind, t.status)}
                   </Badge>
                 </td>
               </tr>

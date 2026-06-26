@@ -12,6 +12,7 @@ import { usePortalData } from '@/context/PortalDataContext'
 import { useLiveQuotes } from '@/lib/useLiveQuotes'
 import { useCandles } from '@/lib/useCandles'
 import { formatCurrency, formatDate } from '@/lib/format'
+import { fundingStatusLabel } from '@/lib/fundingStatus'
 import { cn } from '@/lib/cn'
 
 const LABELS: Record<string, string> = {
@@ -126,6 +127,7 @@ export default function DashboardPage() {
           return (
             <button
               key={sym}
+              type="button"
               onClick={() => setSelected(sym)}
               className={cn(
                 'glass-panel card-lift p-4 text-left transition',
@@ -207,7 +209,7 @@ export default function DashboardPage() {
         {/* Statistics */}
         <div className="glass-panel p-5">
           <h3 className="mb-3 font-display text-base font-semibold text-white">Price Statistics</h3>
-          <dl className="divide-y divide-white/[0.05] text-sm">
+          <div className="divide-y divide-white/[0.05] text-sm">
             <Row k="Value in USD" v={fmt(last)} />
             <Row k="Price Change" v={chg !== undefined ? `${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%` : '—'} tone={chg} />
             <Row k="Session Open" v={fmt(stats?.open)} />
@@ -215,7 +217,7 @@ export default function DashboardPage() {
             <Row k="Session Low" v={fmt(stats?.low)} />
             <Row k="Last Close" v={fmt(stats?.close)} />
             <Row k="Data Points" v={stats ? String(stats.points) : '—'} />
-          </dl>
+          </div>
         </div>
 
         {/* Sentiment (compliant replacement for the prediction meter) */}
@@ -256,7 +258,7 @@ export default function DashboardPage() {
                   <tr key={t.id}>
                     <td className="px-5 py-3 font-medium text-white">{t.kind}</td>
                     <td className="px-5 py-3 text-right tabular-nums text-white">{formatCurrency(t.amount)}</td>
-                    <td className="px-5 py-3"><Badge tone={statusTone(t.status)}>{t.status}</Badge></td>
+                    <td className="px-5 py-3"><Badge tone={statusTone(t.status)}>{fundingStatusLabel(t.kind, t.status)}</Badge></td>
                     <td className="px-5 py-3 text-gray-400">{formatDate(t.date)}</td>
                   </tr>
                 ))}
@@ -342,8 +344,8 @@ function Row({ k, v, tone }: { k: string; v: string; tone?: number }) {
   const color = tone !== undefined ? (tone >= 0 ? 'text-success' : 'text-danger') : 'text-white'
   return (
     <div className="flex items-center justify-between py-2.5">
-      <dt className="text-gray-400">{k}</dt>
-      <dd className={cn('font-mono tabular-nums', color)}>{v}</dd>
+      <span className="text-gray-400">{k}</span>
+      <span className={cn('font-mono tabular-nums', color)}>{v}</span>
     </div>
   )
 }

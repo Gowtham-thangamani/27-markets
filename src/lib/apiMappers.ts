@@ -47,7 +47,7 @@ const txStatusFromApi: Record<string, TxStatus> = {
   POSTED: 'Completed',
   PENDING: 'Pending',
   FAILED: 'Failed',
-  REVERSED: 'Failed',
+  REVERSED: 'Rejected', // a reversed withdrawal = rejected by finance
 }
 const kycStatusFromApi: Record<string, KycStatus> = {
   NOT_SUBMITTED: 'Not Submitted',

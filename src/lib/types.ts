@@ -21,7 +21,7 @@ export interface TradingAccount {
 }
 
 export type TxKind = 'Deposit' | 'Withdrawal' | 'Transfer'
-export type TxStatus = 'Completed' | 'Pending' | 'Failed'
+export type TxStatus = 'Completed' | 'Pending' | 'Failed' | 'Rejected'
 
 export interface Transaction {
   id: string
