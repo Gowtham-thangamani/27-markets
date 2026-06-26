@@ -29,6 +29,10 @@ type AccountWithLedger = Prisma.TradingAccountGetPayload<{ include: { ledgerAcco
 
 /** Margin level (%) at which open positions are force-liquidated. */
 const STOP_OUT_LEVEL = 50;
+/** Balance a demo account is reset to. */
+const DEMO_RESET_BALANCE = 50000;
+
+const round2 = (n: number) => Number(n.toFixed(2));
 
 @Injectable()
 export class TradingService {
@@ -76,6 +80,24 @@ export class TradingService {
     }
   }
 
+  private async currentPrice(symbol: string): Promise<number | undefined> {
+    const [q] = await this.market.getQuotes([symbol]);
+    return q && q.price > 0 ? q.price : undefined;
+  }
+
+  /** A pending order must trigger on the correct side of the market (else it would fill instantly). */
+  private assertTriggerDirection(type: OrderType, side: OrderSide, trigger: number, ref: number | undefined): void {
+    if (ref == null) return;
+    // LIMIT+BUY and STOP+SELL trigger below the price; LIMIT+SELL and STOP+BUY trigger above.
+    const below = (type === OrderType.LIMIT) === (side === OrderSide.BUY);
+    const valid = below ? trigger < ref : trigger > ref;
+    if (!valid) {
+      throw new BadRequestException(
+        `A ${side} ${type.toLowerCase()} order must trigger ${below ? 'below' : 'above'} the current price (${ref.toFixed(2)}).`,
+      );
+    }
+  }
+
   // ── Order placement ──────────────────────────────────────────────────────
 
   async placeOrder(userId: string, dto: PlaceOrderDto) {
@@ -97,6 +119,7 @@ export class TradingService {
     if (!dto.triggerPrice || !(dto.triggerPrice > 0)) {
       throw new BadRequestException('A trigger price is required for limit/stop orders.');
     }
+    this.assertTriggerDirection(type, dto.side, dto.triggerPrice, await this.currentPrice(dto.symbol));
     await this.assertMargin(account, dto.triggerPrice * dto.quantity);
     const order = await this.prisma.order.create({
       data: {
@@ -162,6 +185,18 @@ export class TradingService {
     const pos = await this.prisma.position.findUnique({ where: { id: positionId } });
     if (!pos || pos.userId !== userId) throw new NotFoundException('Position not found');
     if (pos.status !== PositionStatus.OPEN) throw new BadRequestException('Position is closed.');
+
+    const entry = Number(pos.entryPrice);
+    const isBuy = pos.side === OrderSide.BUY;
+    if (dto.takeProfit != null) {
+      const ok = isBuy ? dto.takeProfit > entry : dto.takeProfit < entry;
+      if (!ok) throw new BadRequestException(`Take-profit must be ${isBuy ? 'above' : 'below'} the entry price (${entry}).`);
+    }
+    if (dto.stopLoss != null) {
+      const ok = isBuy ? dto.stopLoss < entry : dto.stopLoss > entry;
+      if (!ok) throw new BadRequestException(`Stop-loss must be ${isBuy ? 'below' : 'above'} the entry price (${entry}).`);
+    }
+
     const data: Prisma.PositionUpdateInput = {};
     if (dto.takeProfit !== undefined) data.takeProfit = dto.takeProfit;
     if (dto.stopLoss !== undefined) data.stopLoss = dto.stopLoss;
@@ -432,6 +467,94 @@ export class TradingService {
       this.logger.warn(`Stop-out on ${accountId}: margin ${snap.marginLevel.toFixed(0)}% < ${STOP_OUT_LEVEL}% — liquidating ${worst.position.symbol}`);
       await this.autoClose(worst.position, worst.cur, 'stopout');
     }
+  }
+
+  // ── Account margin / demo tools ──────────────────────────────────────────
+
+  /** Margin health for the Trade UI: balance, equity, used/free margin, level. */
+  async getMargin(userId: string, accountId: string) {
+    const account = await this.ownedAccount(userId, accountId);
+    const s = await this.marginSnapshot(account);
+    return {
+      accountId,
+      balance: round2(s.balance),
+      equity: round2(s.equity),
+      used: round2(s.used),
+      free: round2(s.equity - s.used),
+      unrealized: round2(s.unrealized),
+      marginLevel: Number.isFinite(s.marginLevel) ? round2(s.marginLevel) : null,
+      leverage: s.leverage,
+      openPositions: s.enriched.length,
+    };
+  }
+
+  /** Edit a pending limit/stop order's trigger price and/or quantity. */
+  async modifyOrder(userId: string, orderId: string, dto: { triggerPrice?: number; quantity?: number }) {
+    const o = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!o || o.userId !== userId) throw new NotFoundException('Order not found');
+    if (o.status !== 'PENDING') throw new BadRequestException('Only pending orders can be modified.');
+    const account = await this.ownedAccount(userId, o.accountId);
+
+    const triggerPrice = dto.triggerPrice ?? Number(o.triggerPrice);
+    const quantity = dto.quantity ?? Number(o.quantity);
+    if (!(triggerPrice > 0)) throw new BadRequestException('Invalid trigger price.');
+    if (!(quantity > 0)) throw new BadRequestException('Invalid quantity.');
+
+    this.assertTriggerDirection(o.type, o.side, triggerPrice, await this.currentPrice(o.symbol));
+    await this.assertMargin(account, triggerPrice * quantity);
+
+    const updated = await this.prisma.order.update({ where: { id: orderId }, data: { triggerPrice, quantity } });
+    await this.audit.record({
+      userId,
+      action: 'trade.order.modify',
+      entity: 'Order',
+      entityId: orderId,
+      metadata: { triggerPrice, quantity },
+    });
+    return updated;
+  }
+
+  /** Reset a demo account: cancel pending, close positions, restore the starting balance. */
+  async resetDemo(userId: string, accountId: string) {
+    const account = await this.ownedAccount(userId, accountId);
+    if (account.mode !== 'DEMO') throw new BadRequestException('Only demo accounts can be reset.');
+
+    await this.prisma.order.updateMany({ where: { accountId, status: 'PENDING' }, data: { status: 'CANCELLED' } });
+    await this.prisma.position.updateMany({
+      where: { accountId, status: PositionStatus.OPEN },
+      data: { status: PositionStatus.CLOSED, closedAt: new Date() },
+    });
+
+    if (account.ledgerAccount) {
+      const bal = Number(await this.ledger.balanceOf(account.ledgerAccount.id));
+      const delta = round2(DEMO_RESET_BALANCE - bal);
+      if (Math.abs(delta) >= 0.01) {
+        const demoFunding = await this.ledger.getSystemAccount('SYSTEM:DEMO_FUNDING');
+        const amount = toMoney(Math.abs(delta).toFixed(2));
+        const clientId = account.ledgerAccount.id;
+        const postings =
+          delta > 0
+            ? [
+                { ledgerAccountId: demoFunding.id, direction: PostingDirection.DEBIT, amount },
+                { ledgerAccountId: clientId, direction: PostingDirection.CREDIT, amount },
+              ]
+            : [
+                { ledgerAccountId: clientId, direction: PostingDirection.DEBIT, amount },
+                { ledgerAccountId: demoFunding.id, direction: PostingDirection.CREDIT, amount },
+              ];
+        await this.ledger.post({
+          kind: JournalKind.ADJUSTMENT,
+          reference: generateTxReference(),
+          idempotencyKey: `demo-reset:${accountId}:${randomUUID()}`,
+          simulated: true,
+          createdById: userId,
+          memo: 'Demo account reset',
+          postings,
+        });
+      }
+    }
+    await this.audit.record({ userId, action: 'trade.demo.reset', entity: 'TradingAccount', entityId: accountId });
+    return this.getMargin(userId, accountId);
   }
 
   // ── Queries ──────────────────────────────────────────────────────────────

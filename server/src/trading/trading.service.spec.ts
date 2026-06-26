@@ -123,7 +123,7 @@ describe('TradingService.setProtection', () => {
   it('sets take-profit / stop-loss on an open position', async () => {
     const prisma = {
       position: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'p1', userId: 'u1', status: 'OPEN' }),
+        findUnique: jest.fn().mockResolvedValue({ id: 'p1', userId: 'u1', status: 'OPEN', side: 'BUY', entryPrice: new Prisma.Decimal(100) }),
         update: jest.fn().mockResolvedValue({ id: 'p1', takeProfit: 120 }),
       },
     } as any;
@@ -184,5 +184,79 @@ describe('TradingService.marginSnapshot', () => {
     expect(snap.unrealized).toBeCloseTo(-50); // (95-100)*10
     expect(snap.equity).toBeCloseTo(-20); // 30 - 50
     expect(snap.marginLevel).toBeCloseTo(-200); // -20/10*100
+  });
+});
+
+describe('TradingService.getMargin', () => {
+  it('returns balance, equity, used, free margin and level', async () => {
+    const prisma = {
+      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', leverage: '1:100', ledgerAccount: { id: 'cl' } }) },
+      position: { findMany: jest.fn().mockResolvedValue([{ symbol: 'X', side: 'BUY', quantity: new Prisma.Decimal(10), entryPrice: new Prisma.Decimal(100) }]) },
+    } as any;
+    const service = new TradingService(prisma, ledgerWith(1000) as any, audit() as any, simExec(1) as any, marketWith([{ symbol: 'X', price: 101 }]) as any);
+    const m = await service.getMargin('u1', 'acc1');
+    expect(m.used).toBeCloseTo(10); // 100*10/100
+    expect(m.equity).toBeCloseTo(1010); // 1000 + (101-100)*10
+    expect(m.free).toBeCloseTo(1000);
+    expect(m.marginLevel).toBeCloseTo(10100);
+  });
+});
+
+describe('TradingService.modifyOrder', () => {
+  it('updates a pending order trigger price and quantity', async () => {
+    const prisma = {
+      order: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'po1', userId: 'u1', accountId: 'acc1', symbol: 'X', side: 'BUY', type: 'LIMIT', status: 'PENDING', triggerPrice: new Prisma.Decimal(90), quantity: new Prisma.Decimal(1) }),
+        update: jest.fn().mockResolvedValue({ id: 'po1', triggerPrice: 80, quantity: 2 }),
+      },
+      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
+      position: { findMany: jest.fn().mockResolvedValue([]) },
+    } as any;
+    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, simExec(1) as any, marketWith() as any);
+    await service.modifyOrder('u1', 'po1', { triggerPrice: 80, quantity: 2 });
+    expect(prisma.order.update).toHaveBeenCalledWith({ where: { id: 'po1' }, data: { triggerPrice: 80, quantity: 2 } });
+  });
+});
+
+describe('TradingService.resetDemo', () => {
+  it('cancels pending, closes positions, and restores the balance', async () => {
+    const post = jest.fn().mockResolvedValue({});
+    const prisma = {
+      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'DEMO', leverage: '1:100', ledgerAccount: { id: 'cl' } }) },
+      order: { updateMany: jest.fn().mockResolvedValue({}) },
+      position: { updateMany: jest.fn().mockResolvedValue({}), findMany: jest.fn().mockResolvedValue([]) },
+    } as any;
+    const ledger = { balanceOf: jest.fn().mockResolvedValue(30000), getSystemAccount: jest.fn().mockResolvedValue({ id: 'df' }), post } as any;
+    const service = new TradingService(prisma, ledger, audit() as any, simExec(1) as any, marketWith() as any);
+    await service.resetDemo('u1', 'acc1');
+    expect(prisma.order.updateMany).toHaveBeenCalled();
+    expect(prisma.position.updateMany).toHaveBeenCalled();
+    const postings = post.mock.calls[0][0].postings; // delta 50000-30000=20000 → add funds
+    expect(postings.map((p: any) => [p.ledgerAccountId, p.direction])).toEqual([['df', 'DEBIT'], ['cl', 'CREDIT']]);
+  });
+
+  it('refuses non-demo accounts', async () => {
+    const prisma = { tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'LIVE', ledgerAccount: { id: 'cl' } }) } } as any;
+    const service = new TradingService(prisma, ledgerWith(0) as any, audit() as any, simExec(1) as any, marketWith() as any);
+    await expect(service.resetDemo('u1', 'acc1')).rejects.toThrow('Only demo accounts');
+  });
+});
+
+describe('TradingService validation', () => {
+  it('rejects a take-profit on the wrong side of entry', async () => {
+    const prisma = { position: { findUnique: jest.fn().mockResolvedValue({ id: 'p1', userId: 'u1', status: 'OPEN', side: 'BUY', entryPrice: new Prisma.Decimal(100) }) } } as any;
+    const service = new TradingService(prisma, ledgerWith(0) as any, audit() as any, simExec(1) as any, marketWith() as any);
+    await expect(service.setProtection('u1', 'p1', { takeProfit: 90 } as any)).rejects.toThrow('Take-profit must be above');
+  });
+
+  it('rejects a limit buy placed above the market', async () => {
+    const prisma = {
+      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'DEMO', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
+      position: { findMany: jest.fn().mockResolvedValue([]) },
+    } as any;
+    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, simExec(100) as any, marketWith([{ symbol: 'X', price: 100 }]) as any);
+    await expect(
+      service.placeOrder('u1', { accountId: 'acc1', symbol: 'X', side: 'BUY', quantity: 1, type: 'LIMIT', triggerPrice: 110 } as any),
+    ).rejects.toThrow('must trigger below');
   });
 });

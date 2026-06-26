@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, Param, Post, Query } from '@nestjs/com
 import type { PositionStatus } from '@prisma/client';
 import { CurrentUser } from '../common/decorators';
 import { TradingService } from './trading.service';
-import { ClosePositionDto, PlaceOrderDto, SetProtectionDto } from './trading.dto';
+import { ClosePositionDto, ModifyOrderDto, PlaceOrderDto, SetProtectionDto } from './trading.dto';
 
 /** Client trading endpoints (authenticated). Demo execution today; MT5 at go-live. */
 @Controller('trading')
@@ -20,10 +20,27 @@ export class TradingController {
     return this.trading.listOrders(userId);
   }
 
+  @Get('margin')
+  margin(@CurrentUser('id') userId: string, @Query('accountId') accountId: string) {
+    return this.trading.getMargin(userId, accountId);
+  }
+
+  @HttpCode(200)
+  @Post('orders/:id/modify')
+  modify(@CurrentUser('id') userId: string, @Param('id') id: string, @Body() dto: ModifyOrderDto) {
+    return this.trading.modifyOrder(userId, id, dto);
+  }
+
   @HttpCode(200)
   @Post('orders/:id/cancel')
   cancel(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return this.trading.cancelOrder(userId, id);
+  }
+
+  @HttpCode(200)
+  @Post('accounts/:id/reset')
+  reset(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.trading.resetDemo(userId, id);
   }
 
   @Get('positions')

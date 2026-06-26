@@ -40,6 +40,18 @@ export class ClosePositionDto {
   quantity?: number;
 }
 
+export class ModifyOrderDto {
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  triggerPrice?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  quantity?: number;
+}
+
 export class SetProtectionDto {
   // null clears the level; a number sets it; undefined leaves it unchanged.
   @IsOptional()
