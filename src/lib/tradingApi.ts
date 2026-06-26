@@ -35,6 +35,18 @@ export interface Order {
   createdAt: string
 }
 
+export interface Margin {
+  accountId: string
+  balance: number
+  equity: number
+  used: number
+  free: number
+  unrealized: number
+  marginLevel: number | null
+  leverage: number
+  openPositions: number
+}
+
 export const tradingApi = {
   placeOrder: (body: {
     accountId: string
@@ -52,4 +64,8 @@ export const tradingApi = {
   setProtection: (id: string, body: { takeProfit?: number | null; stopLoss?: number | null }) =>
     api.post<Position>(`/trading/positions/${id}/protection`, body),
   cancelOrder: (id: string) => api.post<Order>(`/trading/orders/${id}/cancel`),
+  modifyOrder: (id: string, body: { triggerPrice?: number; quantity?: number }) =>
+    api.post<Order>(`/trading/orders/${id}/modify`, body),
+  margin: (accountId: string) => api.get<Margin>(`/trading/margin?accountId=${accountId}`),
+  resetDemo: (accountId: string) => api.post<Margin>(`/trading/accounts/${accountId}/reset`),
 }

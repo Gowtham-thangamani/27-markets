@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { TrendingUp, LineChart, Clock, SlidersHorizontal } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { TrendingUp, LineChart, Clock, SlidersHorizontal, RotateCcw, Pencil } from 'lucide-react'
 import { Badge, Button, EmptyState, Input, Modal, Select, SkeletonRows } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
 import { usePortalUI } from '@/layouts/PortalLayout'
@@ -7,7 +7,7 @@ import { usePortalData } from '@/context/PortalDataContext'
 import { useToast } from '@/context/ToastContext'
 import { useLiveQuotes } from '@/lib/useLiveQuotes'
 import { ApiError } from '@/lib/api'
-import { tradingApi, type OrderSide, type OrderType, type OrderStatus, type Order, type Position } from '@/lib/tradingApi'
+import { tradingApi, type OrderSide, type OrderType, type OrderStatus, type Order, type Position, type Margin } from '@/lib/tradingApi'
 import { formatCurrency } from '@/lib/format'
 import { cn } from '@/lib/cn'
 
@@ -18,6 +18,17 @@ const ORDER_TYPES: { value: OrderType; label: string }[] = [
 ]
 const statusTone = (s: OrderStatus): 'success' | 'warning' | 'danger' | 'neutral' =>
   s === 'FILLED' ? 'success' : s === 'PENDING' ? 'warning' : s === 'REJECTED' ? 'danger' : 'neutral'
+
+function Stat({ label, value, tone = 'neutral' }: { label: string; value: string; tone?: 'up' | 'down' | 'neutral' }) {
+  return (
+    <div>
+      <div className="text-[11px] uppercase tracking-wide text-gray-500">{label}</div>
+      <div className={cn('mt-0.5 font-mono text-sm font-medium tabular-nums', tone === 'up' ? 'text-success' : tone === 'down' ? 'text-danger' : 'text-white')}>
+        {value}
+      </div>
+    </div>
+  )
+}
 
 const INSTRUMENTS = [
   { sym: 'BINANCE:BTCUSDT', label: 'BTC / USD' },
@@ -39,8 +50,13 @@ export default function TradePage() {
 
   const [positions, setPositions] = useState<Position[]>([])
   const [orders, setOrders] = useState<Order[]>([])
+  const [margin, setMargin] = useState<Margin | null>(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
+
+  // Detect server-side auto-closes (TP/SL/stop-out) between polls.
+  const prevOpenIds = useRef<Set<string>>(new Set())
+  const lastActionAt = useRef(0)
 
   const [accountId, setAccountId] = useState('')
   const [symbol, setSymbol] = useState(INSTRUMENTS[0].sym)
@@ -55,26 +71,58 @@ export default function TradePage() {
   const [sl, setSl] = useState('')
   const [partial, setPartial] = useState('')
 
+  // Edit pending order modal
+  const [editId, setEditId] = useState<string | null>(null)
+  const [editTrigger, setEditTrigger] = useState('')
+  const [editQty, setEditQty] = useState('')
+
   const pendingOrders = useMemo(() => orders.filter((o) => o.status === 'PENDING'), [orders])
   const historyOrders = useMemo(() => orders.filter((o) => o.status !== 'PENDING'), [orders])
   const managePos = useMemo(() => positions.find((p) => p.id === manageId) ?? null, [positions, manageId])
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      const [p, o] = await Promise.all([tradingApi.listPositions('OPEN'), tradingApi.listOrders()])
-      setPositions(p)
-      setOrders(o)
-    } catch {
-      /* shown via toast on actions */
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  const load = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true)
+      try {
+        const [p, o] = await Promise.all([tradingApi.listPositions('OPEN'), tradingApi.listOrders()])
+        // Detect positions auto-closed server-side (TP/SL/stop-out) since the last poll.
+        const currentIds = new Set(p.map((x) => x.id))
+        const gone = [...prevOpenIds.current].filter((id) => !currentIds.has(id))
+        if (gone.length && Date.now() - lastActionAt.current > 2500) {
+          toast.info(
+            'Position closed',
+            `${gone.length} position${gone.length > 1 ? 's were' : ' was'} auto-closed (take-profit, stop-loss, or stop-out). See order history.`,
+          )
+        }
+        prevOpenIds.current = currentIds
+        setPositions(p)
+        setOrders(o)
+        if (accountId) {
+          try {
+            setMargin(await tradingApi.margin(accountId))
+          } catch {
+            /* margin is best-effort */
+          }
+        }
+      } catch {
+        /* surfaced via toast on actions */
+      } finally {
+        if (!silent) setLoading(false)
+      }
+    },
+    [accountId, toast],
+  )
 
   useEffect(() => {
     void load()
   }, [load])
+
+  // Live refresh so auto-closes, fills, and P&L stay current.
+  useEffect(() => {
+    const id = window.setInterval(() => void load(true), 5000)
+    return () => window.clearInterval(id)
+  }, [load])
+
   useEffect(() => {
     if (!accountId && demoAccounts[0]) setAccountId(demoAccounts[0].id)
   }, [demoAccounts, accountId])
@@ -142,6 +190,7 @@ export default function TradePage() {
     const full = Number(managePos.quantity)
     const qty = Number(partial)
     const partialQty = qty > 0 && qty < full ? qty : undefined
+    lastActionAt.current = Date.now()
     setBusy('closeManaged')
     try {
       const res = await tradingApi.closePosition(manageId, partialQty)
@@ -169,7 +218,47 @@ export default function TradePage() {
     }
   }
 
+  const openEdit = (o: Order) => {
+    setEditId(o.id)
+    setEditTrigger(o.triggerPrice ? String(Number(o.triggerPrice)) : '')
+    setEditQty(String(Number(o.quantity)))
+  }
+
+  const saveEdit = async () => {
+    if (!editId) return
+    setBusy('edit')
+    try {
+      await tradingApi.modifyOrder(editId, {
+        triggerPrice: editTrigger ? Number(editTrigger) : undefined,
+        quantity: editQty ? Number(editQty) : undefined,
+      })
+      toast.success('Order updated', 'The pending order was modified.')
+      await load()
+      setEditId(null)
+    } catch (e) {
+      toast.error('Could not update', e instanceof ApiError ? e.message : (e as Error).message)
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const resetDemo = async () => {
+    if (!accountId) return
+    setBusy('reset')
+    try {
+      lastActionAt.current = Date.now()
+      await tradingApi.resetDemo(accountId)
+      toast.success('Demo reset', 'Positions closed and balance restored to $50,000.')
+      await load()
+    } catch (e) {
+      toast.error('Could not reset', (e as Error).message)
+    } finally {
+      setBusy(null)
+    }
+  }
+
   const close = async (id: string) => {
+    lastActionAt.current = Date.now()
     setBusy(id)
     try {
       const p = await tradingApi.closePosition(id)
@@ -282,6 +371,30 @@ export default function TradePage() {
 
         {/* Positions + orders */}
         <div className="space-y-4">
+          {/* Account margin / equity */}
+          <div className="glass-panel p-5">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="grid flex-1 grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-5">
+                <Stat label="Equity" value={margin ? formatCurrency(margin.equity) : '—'} />
+                <Stat label="Balance" value={margin ? formatCurrency(margin.balance) : '—'} />
+                <Stat label="Free margin" value={margin ? formatCurrency(margin.free) : '—'} />
+                <Stat
+                  label="Margin level"
+                  value={margin?.marginLevel != null ? `${fmtNum(margin.marginLevel)}%` : '—'}
+                  tone={margin?.marginLevel == null ? 'neutral' : margin.marginLevel >= 100 ? 'up' : 'down'}
+                />
+                <Stat
+                  label="Unrealized P&L"
+                  value={margin ? `${margin.unrealized >= 0 ? '+' : ''}${fmtNum(margin.unrealized)}` : '—'}
+                  tone={margin ? (margin.unrealized >= 0 ? 'up' : 'down') : 'neutral'}
+                />
+              </div>
+              <Button size="sm" variant="outline" loading={busy === 'reset'} onClick={resetDemo}>
+                <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Reset demo
+              </Button>
+            </div>
+          </div>
+
           <div className="glass-panel overflow-hidden p-0">
             <div className="flex items-center gap-2 border-b border-white/[0.06] p-5">
               <TrendingUp className="h-4 w-4 text-brand-400" />
@@ -383,9 +496,14 @@ export default function TradePage() {
                         <td className="px-5 py-3 text-right tabular-nums text-warning">{o.triggerPrice ? fmtNum(Number(o.triggerPrice)) : '—'}</td>
                         <td className="px-5 py-3 text-right tabular-nums text-white">{quotes[o.symbol]?.price ? fmtNum(quotes[o.symbol].price) : '—'}</td>
                         <td className="px-5 py-3">
-                          <Button size="sm" variant="outline" loading={busy === o.id} onClick={() => cancel(o.id)}>
-                            Cancel
-                          </Button>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button size="sm" variant="outline" aria-label="Edit order" onClick={() => openEdit(o)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="sm" variant="outline" loading={busy === o.id} onClick={() => cancel(o.id)}>
+                              Cancel
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -441,6 +559,32 @@ export default function TradePage() {
           description={`${managePos.side} ${Number(managePos.quantity)} @ ${fmtNum(Number(managePos.entryPrice))}`}
         >
           <div className="space-y-5">
+            {(() => {
+              const cur = quotes[managePos.symbol]?.price
+              const entry = Number(managePos.entryPrice)
+              const qty = Number(managePos.quantity)
+              const upnl = cur != null ? (cur - entry) * qty * (managePos.side === 'BUY' ? 1 : -1) : undefined
+              const realized = Number(managePos.realizedPnl ?? 0)
+              return (
+                <div className="grid grid-cols-3 gap-3 rounded-lg border border-white/[0.06] bg-ink-800/40 p-3 text-center">
+                  <div>
+                    <div className="text-[11px] text-gray-500">Market</div>
+                    <div className="font-mono text-sm text-white">{cur ? fmtNum(cur) : '—'}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-gray-500">Unrealized</div>
+                    <div className={cn('font-mono text-sm', upnl === undefined ? 'text-gray-500' : upnl >= 0 ? 'text-success' : 'text-danger')}>
+                      {upnl === undefined ? '—' : `${upnl >= 0 ? '+' : ''}${fmtNum(upnl)}`}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-gray-500">Realized</div>
+                    <div className="font-mono text-sm text-white">{realized ? `${realized >= 0 ? '+' : ''}${fmtNum(realized)}` : '—'}</div>
+                  </div>
+                </div>
+              )
+            })()}
+
             <div>
               <h4 className="mb-2 text-sm font-semibold text-white">Protection</h4>
               <div className="grid grid-cols-2 gap-3">
@@ -475,6 +619,28 @@ export default function TradePage() {
           </div>
         </Modal>
       )}
+
+      {editId &&
+        (() => {
+          const o = orders.find((x) => x.id === editId)
+          if (!o) return null
+          return (
+            <Modal
+              open={!!editId}
+              onClose={() => setEditId(null)}
+              title={`Edit ${o.type.toLowerCase()} order`}
+              description={`${o.side} ${symLabel(o.symbol)} · market ${quotes[o.symbol]?.price ? fmtNum(quotes[o.symbol].price) : '—'}`}
+            >
+              <div className="space-y-3">
+                <Input label="Trigger price" type="number" value={editTrigger} onChange={(e) => setEditTrigger(e.target.value)} />
+                <Input label="Quantity" type="number" value={editQty} onChange={(e) => setEditQty(e.target.value)} />
+                <Button className="mt-1" fullWidth loading={busy === 'edit'} onClick={saveEdit}>
+                  Save changes
+                </Button>
+              </div>
+            </Modal>
+          )
+        })()}
     </>
   )
 }
