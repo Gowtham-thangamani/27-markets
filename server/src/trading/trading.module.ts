@@ -4,6 +4,7 @@ import type { Env } from '../config/env.validation';
 import { MarketModule } from '../market/market.module';
 import { TradingController } from './trading.controller';
 import { TradingService } from './trading.service';
+import { PendingOrderWatcher } from './pending-order.watcher';
 import {
   EXECUTION_PROVIDER,
   SimulationExecutionProvider,
@@ -21,6 +22,7 @@ import {
   controllers: [TradingController],
   providers: [
     TradingService,
+    PendingOrderWatcher,
     SimulationExecutionProvider,
     Mt5ExecutionProvider,
     {

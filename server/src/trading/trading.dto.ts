@@ -1,5 +1,5 @@
-import { IsEnum, IsNumber, IsPositive, IsString, MaxLength } from 'class-validator';
-import { OrderSide, PositionStatus } from '@prisma/client';
+import { IsEnum, IsNumber, IsOptional, IsPositive, IsString, MaxLength } from 'class-validator';
+import { OrderSide, OrderType, PositionStatus } from '@prisma/client';
 
 export class PlaceOrderDto {
   @IsString()
@@ -15,6 +15,16 @@ export class PlaceOrderDto {
   @IsNumber()
   @IsPositive()
   quantity!: number;
+
+  @IsOptional()
+  @IsEnum(OrderType)
+  type?: OrderType; // defaults to MARKET
+
+  // Required for LIMIT/STOP orders.
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  triggerPrice?: number;
 }
 
 export class ListPositionsQuery {

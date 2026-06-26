@@ -406,9 +406,12 @@ enum OrderSide {
 
 enum OrderType {
   MARKET
+  LIMIT
+  STOP
 }
 
 enum OrderStatus {
+  PENDING
   FILLED
   REJECTED
   CANCELLED
@@ -427,14 +430,16 @@ model Order {
   symbol    String
   side      OrderSide
   type      OrderType   @default(MARKET)
-  quantity  Decimal     @db.Decimal(18, 8)
-  price     Decimal     @db.Decimal(18, 8)
-  status    OrderStatus @default(FILLED)
-  simulated Boolean     @default(true)
-  createdAt DateTime    @default(now())
+  quantity     Decimal     @db.Decimal(18, 8)
+  price        Decimal     @db.Decimal(18, 8) // fill price (0 until a pending order fills)
+  triggerPrice Decimal?    @db.Decimal(18, 8) // for LIMIT/STOP
+  status       OrderStatus @default(FILLED)
+  simulated    Boolean     @default(true)
+  createdAt    DateTime    @default(now())
 
   @@index([userId])
   @@index([accountId])
+  @@index([status])
 }
 
 model Position {

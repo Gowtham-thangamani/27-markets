@@ -12,12 +12,18 @@ export class TradingController {
   @HttpCode(200)
   @Post('orders')
   place(@CurrentUser('id') userId: string, @Body() dto: PlaceOrderDto) {
-    return this.trading.openPosition(userId, dto);
+    return this.trading.placeOrder(userId, dto);
   }
 
   @Get('orders')
   orders(@CurrentUser('id') userId: string) {
     return this.trading.listOrders(userId);
+  }
+
+  @HttpCode(200)
+  @Post('orders/:id/cancel')
+  cancel(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.trading.cancelOrder(userId, id);
   }
 
   @Get('positions')
