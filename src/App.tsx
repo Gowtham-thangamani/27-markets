@@ -31,6 +31,7 @@ import RegisterPage from './pages/auth/RegisterPage'
 import DemoPage from './pages/auth/DemoPage'
 
 import DashboardPage from './pages/portal/DashboardPage'
+import TradePage from './pages/portal/TradePage'
 import PortalAccountsPage from './pages/portal/PortalAccountsPage'
 import FundsPage from './pages/portal/FundsPage'
 import KycPage from './pages/portal/KycPage'
@@ -71,6 +72,7 @@ export default function App() {
       >
         <Route index element={<Navigate to="/portal/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="trade" element={<TradePage />} />
         <Route path="accounts" element={<PortalAccountsPage />} />
         <Route path="funds" element={<FundsPage />} />
         <Route path="kyc" element={<KycPage />} />

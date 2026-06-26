@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  CandlestickChart,
   Wallet,
   ArrowLeftRight,
   Download,
@@ -17,6 +18,7 @@ export interface NavLinkItem {
 
 export const portalNav: NavLinkItem[] = [
   { label: 'Dashboard', to: '/portal/dashboard', icon: LayoutDashboard },
+  { label: 'Trade', to: '/portal/trade', icon: CandlestickChart },
   { label: 'Accounts', to: '/portal/accounts', icon: Wallet },
   { label: 'Funds', to: '/portal/funds', icon: ArrowLeftRight },
   { label: 'KYC', to: '/portal/kyc', icon: ShieldCheck },
