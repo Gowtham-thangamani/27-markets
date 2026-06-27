@@ -47,8 +47,6 @@ export class AdminDashboardService {
 
   async summary(): Promise<AdminDashboard> {
     const now = new Date();
-    const startOfToday = new Date(now);
-    startOfToday.setHours(0, 0, 0, 0);
     const windowStart = new Date(now);
     windowStart.setUTCDate(windowStart.getUTCDate() - (DAYS - 1));
     windowStart.setUTCHours(0, 0, 0, 0);
@@ -57,7 +55,6 @@ export class AdminDashboardService {
       totalClients,
       pendingKyc,
       pendingWithdrawals,
-      depositsToday,
       openTickets,
       leadGroups,
       kycProfiles,
@@ -80,9 +77,6 @@ export class AdminDashboardService {
       }),
       this.prisma.journalEntry.count({
         where: { kind: JournalKind.WITHDRAWAL, status: JournalStatus.PENDING },
-      }),
-      this.prisma.journalEntry.count({
-        where: { kind: JournalKind.DEPOSIT, createdAt: { gte: startOfToday } },
       }),
       this.prisma.ticket.count({ where: { status: TicketStatus.OPEN } }),
       this.prisma.lead.groupBy({ by: ['status'], _count: { _all: true } }),

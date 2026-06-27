@@ -16,8 +16,8 @@ function makePrisma() {
       ]),
     },
     journalEntry: {
-      // pendingWithdrawals count, depositsToday count, then findMany calls
-      count: jest.fn().mockResolvedValueOnce(2).mockResolvedValueOnce(5),
+      // pendingWithdrawals count
+      count: jest.fn().mockResolvedValue(2),
       findMany: jest.fn().mockResolvedValue([]), // deposits, withdrawals, recentWithdrawals series queries → empty
     },
     ticket: { count: jest.fn().mockResolvedValue(4) },
