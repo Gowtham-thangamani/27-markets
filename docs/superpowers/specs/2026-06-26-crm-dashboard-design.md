@@ -65,6 +65,8 @@ interface AdminDashboard {
     kyc:    Record<'NOT_SUBMITTED'|'PENDING'|'APPROVED'|'REJECTED', number>
   }
   recentSignups: Array<{ id: string; name: string; email: string; country: string | null; createdAt: string }>
+  recentActivity: Array<{ id: string; action: string; entity: string | null; createdAt: string; actor: string | null }>
+  recentWithdrawals: Array<{ id: string; reference: string; client: string | null; amount: string; createdAt: string }>
 }
 ```
 
