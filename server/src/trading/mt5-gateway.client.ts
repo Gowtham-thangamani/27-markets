@@ -3,9 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import type { Env } from '../config/env.validation';
 
 export interface Mt5Deal {
-  price: number;
-  ticket?: number;
-  volume?: number;
+  orderId?: string;
+  positionId?: string;
+  price?: number;
 }
 export interface Mt5Account {
   balance: number;
@@ -15,21 +15,27 @@ export interface Mt5Account {
   currency: string;
 }
 export interface Mt5Position {
-  ticket: number;
+  id: string;
   symbol: string;
-  type: 'BUY' | 'SELL';
+  type: string;
   volume: number;
   openPrice: number;
   profit: number;
+}
+export interface Mt5Price {
+  ask: number;
+  bid: number;
 }
 
 const TIMEOUT_MS = 10_000;
 
 /**
- * Thin HTTP client for an MT5 REST gateway (e.g. MetaApi.cloud, or a self-hosted
- * MT5 Manager/Gateway bridge). The endpoint shapes below are the contract our
- * adapter expects — map them to the chosen provider's API at integration time.
- * All calls require MT5_GATEWAY_URL; auth via MT5_API_KEY, account via MT5_ACCOUNT_ID.
+ * MetaApi.cloud REST client for MetaTrader 5. MetaApi connects to ANY MT5 account
+ * (live or demo) — no white-label server required. Configure:
+ *   MT5_GATEWAY_URL = https://mt-client-api-v1.<region>.agiliumtrade.ai
+ *   MT5_API_KEY     = MetaApi auth token   (sent as the `auth-token` header)
+ *   MT5_ACCOUNT_ID  = the MetaApi account id (provisioned for your MT5 login)
+ * Docs: https://metaapi.cloud/docs/client/restApi/
  */
 @Injectable()
 export class Mt5GatewayClient {
@@ -40,27 +46,28 @@ export class Mt5GatewayClient {
   get baseUrl(): string | undefined {
     return this.config.get('MT5_GATEWAY_URL', { infer: true });
   }
-
+  get accountId(): string | undefined {
+    return this.config.get('MT5_ACCOUNT_ID', { infer: true });
+  }
   get configured(): boolean {
-    return !!this.baseUrl;
+    return !!this.baseUrl && !!this.accountId;
   }
 
   private async request<T>(path: string, init?: RequestInit): Promise<T> {
-    const base = this.baseUrl;
-    if (!base) throw new ServiceUnavailableException('MT5 gateway is not configured (MT5_GATEWAY_URL).');
+    if (!this.baseUrl || !this.accountId) {
+      throw new ServiceUnavailableException('MT5 gateway is not configured (MT5_GATEWAY_URL + MT5_ACCOUNT_ID).');
+    }
     const token = this.config.get('MT5_API_KEY', { infer: true });
-    const accountId = this.config.get('MT5_ACCOUNT_ID', { infer: true });
-
+    const url = `${this.baseUrl.replace(/\/$/, '')}/users/current/accounts/${this.accountId}${path}`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
     try {
-      const res = await fetch(`${base.replace(/\/$/, '')}${path}`, {
+      const res = await fetch(url, {
         ...init,
         signal: controller.signal,
         headers: {
           'content-type': 'application/json',
-          ...(token ? { authorization: `Bearer ${token}` } : {}),
-          ...(accountId ? { 'x-mt5-account': accountId } : {}),
+          ...(token ? { 'auth-token': token } : {}),
           ...(init?.headers ?? {}),
         },
       });
@@ -71,9 +78,7 @@ export class Mt5GatewayClient {
       return (await res.json()) as T;
     } catch (e) {
       if (e instanceof ServiceUnavailableException) throw e;
-      if ((e as Error).name === 'AbortError') {
-        throw new ServiceUnavailableException('MT5 gateway request timed out.');
-      }
+      if ((e as Error).name === 'AbortError') throw new ServiceUnavailableException('MT5 gateway request timed out.');
       this.log.error(`MT5 gateway request failed: ${(e as Error).message}`);
       throw new ServiceUnavailableException('MT5 gateway is unreachable.');
     } finally {
@@ -81,14 +86,26 @@ export class Mt5GatewayClient {
     }
   }
 
-  /** Place a market deal and return the executed price. */
+  /** Place a market deal (MetaApi trade RPC). */
   placeMarketOrder(input: { symbol: string; side: 'BUY' | 'SELL'; volume: number }): Promise<Mt5Deal> {
-    return this.request<Mt5Deal>('/orders/market', { method: 'POST', body: JSON.stringify(input) });
+    return this.request<Mt5Deal>('/trade', {
+      method: 'POST',
+      body: JSON.stringify({
+        actionType: input.side === 'BUY' ? 'ORDER_TYPE_BUY' : 'ORDER_TYPE_SELL',
+        symbol: input.symbol,
+        volume: input.volume,
+      }),
+    });
+  }
+
+  /** Current ask/bid for a symbol. */
+  currentPrice(symbol: string): Promise<Mt5Price> {
+    return this.request<Mt5Price>(`/symbols/${encodeURIComponent(symbol)}/current-price`);
   }
 
   /** Live account state (balance, equity, margin) for reconciliation. */
   getAccount(): Promise<Mt5Account> {
-    return this.request<Mt5Account>('/account');
+    return this.request<Mt5Account>('/account-information');
   }
 
   /** Open positions on the MT5 account. */
@@ -96,8 +113,11 @@ export class Mt5GatewayClient {
     return this.request<Mt5Position[]>('/positions');
   }
 
-  /** Close an MT5 position by ticket. */
-  closePosition(ticket: number): Promise<Mt5Deal> {
-    return this.request<Mt5Deal>(`/positions/${ticket}/close`, { method: 'POST' });
+  /** Close an MT5 position by id (market close). */
+  closePosition(positionId: string): Promise<Mt5Deal> {
+    return this.request<Mt5Deal>('/trade', {
+      method: 'POST',
+      body: JSON.stringify({ actionType: 'POSITION_CLOSE_ID', positionId }),
+    });
   }
 }

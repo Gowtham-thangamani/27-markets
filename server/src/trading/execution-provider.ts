@@ -4,7 +4,7 @@ import {
   NotImplementedException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import type { OrderSide } from '@prisma/client';
+import { OrderSide } from '@prisma/client';
 import { MarketService } from '../market/market.service';
 import { Mt5GatewayClient } from './mt5-gateway.client';
 import { toMt5Symbol } from './mt5-symbols';
@@ -54,9 +54,9 @@ export class SimulationExecutionProvider implements ExecutionProvider {
 }
 
 /**
- * MetaTrader 5 white-label adapter. Routes real market orders to the configured
- * MT5 gateway and returns the executed price. Inactive until MT5_GATEWAY_URL is
- * set — real trades must never execute without a venue.
+ * MetaTrader 5 adapter (via MetaApi.cloud). Routes real market orders to the
+ * configured MT5 account and returns the executed price. Inactive until the
+ * gateway is configured — real trades must never execute without a venue.
  */
 @Injectable()
 export class Mt5ExecutionProvider implements ExecutionProvider {
@@ -68,22 +68,26 @@ export class Mt5ExecutionProvider implements ExecutionProvider {
   assertAvailable(): void {
     if (!this.gateway.configured) {
       throw new NotImplementedException(
-        'MT5 execution is not configured (MT5_GATEWAY_URL missing). Connect a licensed ' +
-          'MetaTrader 5 white-label gateway before enabling live trading.',
+        'MT5 execution is not configured (MT5_GATEWAY_URL + MT5_ACCOUNT_ID). Connect a ' +
+          'MetaTrader 5 account (e.g. via MetaApi.cloud) before enabling live trading.',
       );
     }
   }
 
   async fill(symbol: string, side: OrderSide, quantity: number): Promise<Fill> {
     this.assertAvailable();
-    const deal = await this.gateway.placeMarketOrder({
-      symbol: toMt5Symbol(symbol),
-      side: side as 'BUY' | 'SELL',
-      volume: quantity,
-    });
-    if (!deal || !(deal.price > 0)) {
-      throw new ServiceUnavailableException(`MT5 gateway returned no fill price for ${symbol}.`);
+    const mt5Symbol = toMt5Symbol(symbol);
+    const deal = await this.gateway.placeMarketOrder({ symbol: mt5Symbol, side: side as 'BUY' | 'SELL', volume: quantity });
+
+    // The trade RPC confirms execution but not always the price — read the quote.
+    let price = deal?.price && deal.price > 0 ? deal.price : undefined;
+    if (price === undefined) {
+      const quote = await this.gateway.currentPrice(mt5Symbol).catch(() => undefined);
+      price = quote ? (side === OrderSide.BUY ? quote.ask : quote.bid) : undefined;
     }
-    return { price: deal.price, simulated: false };
+    if (!price || !(price > 0)) {
+      throw new ServiceUnavailableException(`MT5 fill price unavailable for ${symbol}.`);
+    }
+    return { price, simulated: false };
   }
 }
