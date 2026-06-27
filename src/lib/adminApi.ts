@@ -9,6 +9,42 @@ export interface AdminDashboardSummary {
   openTickets: number
 }
 
+export interface DailyPoint {
+  date: string
+  deposits: number
+  withdrawals: number
+  signups: number
+}
+
+export interface KpiTrend {
+  value: number
+  delta: number | null
+  spark: number[]
+}
+
+export interface KpiCount {
+  value: number
+  spark: number[]
+}
+
+export interface AdminDashboard {
+  kpis: {
+    totalClients: KpiTrend
+    netFlow: { value: string; delta: number | null; spark: number[] }
+    pendingKyc: KpiCount
+    pendingWithdrawals: KpiCount
+    openTickets: KpiCount
+  }
+  series: DailyPoint[]
+  distributions: {
+    funnel: Record<'NEW' | 'CONTACTED' | 'QUALIFIED' | 'CONVERTED' | 'LOST', number>
+    kyc: Record<'NOT_SUBMITTED' | 'PENDING' | 'APPROVED' | 'REJECTED', number>
+  }
+  recentSignups: { id: string; name: string; email: string; country: string | null; createdAt: string }[]
+  recentActivity: { id: string; action: string; entity: string | null; createdAt: string; actor: string | null }[]
+  recentWithdrawals: { id: string; reference: string; client: string | null; amount: string; createdAt: string }[]
+}
+
 export type KycStepStatus = 'NOT_SUBMITTED' | 'PENDING' | 'APPROVED' | 'REJECTED'
 
 export interface KycDocument {
@@ -138,7 +174,7 @@ export interface PartnerItem {
 }
 
 export const adminApi = {
-  getDashboard: () => api.get<AdminDashboardSummary>('/admin/dashboard'),
+  getDashboard: () => api.get<AdminDashboard>('/admin/dashboard'),
   getStaff: () => api.get<StaffMember[]>('/admin/staff'),
 
   // Clients
