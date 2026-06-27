@@ -11,7 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService, type RequestContext } from './auth.service';
-import { RegisterDto, LoginDto, TotpVerifyDto, ChangePasswordDto } from './dto';
+import { RegisterDto, LoginDto, TotpVerifyDto, ChangePasswordDto, VerifyEmailDto, ForgotPasswordDto, ResetPasswordDto } from './dto';
 import { setAuthCookies, clearAuthCookies, REFRESH_COOKIE_NAME } from './cookies';
 import { CurrentUser, Public } from '../common/decorators';
 import type { Env } from '../config/env.validation';
@@ -69,6 +69,35 @@ export class AuthController {
   @Get('me')
   me(@CurrentUser('id') userId: string) {
     return this.auth.me(userId);
+  }
+
+  @Public()
+  @HttpCode(200)
+  @Post('verify-email')
+  verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.auth.verifyEmail(dto.token);
+  }
+
+  @HttpCode(200)
+  @Post('resend-verification')
+  resendVerification(@CurrentUser('id') userId: string) {
+    return this.auth.resendVerification(userId);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @HttpCode(200)
+  @Post('forgot-password')
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.auth.forgotPassword(dto.email);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @HttpCode(200)
+  @Post('reset-password')
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.auth.resetPassword(dto.token, dto.newPassword);
   }
 
   @HttpCode(200)

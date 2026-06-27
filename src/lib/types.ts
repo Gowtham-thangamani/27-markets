@@ -86,6 +86,7 @@ export interface UserProfile {
   phone: string
   country: string
   joinedAt: string
+  emailVerified: boolean
   avatarColor: string
 }
 

@@ -4,9 +4,10 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TokensService } from './tokens.service';
 import { LeadsModule } from '../leads/leads.module';
+import { AccountsModule } from '../accounts/accounts.module';
 
 @Module({
-  imports: [JwtModule.register({}), LeadsModule],
+  imports: [JwtModule.register({}), LeadsModule, AccountsModule],
   controllers: [AuthController],
   providers: [AuthService, TokensService],
   exports: [TokensService, AuthService],

@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { validateEnv } from './config/env.validation';
 import { CryptoModule } from './common/crypto.module';
+import { EmailModule } from './email/email.module';
 import { LoggingInterceptor } from './common/logging.interceptor';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module';
@@ -29,6 +30,7 @@ import { HealthController } from './health/health.controller';
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
     CryptoModule,
+    EmailModule,
     PrismaModule,
     AuditModule,
     LedgerModule,

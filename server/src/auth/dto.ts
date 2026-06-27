@@ -1,5 +1,8 @@
 import {
+  Equals,
+  IsBoolean,
   IsEmail,
+  IsISO8601,
   IsOptional,
   IsString,
   Matches,
@@ -38,6 +41,52 @@ export class RegisterDto {
   @IsString()
   @MaxLength(80)
   country?: string;
+
+  @IsOptional()
+  @IsISO8601()
+  dateOfBirth?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(160)
+  address?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  postalCode?: string;
+
+  // Must explicitly accept the client agreement + risk disclosure.
+  @IsBoolean()
+  @Equals(true, { message: 'You must accept the terms to register' })
+  acceptTerms!: boolean;
+}
+
+export class VerifyEmailDto {
+  @IsString()
+  token!: string;
+}
+
+export class ForgotPasswordDto {
+  @IsEmail()
+  email!: string;
+}
+
+export class ResetPasswordDto {
+  @IsString()
+  token!: string;
+
+  @IsString()
+  @MinLength(8)
+  @MaxLength(128)
+  @Matches(/[A-Za-z]/, { message: 'Password must contain a letter' })
+  @Matches(/[0-9]/, { message: 'Password must contain a number' })
+  newPassword!: string;
 }
 
 export class LoginDto {

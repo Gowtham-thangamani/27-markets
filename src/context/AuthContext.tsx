@@ -10,6 +10,11 @@ export interface RegisterPayload {
   password: string
   phone?: string
   country?: string
+  dateOfBirth?: string
+  address?: string
+  city?: string
+  postalCode?: string
+  acceptTerms: boolean
 }
 
 export interface ProfilePatch {

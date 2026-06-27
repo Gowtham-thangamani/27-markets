@@ -44,6 +44,14 @@ model User {
   twoFactorSecret  String?
   twoFactorEnabled Boolean @default(false)
 
+  // Onboarding
+  emailVerified   Boolean   @default(false)
+  dateOfBirth     DateTime?
+  address         String?
+  city            String?
+  postalCode      String?
+  acceptedTermsAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -66,8 +74,30 @@ model User {
   positions           Position[]
   depositRequests     DepositRequest[]
   savedCards          SavedCard[]
+  verificationTokens  VerificationToken[]
 
   @@index([email])
+}
+
+enum VerificationTokenType {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+}
+
+// Email-verification + password-reset tokens. The raw token is emailed; only its
+// hash is stored (like refresh tokens). Single-use, time-limited.
+model VerificationToken {
+  id        String                @id @default(cuid())
+  userId    String
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      VerificationTokenType
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime              @default(now())
+
+  @@index([userId])
+  @@index([tokenHash])
 }
 
 // Refresh-token sessions. The raw refresh token is NEVER stored — only a hash.

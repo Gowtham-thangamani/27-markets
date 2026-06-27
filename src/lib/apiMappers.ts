@@ -90,6 +90,7 @@ export interface ApiUser {
   country?: string | null
   role: string
   twoFactorEnabled: boolean
+  emailVerified?: boolean
   joinedAt: string
 }
 
@@ -145,6 +146,7 @@ export function mapUser(u: ApiUser): UserProfile {
     phone: u.phone ?? '',
     country: u.country ?? '',
     joinedAt: u.joinedAt,
+    emailVerified: u.emailVerified ?? false,
     avatarColor: '#e11d2e',
   }
 }

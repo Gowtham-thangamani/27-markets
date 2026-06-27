@@ -4,6 +4,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { SidebarContent } from '@/components/portal/Sidebar'
 import { Topbar } from '@/components/portal/Topbar'
 import { OpenAccountModal } from '@/components/portal/OpenAccountModal'
+import { VerifyEmailBanner } from '@/components/portal/VerifyEmailBanner'
 import { useBodyScrollLock } from '@/lib/hooks'
 
 interface PortalUIContextValue {
@@ -70,6 +71,7 @@ export function PortalLayout() {
           />
           <main id="portal-scroll" tabIndex={-1} className="flex-1 overflow-y-auto outline-none">
             <div className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8">
+              <VerifyEmailBanner />
               <Outlet />
             </div>
           </main>

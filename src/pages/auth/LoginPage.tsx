@@ -83,13 +83,9 @@ export default function LoginPage() {
           />
         )}
         <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={() => toast.info('Password reset', 'Please contact support@27markets.io to reset your password.')}
-            className="text-sm font-medium text-brand-400 hover:text-brand-300"
-          >
+          <Link to="/forgot-password" className="text-sm font-medium text-brand-400 hover:text-brand-300">
             Forgot Password?
-          </button>
+          </Link>
         </div>
         <Button type="submit" fullWidth size="lg" loading={isSubmitting}>
           {needTotp ? 'Verify & sign in' : 'Login'}

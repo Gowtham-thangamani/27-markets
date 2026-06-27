@@ -17,6 +17,7 @@ export const demoUser: UserProfile = {
   phone: '+971 50 123 4567',
   country: 'United Arab Emirates',
   joinedAt: '2025-02-14T10:00:00Z',
+  emailVerified: true,
   avatarColor: '#e11d2e',
 }
 

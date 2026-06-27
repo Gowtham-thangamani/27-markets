@@ -1,16 +1,20 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { createHash, randomBytes } from 'node:crypto';
 import * as argon2 from 'argon2';
 import { authenticator } from 'otplib';
 import * as QRCode from 'qrcode';
-import type { User } from '@prisma/client';
+import { AccountType, AccountMode, VerificationTokenType, type User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { CryptoService } from '../common/crypto.service';
+import { EmailService } from '../email/email.service';
+import { AccountsService } from '../accounts/accounts.service';
 import { LeadsService } from '../leads/leads.service';
 import { TokensService } from './tokens.service';
 import { RegisterDto, LoginDto } from './dto';
@@ -33,6 +37,7 @@ export interface PublicUser {
   lastName: string;
   role: string;
   twoFactorEnabled: boolean;
+  emailVerified: boolean;
 }
 
 @Injectable()
@@ -44,7 +49,33 @@ export class AuthService {
     private readonly leads: LeadsService,
     private readonly config: ConfigService<Env, true>,
     private readonly crypto: CryptoService,
+    private readonly email: EmailService,
+    private readonly accounts: AccountsService,
   ) {}
+
+  // ── Verification / reset tokens (raw emailed, only the hash stored) ──
+  private hashToken(raw: string): string {
+    return createHash('sha256').update(raw).digest('hex');
+  }
+
+  private async issueVerificationToken(userId: string, type: VerificationTokenType, ttlMs: number): Promise<string> {
+    const raw = randomBytes(32).toString('hex');
+    await this.prisma.verificationToken.create({
+      data: { userId, type, tokenHash: this.hashToken(raw), expiresAt: new Date(Date.now() + ttlMs) },
+    });
+    return raw;
+  }
+
+  private async consumeToken(raw: string, type: VerificationTokenType) {
+    const token = await this.prisma.verificationToken.findFirst({
+      where: { tokenHash: this.hashToken(raw), type },
+    });
+    if (!token || token.usedAt || token.expiresAt < new Date()) {
+      throw new BadRequestException('This link is invalid or has expired.');
+    }
+    await this.prisma.verificationToken.update({ where: { id: token.id }, data: { usedAt: new Date() } });
+    return token;
+  }
 
   toPublic(user: User): PublicUser {
     return {
@@ -54,6 +85,7 @@ export class AuthService {
       lastName: user.lastName,
       role: user.role,
       twoFactorEnabled: user.twoFactorEnabled,
+      emailVerified: user.emailVerified,
     };
   }
 
@@ -71,6 +103,11 @@ export class AuthService {
         lastName: dto.lastName,
         phone: dto.phone,
         country: dto.country,
+        dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : null,
+        address: dto.address,
+        city: dto.city,
+        postalCode: dto.postalCode,
+        acceptedTermsAt: new Date(),
         kycProfile: { create: {} },
       },
     });
@@ -83,9 +120,54 @@ export class AuthService {
       country: user.country ?? undefined,
     });
 
+    // Give new users a demo account so they can trade immediately.
+    await this.accounts.create(user.id, AccountType.STANDARD, AccountMode.DEMO).catch(() => undefined);
+
+    // Send the verification email (non-blocking for the signup response).
+    const verifyToken = await this.issueVerificationToken(user.id, VerificationTokenType.EMAIL_VERIFY, 24 * 60 * 60 * 1000);
+    await this.email.sendVerifyEmail(user.email, verifyToken).catch(() => undefined);
+    await this.email.sendWelcome(user.email, user.firstName).catch(() => undefined);
+
     const tokens = await this.issueSession(user, ctx);
     await this.audit.record({ userId: user.id, action: 'auth.register', entity: 'User', entityId: user.id, ...ctx });
     return { user: this.toPublic(user), tokens };
+  }
+
+  /** Confirm an email-verification token. */
+  async verifyEmail(rawToken: string) {
+    const token = await this.consumeToken(rawToken, VerificationTokenType.EMAIL_VERIFY);
+    await this.prisma.user.update({ where: { id: token.userId }, data: { emailVerified: true } });
+    await this.audit.record({ userId: token.userId, action: 'auth.email.verified', entity: 'User', entityId: token.userId });
+    return { ok: true };
+  }
+
+  /** Re-send the verification email to a signed-in, still-unverified user. */
+  async resendVerification(userId: string) {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    if (user.emailVerified) return { ok: true, alreadyVerified: true };
+    const token = await this.issueVerificationToken(user.id, VerificationTokenType.EMAIL_VERIFY, 24 * 60 * 60 * 1000);
+    await this.email.sendVerifyEmail(user.email, token);
+    return { ok: true };
+  }
+
+  /** Start a password reset. Always resolves (no account enumeration). */
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    if (user) {
+      const token = await this.issueVerificationToken(user.id, VerificationTokenType.PASSWORD_RESET, 60 * 60 * 1000);
+      await this.email.sendPasswordReset(user.email, token).catch(() => undefined);
+    }
+    return { ok: true };
+  }
+
+  /** Complete a password reset and invalidate existing sessions. */
+  async resetPassword(rawToken: string, newPassword: string) {
+    const token = await this.consumeToken(rawToken, VerificationTokenType.PASSWORD_RESET);
+    const passwordHash = await argon2.hash(newPassword, { type: argon2.argon2id });
+    await this.prisma.user.update({ where: { id: token.userId }, data: { passwordHash } });
+    await this.prisma.session.updateMany({ where: { userId: token.userId, revokedAt: null }, data: { revokedAt: new Date() } });
+    await this.audit.record({ userId: token.userId, action: 'auth.password.reset', entity: 'User', entityId: token.userId });
+    return { ok: true };
   }
 
   async login(dto: LoginDto, ctx: RequestContext): Promise<{ user: PublicUser; tokens: IssuedTokens }> {

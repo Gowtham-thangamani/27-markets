@@ -21,6 +21,7 @@ export class UsersService {
       country: user.country,
       role: user.role,
       twoFactorEnabled: user.twoFactorEnabled,
+      emailVerified: user.emailVerified,
       joinedAt: user.createdAt,
     };
   }

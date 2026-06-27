@@ -22,6 +22,11 @@ export const envSchema = z
 
     TOTP_ISSUER: z.string().default('Apex Markets'),
 
+    // ── Email (transactional) ──
+    // 'console' (default) logs emails for dev; 'smtp' uses a real provider (creds).
+    EMAIL_PROVIDER: z.enum(['console', 'smtp']).default('console'),
+    EMAIL_FROM: z.string().default('no-reply@27markets.io'),
+
     // ── Market data (Finnhub real-time) ──
     // Optional: when unset, live market endpoints serve cached/empty and the
     // upstream WebSocket is not opened (app still boots normally).

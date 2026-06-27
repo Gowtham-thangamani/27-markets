@@ -32,7 +32,11 @@ export default function RegisterPage() {
     lastName: '',
     email: '',
     phone: '',
+    dateOfBirth: '',
     country: '',
+    address: '',
+    city: '',
+    postalCode: '',
     accountType: (params.get('account') as 'Standard' | 'Raw Spread' | 'VIP') || 'Raw Spread',
     currency: 'USD' as 'USD' | 'EUR' | 'GBP',
     password: '',
@@ -74,6 +78,11 @@ export default function RegisterPage() {
         password: form.password,
         phone: form.phone,
         country: form.country,
+        dateOfBirth: form.dateOfBirth || undefined,
+        address: form.address || undefined,
+        city: form.city || undefined,
+        postalCode: form.postalCode || undefined,
+        acceptTerms: form.agree,
       })
       // Open the account type the user selected during onboarding.
       try {
@@ -154,6 +163,7 @@ export default function RegisterPage() {
                 </div>
                 <Input label="Email" type="email" value={form.email} error={errors.email} onChange={(e) => set('email', e.target.value)} />
                 <Input label="Phone" value={form.phone} placeholder="+971 50 000 0000" error={errors.phone} onChange={(e) => set('phone', e.target.value)} />
+                <Input label="Date of birth" type="date" value={form.dateOfBirth} error={errors.dateOfBirth} onChange={(e) => set('dateOfBirth', e.target.value)} />
               </>
             )}
 
@@ -167,6 +177,11 @@ export default function RegisterPage() {
                   options={countries.map((c) => ({ value: c, label: c }))}
                   onChange={(e) => set('country', e.target.value)}
                 />
+                <Input label="Address" value={form.address} placeholder="Street address" error={errors.address} onChange={(e) => set('address', e.target.value)} />
+                <div className="grid grid-cols-2 gap-3">
+                  <Input label="City" value={form.city} error={errors.city} onChange={(e) => set('city', e.target.value)} />
+                  <Input label="Postal code" value={form.postalCode} error={errors.postalCode} onChange={(e) => set('postalCode', e.target.value)} />
+                </div>
                 <div>
                   <p className="mb-1.5 text-sm font-medium text-gray-300">Account type</p>
                   <div className="grid grid-cols-3 gap-2">
