@@ -17,10 +17,12 @@ import {
   AccountMode,
   LedgerAccountType,
   JournalKind,
+  JournalStatus,
   PostingDirection,
   PostStatus,
   LeadSource,
   LeadStatus,
+  KycStepStatus,
   TicketPriority,
   TicketStatus,
 } from '@prisma/client'
@@ -100,6 +102,106 @@ async function main() {
         },
       },
     })
+  }
+
+  // ── Rich demo activity for dashboard charts (idempotent) ──
+  const DEMO_PREFIX = 'demo.client+'
+  if ((await prisma.user.count({ where: { email: { startsWith: DEMO_PREFIX } } })) === 0) {
+    const demoHash = await argon2.hash('Client123!', { type: argon2.argon2id })
+    const countries = ['United Arab Emirates', 'United Kingdom', 'Germany', 'Singapore', 'India', 'Canada', 'Australia']
+    const names: [string, string][] = [['Liam','Nguyen'],['Olivia','Khan'],['Noah','Silva'],['Emma','Costa'],['Ava','Mensah'],['Lucas','Park'],['Mia','Haddad'],['Ethan','Reyes']]
+    const leadStatuses = [LeadStatus.NEW, LeadStatus.CONTACTED, LeadStatus.QUALIFIED, LeadStatus.CONVERTED, LeadStatus.LOST]
+    const daysAgo = (n: number) => { const d = new Date(); d.setUTCDate(d.getUTCDate() - n); return d }
+
+    const clearing = await prisma.ledgerAccount.upsert({
+      where: { code: 'SYSTEM:PSP_CLEARING' }, update: {},
+      create: { code: 'SYSTEM:PSP_CLEARING', name: 'PSP / Bank Clearing', type: LedgerAccountType.ASSET },
+    })
+    const payable = await prisma.ledgerAccount.upsert({
+      where: { code: 'SYSTEM:WITHDRAWALS_PAYABLE' }, update: {},
+      create: { code: 'SYSTEM:WITHDRAWALS_PAYABLE', name: 'Withdrawals Payable', type: LedgerAccountType.LIABILITY },
+    })
+
+    for (let i = 0; i < 50; i++) {
+      const [first, last] = names[i % names.length]
+      const created = daysAgo(88 - Math.floor((i / 50) * 86)) // oldest → newest across ~88 days
+      const approved = i % 10 !== 0                            // ~90% fully verified
+
+      const user = await prisma.user.create({
+        data: {
+          email: `${DEMO_PREFIX}${i}@27markets.io`,
+          passwordHash: demoHash,
+          firstName: first,
+          lastName: `${last}${i}`,
+          role: UserRole.CLIENT,
+          country: countries[i % countries.length],
+          createdAt: created,
+          kycProfile: {
+            create: approved
+              ? { identityStatus: KycStepStatus.APPROVED, addressStatus: KycStepStatus.APPROVED, selfieStatus: KycStepStatus.APPROVED }
+              : { identityStatus: KycStepStatus.PENDING },
+          },
+        },
+      })
+
+      const number = `30${100000 + i}`
+      const account = await prisma.tradingAccount.create({
+        data: { number, userId: user.id, type: AccountType.STANDARD, mode: AccountMode.LIVE, leverage: '1:500', createdAt: created },
+      })
+      const clientLedger = await prisma.ledgerAccount.create({
+        data: { code: `CLIENT:${account.id}`, name: `Client balance ${number}`, type: LedgerAccountType.LIABILITY, userId: user.id, tradingAccountId: account.id },
+      })
+
+      const depAmount = new Prisma.Decimal(200 + i * 35)
+      await prisma.journalEntry.create({
+        data: {
+          reference: `TX-DEMO-D${i}`,
+          kind: JournalKind.DEPOSIT,
+          idempotencyKey: `seed-demo-deposit:${account.id}`,
+          simulated: true,
+          status: JournalStatus.POSTED,
+          memo: 'Seed demo deposit',
+          createdAt: created,
+          postings: { create: [
+            { ledgerAccountId: clearing.id, direction: PostingDirection.DEBIT, amount: depAmount },
+            { ledgerAccountId: clientLedger.id, direction: PostingDirection.CREDIT, amount: depAmount },
+          ] },
+        },
+      })
+
+      if (i % 5 === 0) {
+        const wdAmount = new Prisma.Decimal(100 + i * 10)
+        const wdDate = daysAgo(Math.max(0, 88 - Math.floor((i / 50) * 86) - 3))
+        await prisma.journalEntry.create({
+          data: {
+            reference: `TX-DEMO-W${i}`,
+            kind: JournalKind.WITHDRAWAL,
+            idempotencyKey: `seed-demo-wd:${account.id}`,
+            simulated: true,
+            status: i % 10 === 0 ? JournalStatus.PENDING : JournalStatus.POSTED,
+            memo: 'Seed demo withdrawal',
+            createdAt: wdDate,
+            postings: { create: [
+              { ledgerAccountId: clientLedger.id, direction: PostingDirection.DEBIT, amount: wdAmount },
+              { ledgerAccountId: payable.id, direction: PostingDirection.CREDIT, amount: wdAmount },
+            ] },
+          },
+        })
+      }
+
+      if (i % 3 === 0) {
+        await prisma.lead.create({
+          data: {
+            name: `${first} ${last}${i}`,
+            email: `demo.lead+${i}@example.com`,
+            country: countries[i % countries.length],
+            source: LeadSource.REGISTER,
+            status: leadStatuses[i % leadStatuses.length],
+            createdAt: created,
+          },
+        })
+      }
+    }
   }
 
   // ── Blog posts (authored by admin) ──
