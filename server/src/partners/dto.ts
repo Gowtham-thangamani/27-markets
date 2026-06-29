@@ -10,3 +10,7 @@ export class ApplyPartnerDto {
   @IsOptional() @IsString() @MaxLength(200) website?: string;
   @IsOptional() @IsString() @MaxLength(2000) audience?: string;
 }
+
+export class RejectApplicationDto {
+  @IsOptional() @IsString() @MaxLength(500) reason?: string;
+}
