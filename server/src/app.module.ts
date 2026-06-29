@@ -23,6 +23,7 @@ import { SupportModule } from './support/support.module';
 import { MarketModule } from './market/market.module';
 import { TradingModule } from './trading/trading.module';
 import { LeadsModule } from './leads/leads.module';
+import { PartnersModule } from './partners/partners.module';
 import { HealthController } from './health/health.controller';
 
 @Module({
@@ -46,6 +47,7 @@ import { HealthController } from './health/health.controller';
     MarketModule,
     TradingModule,
     LeadsModule,
+    PartnersModule,
   ],
   controllers: [HealthController],
   providers: [
