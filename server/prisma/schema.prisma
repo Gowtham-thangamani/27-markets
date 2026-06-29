@@ -77,6 +77,14 @@ model User {
   verificationTokens  VerificationToken[]
   mt5Connection       Mt5Connection?
 
+  // Partner / IB
+  partnerProfile      PartnerProfile?      @relation("UserPartnerProfile")
+  referredByPartnerId String?
+  referredByPartner   User?                @relation("PartnerReferrals", fields: [referredByPartnerId], references: [id])
+  referredClients     User[]               @relation("PartnerReferrals")
+  partnerAppsReviewed PartnerApplication[] @relation("PartnerAppReviewer")
+  partnerAppResult    PartnerApplication?  @relation("PartnerAppResult")
+
   @@index([email])
 }
 
@@ -105,6 +113,7 @@ model Mt5Connection {
 enum VerificationTokenType {
   EMAIL_VERIFY
   PASSWORD_RESET
+  PARTNER_INVITE
 }
 
 // Email-verification + password-reset tokens. The raw token is emailed; only its
@@ -585,4 +594,42 @@ model SavedCard {
   createdAt          DateTime @default(now())
 
   @@index([userId])
+}
+
+// ─────────────────────────── Partner / IB ───────────────────────────
+
+enum PartnerApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model PartnerApplication {
+  id              String                   @id @default(cuid())
+  firstName       String
+  lastName        String
+  email           String
+  phone           String?
+  country         String?
+  company         String?
+  website         String?
+  audience        String?
+  status          PartnerApplicationStatus @default(PENDING)
+  notes           String?
+  reviewedAt      DateTime?
+  reviewedById    String?
+  reviewedBy      User?                    @relation("PartnerAppReviewer", fields: [reviewedById], references: [id])
+  resultingUserId String?                  @unique
+  resultingUser   User?                    @relation("PartnerAppResult", fields: [resultingUserId], references: [id])
+  createdAt       DateTime                 @default(now())
+
+  @@index([status])
+}
+
+model PartnerProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation("UserPartnerProfile", fields: [userId], references: [id], onDelete: Cascade)
+  referralCode String   @unique
+  createdAt    DateTime @default(now())
 }
