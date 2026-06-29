@@ -30,6 +30,6 @@ it('renders KPIs and panels from the dashboard payload', async () => {
   expect(screen.getByText('Fund Flow')).toBeInTheDocument();
   expect(screen.getByText('Recent Activity')).toBeInTheDocument();
   // "Pending Withdrawals" appears as both a KPI label and a panel heading; assert the panel heading
-  expect(screen.getAllByText('Pending Withdrawals').length).toBeGreaterThanOrEqual(1);
+  expect(screen.getAllByText('Pending Withdrawals').length).toBeGreaterThanOrEqual(2);
   expect(screen.getByText('Recent Signups')).toBeInTheDocument();
 });
