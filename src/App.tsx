@@ -42,6 +42,7 @@ import DownloadsPage from './pages/portal/DownloadsPage'
 import ProfilePage from './pages/portal/ProfilePage'
 import SupportPage from './pages/portal/SupportPage'
 import NotFoundPage from './pages/NotFoundPage'
+import PartnerApplyPage from './pages/PartnerApplyPage'
 
 export default function App() {
   return (
@@ -57,6 +58,7 @@ export default function App() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/blog" element={<BlogListPage />} />
         <Route path="/blog/:slug" element={<BlogDetailPage />} />
+        <Route path="/partner/apply" element={<PartnerApplyPage />} />
       </Route>
 
       {/* Auth (standalone full-screen) */}
