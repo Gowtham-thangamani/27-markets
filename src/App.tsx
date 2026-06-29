@@ -12,6 +12,7 @@ import AdminKycPage from './pages/admin/AdminKycPage'
 import AdminFinancePage from './pages/admin/AdminFinancePage'
 import AdminAccountsPage from './pages/admin/AdminAccountsPage'
 import AdminPartnersPage from './pages/admin/AdminPartnersPage'
+import AdminPartnerApplicationsPage from './pages/admin/AdminPartnerApplicationsPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
 import AdminStaffPage from './pages/admin/AdminStaffPage'
 import AdminBlogListPage from './pages/admin/AdminBlogListPage'
@@ -107,6 +108,7 @@ export default function App() {
         <Route path="finance" element={<AdminFinancePage />} />
         <Route path="accounts" element={<AdminAccountsPage />} />
         <Route path="partners" element={<AdminPartnersPage />} />
+        <Route path="partner-applications" element={<AdminPartnerApplicationsPage />} />
         <Route path="reports" element={<AdminReportsPage />} />
         <Route path="staff" element={<AdminStaffPage />} />
         <Route path="blog" element={<AdminBlogListPage />} />
