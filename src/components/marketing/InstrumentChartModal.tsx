@@ -63,15 +63,20 @@ export function InstrumentChartModal({
       </div>
 
       <div className="mt-5 h-[320px] rounded-xl border border-white/[0.06] bg-ink-800/40 p-3">
-        {!feed ? (
-          <div className="flex h-full items-center justify-center px-6 text-center text-sm text-gray-500">
-            Indicative pricing only. A live chart for {instrument.symbol} is available inside the trading terminal.
-          </div>
-        ) : candles.length > 1 ? (
+        {candles.length > 1 ? (
           <PriceChart candles={candles} className="h-full w-full" />
-        ) : (
+        ) : isLive ? (
           <div className="flex h-full items-center justify-center text-sm text-gray-500">
             {loading ? 'Loading chart…' : 'Building live candles… (streams in as ticks arrive)'}
+          </div>
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+            <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wide text-gray-400">
+              Indicative pricing
+            </span>
+            <p className="max-w-sm text-sm text-gray-500">
+              A live chart for {instrument.symbol} appears once its market data feed is connected.
+            </p>
           </div>
         )}
       </div>

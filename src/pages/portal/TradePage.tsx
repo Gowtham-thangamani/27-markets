@@ -300,7 +300,9 @@ export default function TradePage() {
     )
   }
 
-  const livePrice = quotes[symbol]?.price
+  const liveQuote = quotes[symbol]
+  const livePrice = liveQuote?.price
+  const quoteFresh = !!liveQuote && !liveQuote.stale
 
   return (
     <>
@@ -321,9 +323,18 @@ export default function TradePage() {
         <div className="h-[300px] sm:h-[360px]">
           {candles.length > 1 ? (
             <PriceChart candles={candles} className="h-full w-full" />
-          ) : (
+          ) : quoteFresh ? (
             <div className="flex h-full items-center justify-center text-sm text-gray-500">
               Building live candles… (streams in as ticks arrive)
+            </div>
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+              <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wide text-gray-400">
+                Indicative pricing
+              </span>
+              <p className="max-w-sm text-sm text-gray-500">
+                A live chart for {symLabel(symbol)} appears once its market data feed is connected.
+              </p>
             </div>
           )}
         </div>
