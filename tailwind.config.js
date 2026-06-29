@@ -4,15 +4,31 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Theme-aware surfaces — values come from CSS variables (light/dark) so
+        // existing bg-ink-*/border classes flip automatically. See globals.css.
         ink: {
-          900: '#050505',
-          850: '#0a0a0a',
-          800: '#0d0d0d',
-          700: '#111111',
-          600: '#161616',
-          500: '#181818',
-          400: '#1f1f1f',
-          300: '#262626',
+          900: 'rgb(var(--ink-900) / <alpha-value>)',
+          850: 'rgb(var(--ink-850) / <alpha-value>)',
+          800: 'rgb(var(--ink-800) / <alpha-value>)',
+          700: 'rgb(var(--ink-700) / <alpha-value>)',
+          600: 'rgb(var(--ink-600) / <alpha-value>)',
+          500: 'rgb(var(--ink-500) / <alpha-value>)',
+          400: 'rgb(var(--ink-400) / <alpha-value>)',
+          300: 'rgb(var(--ink-300) / <alpha-value>)',
+        },
+        // `white` is the THEME FOREGROUND (white on dark, near-black on light) so
+        // text-white / border-white/* / bg-white/* all adapt. Use `onaccent` for
+        // text that must stay white on a colored fill (buttons, badges).
+        white: 'rgb(var(--fg) / <alpha-value>)',
+        onaccent: '#ffffff',
+        // Theme-aware neutral text scale (only 100–600 are used in the app).
+        gray: {
+          100: 'rgb(var(--gray-100) / <alpha-value>)',
+          200: 'rgb(var(--gray-200) / <alpha-value>)',
+          300: 'rgb(var(--gray-300) / <alpha-value>)',
+          400: 'rgb(var(--gray-400) / <alpha-value>)',
+          500: 'rgb(var(--gray-500) / <alpha-value>)',
+          600: 'rgb(var(--gray-600) / <alpha-value>)',
         },
         brand: {
           DEFAULT: '#e11d2e',

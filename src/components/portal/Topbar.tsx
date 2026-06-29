@@ -2,6 +2,7 @@ import { Bell, Menu, Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Badge } from '@/components/ui'
 import { Dropdown, DropdownItem } from '@/components/ui/Dropdown'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { useAuth } from '@/context/AuthContext'
 import { usePortalData } from '@/context/PortalDataContext'
 import { initials, formatDateTime } from '@/lib/format'
@@ -36,6 +37,8 @@ export function Topbar({ onOpenSidebar, onOpenAccount }: TopbarProps) {
         <Button size="sm" className="hidden gap-1.5 sm:inline-flex" onClick={onOpenAccount}>
           <Plus className="h-4 w-4" /> Open New Account
         </Button>
+
+        <ThemeToggle />
 
         {/* Notifications */}
         <Dropdown

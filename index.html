@@ -17,6 +17,10 @@
       rel="stylesheet"
     />
     <title>27 Markets — Trade Beyond Limits</title>
+    <script>
+      // Apply the saved theme before paint to avoid a flash. Dark is the default.
+      try { if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light'); } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

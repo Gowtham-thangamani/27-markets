@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { useBodyScrollLock } from '@/lib/hooks'
 import { cn } from '@/lib/cn'
 
@@ -80,6 +81,7 @@ export function Navbar() {
           >
             <Globe className="h-[18px] w-[18px]" />
           </button>
+          <ThemeToggle />
           <Link to="/login">
             <Button variant="ghost" size="sm">
               Login
