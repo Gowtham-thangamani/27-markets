@@ -1,5 +1,5 @@
 import { Search, TrendingDown, TrendingUp } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Input, EmptyState } from '@/components/ui'
 import { cn } from '@/lib/cn'
 import { formatNumber } from '@/lib/format'
@@ -21,6 +21,13 @@ export function InstrumentsExplorer({ initialCategory }: { initialCategory?: Ins
   const [query, setQuery] = useState('')
   const [active, setActive] = useState<InstrumentCategory | 'All'>(initialCategory ?? 'All')
   const { quotes } = useLiveQuotes()
+
+  // Keep the active filter in sync with the category passed from the URL, so
+  // clicking a market card (which updates ?category=) re-filters this list even
+  // though the page itself doesn't remount.
+  useEffect(() => {
+    setActive(initialCategory ?? 'All')
+  }, [initialCategory])
 
   const filtered = useMemo(() => {
     return instruments.filter((ins) => {
