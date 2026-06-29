@@ -54,7 +54,25 @@
     --gray-300: 51 65 85;
     --gray-400: 71 85 105;
     --gray-500: 100 116 139;
-    --gray-600: 148 163 184;
+    --gray-600: 130 142 158;
+  }
+
+  /* Light-theme background: gentler red wash on a near-white page. */
+  html.light body {
+    background-image:
+      radial-gradient(70% 50% at 50% -10%, rgba(225, 29, 46, 0.05), transparent 60%),
+      radial-gradient(40% 30% at 90% 10%, rgba(225, 29, 46, 0.03), transparent 70%);
+  }
+
+  /* Light-theme scrollbars */
+  html.light ::-webkit-scrollbar-track {
+    background: #eef1f5;
+  }
+  html.light ::-webkit-scrollbar-thumb {
+    background: #cbd2db;
+  }
+  html.light ::-webkit-scrollbar-thumb:hover {
+    background: #aeb8c6;
   }
 
   * {
@@ -386,4 +404,25 @@
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ─── Light-theme component refinements ─── */
+/* Solid white cards with a clear edge + soft shadow so they separate from the page. */
+html.light .glass-panel {
+  border-color: #e2e8f0;
+  background-color: #ffffff;
+  background-image: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 30px -18px rgba(15, 23, 42, 0.18);
+}
+/* Softer elevation for modals/panels (dark shadow is too heavy on white). */
+html.light .shadow-panel {
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.14) !important;
+}
+html.light .card-lift:hover {
+  box-shadow: 0 0 0 1px rgba(225, 29, 46, 0.25), 0 16px 40px rgba(15, 23, 42, 0.12),
+    0 0 30px rgba(225, 29, 46, 0.08);
+}
+/* The wordmark PNG has white text baked in — add a soft dark edge for legibility on light. */
+html.light img[alt='27 Markets'] {
+  filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.5));
 }
