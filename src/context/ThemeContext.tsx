@@ -49,3 +49,8 @@ export function useTheme() {
   if (!ctx) throw new Error('useTheme must be used within ThemeProvider')
   return ctx
 }
+
+/** Non-throwing theme read (defaults to dark) — safe for components rendered outside the provider (e.g. in tests). */
+export function useThemeSafe(): Theme {
+  return useContext(ThemeContext)?.theme ?? 'dark'
+}
