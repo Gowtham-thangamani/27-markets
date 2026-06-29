@@ -12,6 +12,7 @@ import AdminKycPage from './pages/admin/AdminKycPage'
 import AdminFinancePage from './pages/admin/AdminFinancePage'
 import AdminAccountsPage from './pages/admin/AdminAccountsPage'
 import AdminPartnersPage from './pages/admin/AdminPartnersPage'
+import AdminPartnerApplicationsPage from './pages/admin/AdminPartnerApplicationsPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
 import AdminStaffPage from './pages/admin/AdminStaffPage'
 import AdminBlogListPage from './pages/admin/AdminBlogListPage'
@@ -42,6 +43,7 @@ import DownloadsPage from './pages/portal/DownloadsPage'
 import ProfilePage from './pages/portal/ProfilePage'
 import SupportPage from './pages/portal/SupportPage'
 import NotFoundPage from './pages/NotFoundPage'
+import PartnerApplyPage from './pages/PartnerApplyPage'
 
 export default function App() {
   return (
@@ -57,6 +59,7 @@ export default function App() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/blog" element={<BlogListPage />} />
         <Route path="/blog/:slug" element={<BlogDetailPage />} />
+        <Route path="/partner/apply" element={<PartnerApplyPage />} />
       </Route>
 
       {/* Auth (standalone full-screen) */}
@@ -105,6 +108,7 @@ export default function App() {
         <Route path="finance" element={<AdminFinancePage />} />
         <Route path="accounts" element={<AdminAccountsPage />} />
         <Route path="partners" element={<AdminPartnersPage />} />
+        <Route path="partner-applications" element={<AdminPartnerApplicationsPage />} />
         <Route path="reports" element={<AdminReportsPage />} />
         <Route path="staff" element={<AdminStaffPage />} />
         <Route path="blog" element={<AdminBlogListPage />} />

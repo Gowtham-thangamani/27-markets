@@ -65,6 +65,11 @@ export class RegisterDto {
   @IsBoolean()
   @Equals(true, { message: 'You must accept the terms to register' })
   acceptTerms!: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(16)
+  ref?: string;
 }
 
 export class VerifyEmailDto {

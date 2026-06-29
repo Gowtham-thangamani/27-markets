@@ -15,6 +15,7 @@ export interface RegisterPayload {
   city?: string
   postalCode?: string
   acceptTerms: boolean
+  ref?: string
 }
 
 export interface ProfilePatch {

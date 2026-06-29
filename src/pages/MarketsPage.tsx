@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Reveal } from '@/components/Reveal'
 import { SectionHeading } from '@/components/SectionHeading'
@@ -15,6 +16,13 @@ import type { InstrumentCategory } from '@/lib/types'
 export default function MarketsPage() {
   const [params] = useSearchParams()
   const category = params.get('category') as InstrumentCategory | null
+  const explorerRef = useRef<HTMLElement>(null)
+
+  // When a category is chosen (via a market card or a direct link), bring the
+  // filtered instruments list into view so the click visibly "goes somewhere".
+  useEffect(() => {
+    if (category) explorerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [category])
 
   return (
     <>
@@ -52,7 +60,7 @@ export default function MarketsPage() {
         </div>
       </section>
 
-      <section className="container-x py-10">
+      <section ref={explorerRef} className="container-x py-10">
         <SectionHeading
           align="left"
           eyebrow="Live Instruments"

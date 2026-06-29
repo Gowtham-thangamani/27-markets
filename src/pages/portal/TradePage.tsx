@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { TrendingUp, LineChart, Clock, SlidersHorizontal, RotateCcw, Pencil } from 'lucide-react'
 import { Badge, Button, EmptyState, Input, Modal, Select, SkeletonRows } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
 import { Mt5Card } from '@/components/portal/Mt5Card'
+import { PriceChart } from '@/components/portal/PriceChart'
 import { usePortalUI } from '@/layouts/PortalLayout'
 import { usePortalData } from '@/context/PortalDataContext'
 import { useToast } from '@/context/ToastContext'
 import { useLiveQuotes } from '@/lib/useLiveQuotes'
+import { useCandles } from '@/lib/useCandles'
 import { ApiError } from '@/lib/api'
 import { tradingApi, type OrderSide, type OrderType, type OrderStatus, type Order, type Position, type Margin } from '@/lib/tradingApi'
+import { instruments } from '@/mock/data'
 import { formatCurrency } from '@/lib/format'
 import { cn } from '@/lib/cn'
 
@@ -31,15 +35,14 @@ function Stat({ label, value, tone = 'neutral' }: { label: string; value: string
   )
 }
 
-const INSTRUMENTS = [
-  { sym: 'BINANCE:BTCUSDT', label: 'BTC / USD' },
-  { sym: 'BINANCE:ETHUSDT', label: 'ETH / USD' },
-  { sym: 'OANDA:EUR_USD', label: 'EUR / USD' },
-  { sym: 'OANDA:XAU_USD', label: 'Gold (XAU/USD)' },
-  { sym: 'AAPL', label: 'Apple' },
-  { sym: 'TSLA', label: 'Tesla' },
-]
+// Tradeable instruments = those with a live price feed (simulated execution
+// fills at the live price). Derived from the shared instrument list so the
+// terminal stays in sync with the public markets page.
+const INSTRUMENTS = instruments
+  .filter((i) => i.feed)
+  .map((i) => ({ sym: i.feed as string, label: i.symbol, name: i.name }))
 const symLabel = (s: string) => INSTRUMENTS.find((i) => i.sym === s)?.label ?? s
+const isTradeable = (s: string | null): s is string => !!s && INSTRUMENTS.some((i) => i.sym === s)
 const fmtNum = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 export default function TradePage() {
@@ -47,6 +50,8 @@ export default function TradePage() {
   const { openNewAccount } = usePortalUI()
   const toast = useToast()
   const { quotes } = useLiveQuotes()
+  const [params] = useSearchParams()
+  const urlSymbol = params.get('symbol')
   const demoAccounts = useMemo(() => accounts.filter((a) => a.mode === 'Demo'), [accounts])
 
   const [positions, setPositions] = useState<Position[]>([])
@@ -60,7 +65,7 @@ export default function TradePage() {
   const lastActionAt = useRef(0)
 
   const [accountId, setAccountId] = useState('')
-  const [symbol, setSymbol] = useState(INSTRUMENTS[0].sym)
+  const [symbol, setSymbol] = useState(() => (isTradeable(urlSymbol) ? urlSymbol : INSTRUMENTS[0].sym))
   const [side, setSide] = useState<OrderSide>('BUY')
   const [quantity, setQuantity] = useState('0.10')
   const [orderType, setOrderType] = useState<OrderType>('MARKET')
@@ -127,6 +132,14 @@ export default function TradePage() {
   useEffect(() => {
     if (!accountId && demoAccounts[0]) setAccountId(demoAccounts[0].id)
   }, [demoAccounts, accountId])
+
+  // Follow the ?symbol= in the URL (e.g. arriving from a market card / preview).
+  useEffect(() => {
+    if (isTradeable(urlSymbol)) setSymbol(urlSymbol)
+  }, [urlSymbol])
+
+  // Live candles for the chart panel above the order ticket.
+  const { candles } = useCandles(symbol, 15)
 
   const place = async () => {
     const qty = Number(quantity)
@@ -287,7 +300,9 @@ export default function TradePage() {
     )
   }
 
-  const livePrice = quotes[symbol]?.price
+  const liveQuote = quotes[symbol]
+  const livePrice = liveQuote?.price
+  const quoteFresh = !!liveQuote && !liveQuote.stale
 
   return (
     <>
@@ -295,6 +310,36 @@ export default function TradePage() {
       <div className="mb-4">
         <Mt5Card />
       </div>
+
+      {/* Live chart for the selected instrument */}
+      <div className="glass-panel mb-4 p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <LineChart className="h-4 w-4 text-brand-400" />
+            <h2 className="font-display text-base font-semibold text-white">{symLabel(symbol)}</h2>
+          </div>
+          <span className="font-mono text-sm tabular-nums text-white">{livePrice ? fmtNum(livePrice) : '—'}</span>
+        </div>
+        <div className="h-[300px] sm:h-[360px]">
+          {candles.length > 1 ? (
+            <PriceChart candles={candles} className="h-full w-full" />
+          ) : quoteFresh ? (
+            <div className="flex h-full items-center justify-center text-sm text-gray-500">
+              Building live candles… (streams in as ticks arrive)
+            </div>
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+              <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wide text-gray-400">
+                Indicative pricing
+              </span>
+              <p className="max-w-sm text-sm text-gray-500">
+                A live chart for {symLabel(symbol)} appears once its market data feed is connected.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
         {/* Order ticket */}
         <div className="glass-panel h-fit p-5">
@@ -319,7 +364,7 @@ export default function TradePage() {
             <Select
               label="Instrument"
               value={symbol}
-              options={INSTRUMENTS.map((i) => ({ value: i.sym, label: i.label }))}
+              options={INSTRUMENTS.map((i) => ({ value: i.sym, label: `${i.label} · ${i.name}` }))}
               onChange={(e) => setSymbol(e.target.value)}
             />
             <Select

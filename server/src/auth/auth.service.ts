@@ -66,9 +66,9 @@ export class AuthService {
     return raw;
   }
 
-  private async consumeToken(raw: string, type: VerificationTokenType) {
+  private async consumeToken(raw: string, type: VerificationTokenType | VerificationTokenType[]) {
     const token = await this.prisma.verificationToken.findFirst({
-      where: { tokenHash: this.hashToken(raw), type },
+      where: { tokenHash: this.hashToken(raw), type: Array.isArray(type) ? { in: type } : type },
     });
     if (!token || token.usedAt || token.expiresAt < new Date()) {
       throw new BadRequestException('This link is invalid or has expired.');
@@ -95,6 +95,10 @@ export class AuthService {
 
     const passwordHash = await argon2.hash(dto.password, { type: argon2.argon2id });
 
+    const referredByPartnerId = dto.ref
+      ? (await this.prisma.partnerProfile.findUnique({ where: { referralCode: dto.ref.toUpperCase() } }))?.userId ?? null
+      : null;
+
     const user = await this.prisma.user.create({
       data: {
         email: dto.email.toLowerCase(),
@@ -108,6 +112,7 @@ export class AuthService {
         city: dto.city,
         postalCode: dto.postalCode,
         acceptedTermsAt: new Date(),
+        referredByPartnerId,
         kycProfile: { create: {} },
       },
     });
@@ -160,9 +165,12 @@ export class AuthService {
     return { ok: true };
   }
 
-  /** Complete a password reset and invalidate existing sessions. */
+  /** Complete a password reset and invalidate existing sessions. Also accepts PARTNER_INVITE tokens. */
   async resetPassword(rawToken: string, newPassword: string) {
-    const token = await this.consumeToken(rawToken, VerificationTokenType.PASSWORD_RESET);
+    const token = await this.consumeToken(rawToken, [
+      VerificationTokenType.PASSWORD_RESET,
+      VerificationTokenType.PARTNER_INVITE,
+    ]);
     const passwordHash = await argon2.hash(newPassword, { type: argon2.argon2id });
     await this.prisma.user.update({ where: { id: token.userId }, data: { passwordHash } });
     await this.prisma.session.updateMany({ where: { userId: token.userId, revokedAt: null }, data: { revokedAt: new Date() } });

@@ -1,11 +1,12 @@
 import { Search, TrendingDown, TrendingUp } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Input, EmptyState } from '@/components/ui'
 import { cn } from '@/lib/cn'
 import { formatNumber } from '@/lib/format'
 import { instruments } from '@/mock/data'
 import { useLiveQuotes } from '@/lib/useLiveQuotes'
-import type { InstrumentCategory } from '@/lib/types'
+import { InstrumentChartModal } from './InstrumentChartModal'
+import type { Instrument, InstrumentCategory } from '@/lib/types'
 
 const categories: (InstrumentCategory | 'All')[] = [
   'All',
@@ -20,7 +21,15 @@ const categories: (InstrumentCategory | 'All')[] = [
 export function InstrumentsExplorer({ initialCategory }: { initialCategory?: InstrumentCategory }) {
   const [query, setQuery] = useState('')
   const [active, setActive] = useState<InstrumentCategory | 'All'>(initialCategory ?? 'All')
+  const [selected, setSelected] = useState<Instrument | null>(null)
   const { quotes } = useLiveQuotes()
+
+  // Keep the active filter in sync with the category passed from the URL, so
+  // clicking a market card (which updates ?category=) re-filters this list even
+  // though the page itself doesn't remount.
+  useEffect(() => {
+    setActive(initialCategory ?? 'All')
+  }, [initialCategory])
 
   const filtered = useMemo(() => {
     return instruments.filter((ins) => {
@@ -86,7 +95,17 @@ export function InstrumentsExplorer({ initialCategory }: { initialCategory?: Ins
               return (
                 <li
                   key={ins.symbol}
-                  className="grid grid-cols-2 items-center gap-4 px-5 py-3.5 transition-colors hover:bg-white/[0.02] sm:grid-cols-[1.6fr_1fr_1fr_1fr]"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelected(ins)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      setSelected(ins)
+                    }
+                  }}
+                  aria-label={`Open ${ins.symbol} chart`}
+                  className="grid cursor-pointer grid-cols-2 items-center gap-4 px-5 py-3.5 transition-colors hover:bg-white/[0.02] focus:outline-none focus-visible:bg-white/[0.04] focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-brand-500/40 sm:grid-cols-[1.6fr_1fr_1fr_1fr]"
                 >
                   <div className="flex items-center gap-3">
                     <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink-600 text-[10px] font-bold text-brand-300 ring-1 ring-white/[0.06]">
@@ -128,6 +147,8 @@ export function InstrumentsExplorer({ initialCategory }: { initialCategory?: Ins
           </ul>
         )}
       </div>
+
+      {selected && <InstrumentChartModal instrument={selected} onClose={() => setSelected(null)} />}
     </div>
   )
 }
