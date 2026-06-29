@@ -7,8 +7,8 @@ import { SectionHeading } from '@/components/SectionHeading'
 import { StatCard } from '@/components/StatCard'
 import { PageHeader } from '@/components/marketing/PageHeader'
 import { CTABand } from '@/components/marketing/CTABand'
-import { LazyInfinityRibbon } from '@/components/three/Lazy3D'
 import { fadeUp, staggerContainer } from '@/lib/motion'
+import { asset } from '@/lib/asset'
 import { partnerBenefits } from '@/mock/content'
 
 const steps = [
@@ -27,7 +27,22 @@ export default function PartnershipPage() {
         <div className="container-x relative py-10">
           <Reveal className="relative mx-auto max-w-3xl text-center">
             <div className="relative mx-auto mb-2 h-44 w-full max-w-xl">
-              <LazyInfinityRibbon className="absolute inset-0" />
+              <img
+                src={asset('infinity.png')}
+                alt=""
+                aria-hidden
+                className="globe-pulse absolute inset-0 h-full w-full select-none object-contain"
+              />
+              {/* Light sheen that sweeps across — masked to the infinity shape,
+                  so the highlight only ever appears on the red ribbon. */}
+              <span
+                className="infinity-sweep"
+                aria-hidden
+                style={{
+                  WebkitMaskImage: `url(${asset('infinity.png')})`,
+                  maskImage: `url(${asset('infinity.png')})`,
+                }}
+              />
             </div>
             <h2 className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
               Powerful Partnership. <span className="text-gradient-red">Lasting Success.</span>
