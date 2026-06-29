@@ -1,14 +1,6 @@
 import { api, API_BASE_URL } from './api'
 import type { TicketPriority, TicketStatus } from './supportApi'
 
-export interface AdminDashboardSummary {
-  totalClients: number
-  pendingKyc: number
-  pendingWithdrawals: number
-  depositsToday: number
-  openTickets: number
-}
-
 export interface DailyPoint {
   date: string
   deposits: number
