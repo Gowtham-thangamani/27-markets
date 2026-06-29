@@ -11,10 +11,11 @@ describe('generateReferralCode', () => {
     expect(REFERRAL_ALPHABET).not.toMatch(/[ILOU]/);
   });
 
-  it('is deterministic given a seeded rng', () => {
-    const seq = [0, 0.5, 0.99, 0, 0.5, 0.99, 0, 0.5];
-    let i = 0;
-    const rand = () => seq[i++];
-    expect(generateReferralCode(rand)).toBe(generateReferralCode(() => seq[(i = 0), i++]));
+  it('maps the rng deterministically onto the alphabet', () => {
+    // rng always 0 → index 0 → '0' eight times
+    expect(generateReferralCode(() => 0)).toBe('00000000');
+    // a constant rng produces the same code on every call (deterministic)
+    const rng = () => 0.5;
+    expect(generateReferralCode(rng)).toBe(generateReferralCode(rng));
   });
 });
