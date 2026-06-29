@@ -47,7 +47,19 @@ export interface Margin {
   openPositions: number
 }
 
+export interface Mt5Status {
+  login: string
+  server: string
+  status: 'PENDING' | 'CONNECTED' | 'FAILED'
+  linked: boolean
+  error: string | null
+  updatedAt: string
+}
+
 export const tradingApi = {
+  mt5Status: () => api.get<Mt5Status | null>('/trading/mt5'),
+  connectMt5: (body: { login: string; password: string; server: string }) => api.post<Mt5Status>('/trading/mt5/connect', body),
+  disconnectMt5: () => api.del<{ ok: boolean }>('/trading/mt5'),
   placeOrder: (body: {
     accountId: string
     symbol: string

@@ -30,7 +30,7 @@ export function PageHeader({ breadcrumb, title, description }: PageHeaderProps) 
           variants={fadeUp}
           initial="hidden"
           animate="show"
-          className="mb-3 flex items-center gap-1.5 text-xs text-gray-500"
+          className="mb-3 flex items-center gap-1.5 text-xs text-white"
           aria-label="Breadcrumb"
         >
           {breadcrumb.map((crumb, i) => {
@@ -62,7 +62,7 @@ export function PageHeader({ breadcrumb, title, description }: PageHeaderProps) 
             variants={fadeUp}
             initial="hidden"
             animate="show"
-            className="mt-3 max-w-2xl text-base leading-relaxed text-gray-400"
+            className="mt-3 max-w-2xl text-base leading-relaxed text-white"
           >
             {description}
           </motion.p>

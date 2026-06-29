@@ -46,13 +46,13 @@ export function LiveMarketOverview() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center gap-2 text-xs text-gray-500">
+      <div className="mb-4 flex items-center gap-2 text-xs text-white">
         <span className={cn('h-2 w-2 rounded-full', connected ? 'animate-pulse bg-success' : 'bg-gray-600')} />
         {connected ? 'Live' : 'Connecting…'}
       </div>
 
       {list.length === 0 ? (
-        <div className="rounded-2xl border border-white/[0.06] bg-ink-800/40 p-8 text-center text-sm text-gray-400">
+        <div className="rounded-2xl border border-white/[0.06] bg-ink-800/40 p-8 text-center text-sm text-white">
           Live market data isn’t available right now.
         </div>
       ) : (

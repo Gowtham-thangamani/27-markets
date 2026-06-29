@@ -68,8 +68,8 @@ export default function PlatformsPage() {
                   <Badge tone="neutral">{p.version}</Badge>
                 </div>
                 <h3 className="mt-4 font-display text-lg font-semibold text-white">{p.name}</h3>
-                <p className="mt-1 flex-1 text-sm leading-relaxed text-gray-400">{p.description}</p>
-                <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
+                <p className="mt-1 flex-1 text-sm leading-relaxed text-white">{p.description}</p>
+                <div className="mt-4 flex items-center justify-between text-xs text-white">
                   <span>{p.platform}</span>
                   <span>{p.size}</span>
                 </div>
@@ -108,7 +108,7 @@ export default function PlatformsPage() {
                 <f.icon className="h-5 w-5" />
               </span>
               <h3 className="mt-4 font-display text-base font-semibold text-white">{f.title}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-gray-400">{f.description}</p>
+              <p className="mt-1 text-sm leading-relaxed text-white">{f.description}</p>
             </motion.div>
           ))}
         </motion.div>

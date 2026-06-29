@@ -15,7 +15,7 @@ export function FeatureCard({ icon: Icon, title, description }: FeatureCardProps
         <Icon className="h-6 w-6" />
       </div>
       <h3 className="font-display text-lg font-semibold text-white">{title}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-gray-400">{description}</p>
+      <p className="mt-2 text-sm leading-relaxed text-white">{description}</p>
     </motion.div>
   )
 }

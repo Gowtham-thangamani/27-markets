@@ -32,7 +32,7 @@ export default function PartnershipPage() {
             <h2 className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
               Powerful Partnership. <span className="text-gradient-red">Lasting Success.</span>
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-gray-400">
+            <p className="mx-auto mt-4 max-w-xl text-white">
               Join our IB program and unlock unlimited potential with industry-leading conditions
               and full transparency.
             </p>
@@ -70,7 +70,7 @@ export default function PartnershipPage() {
                 <b.icon className="h-6 w-6" />
               </div>
               <h3 className="font-display text-lg font-semibold text-white">{b.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-gray-400">{b.description}</p>
+              <p className="mt-2 text-sm leading-relaxed text-white">{b.description}</p>
             </motion.div>
           ))}
         </motion.div>
@@ -82,9 +82,9 @@ export default function PartnershipPage() {
         <div className="mt-12 grid gap-5 md:grid-cols-3">
           {steps.map((s) => (
             <Reveal key={s.n} className="glass-panel relative overflow-hidden p-7">
-              <span className="font-display text-5xl font-bold text-brand-500/20">{s.n}</span>
+              <span className="font-display text-5xl font-bold text-brand-500">{s.n}</span>
               <h3 className="mt-2 font-display text-lg font-semibold text-white">{s.title}</h3>
-              <p className="mt-2 text-sm text-gray-400">{s.text}</p>
+              <p className="mt-2 text-sm text-white">{s.text}</p>
             </Reveal>
           ))}
         </div>

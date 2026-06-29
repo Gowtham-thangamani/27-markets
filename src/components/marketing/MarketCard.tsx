@@ -29,7 +29,7 @@ export function MarketCard({ category }: { category: MarketCategory }) {
           <ArrowUpRight className="h-5 w-5 text-gray-600 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand-400" />
         </div>
         <h3 className="font-display text-lg font-semibold text-white">{title}</h3>
-        <p className="mt-1 text-sm text-gray-400">{subtitle}</p>
+        <p className="mt-1 text-sm text-white">{subtitle}</p>
         <p className="mt-3 text-xs font-medium text-brand-300/80">{examples}</p>
       </Link>
     </motion.div>

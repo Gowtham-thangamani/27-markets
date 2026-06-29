@@ -21,7 +21,7 @@ export function DfmBoard() {
           Awaiting licensed feed
         </span>
       </div>
-      <p className="mb-4 text-xs leading-relaxed text-gray-500">
+      <p className="mb-4 text-xs leading-relaxed text-white">
         DFM real-time prices require an authorized vendor agreement. The symbols below are
         placeholders until the licensed feed is connected.
       </p>
@@ -30,7 +30,7 @@ export function DfmBoard() {
           <li key={r.sym} className="flex items-center justify-between py-2.5">
             <div className="min-w-0">
               <span className="font-medium text-white">{r.sym}</span>
-              <span className="text-gray-500"> · {r.name}</span>
+              <span className="text-white"> · {r.name}</span>
             </div>
             <span className="tabular-nums text-gray-600">—</span>
           </li>

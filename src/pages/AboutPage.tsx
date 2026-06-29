@@ -21,12 +21,12 @@ export default function AboutPage() {
           <h2 className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
             A next-generation broker built on trust
           </h2>
-          <p className="mt-4 leading-relaxed text-gray-400">
+          <p className="mt-4 leading-relaxed text-white">
             27 Markets is a next-generation broker built on trust, transparency, and technology.
             Our mission is to empower traders and partners with the best trading conditions,
             innovative solutions, and unmatched support.
           </p>
-          <p className="mt-4 leading-relaxed text-gray-400">
+          <p className="mt-4 leading-relaxed text-white">
             From institutional-grade liquidity to sub-30ms execution, every part of our
             infrastructure is engineered to give you an edge across global markets.
           </p>
@@ -59,7 +59,7 @@ export default function AboutPage() {
                 <v.icon className="h-6 w-6" />
               </div>
               <h3 className="font-display text-xl font-semibold text-white">{v.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-gray-400">{v.description}</p>
+              <p className="mt-2 text-sm leading-relaxed text-white">{v.description}</p>
             </motion.div>
           ))}
         </motion.div>
@@ -106,7 +106,7 @@ export default function AboutPage() {
                 <h2 className="max-w-xl font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
                   Engineered for performance and trust
                 </h2>
-                <p className="mt-4 max-w-md leading-relaxed text-gray-300">
+                <p className="mt-4 max-w-md leading-relaxed text-white">
                   Segregated funds, transparent pricing, and a relentless focus on execution
                   quality.
                 </p>

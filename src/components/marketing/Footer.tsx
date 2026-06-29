@@ -66,7 +66,7 @@ export function Footer() {
         <div className="grid gap-10 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
           <div className="max-w-xs">
             <Logo />
-            <p className="mt-4 text-sm leading-relaxed text-gray-400">
+            <p className="mt-4 text-sm leading-relaxed text-white">
               Trade global financial markets through a broker built for traders, partners, and
               long-term growth.
             </p>
@@ -77,7 +77,7 @@ export function Footer() {
                   href={href}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.06] text-gray-400 transition-colors hover:border-brand-500/40 hover:text-brand-400"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.06] text-white transition-colors hover:border-brand-500/40 hover:text-brand-400"
                   aria-label={label}
                 >
                   <Icon className="h-4 w-4" />
@@ -94,7 +94,7 @@ export function Footer() {
                   <li key={link.label}>
                     <Link
                       to={link.to}
-                      className="text-sm text-gray-400 transition-colors hover:text-brand-400"
+                      className="text-sm text-white transition-colors hover:text-brand-400"
                     >
                       {link.label}
                     </Link>
@@ -107,7 +107,7 @@ export function Footer() {
 
         <div className="hairline my-10" />
 
-        <div className="flex flex-col gap-4 text-xs text-gray-500 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-4 text-xs text-white lg:flex-row lg:items-center lg:justify-between">
           <p>© 2026 27 Markets. All rights reserved.</p>
           <p className="max-w-3xl leading-relaxed">
             Risk warning: CFDs are complex instruments and carry a high risk of losing money

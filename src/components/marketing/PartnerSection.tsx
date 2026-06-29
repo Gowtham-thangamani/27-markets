@@ -18,7 +18,7 @@ export function PartnerSection() {
               Grow Together. <br />
               <span className="text-gradient-red">Succeed Together.</span>
             </h2>
-            <p className="mt-4 max-w-md text-base leading-relaxed text-gray-400">
+            <p className="mt-4 max-w-md text-base leading-relaxed text-white">
               Our IB program is built for long-term success. Enjoy competitive rebates, powerful
               tools, and dedicated support to grow your business across global markets.
             </p>

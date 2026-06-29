@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { TrendingUp, LineChart, Clock, SlidersHorizontal, RotateCcw, Pencil } from 'lucide-react'
 import { Badge, Button, EmptyState, Input, Modal, Select, SkeletonRows } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
+import { Mt5Card } from '@/components/portal/Mt5Card'
 import { usePortalUI } from '@/layouts/PortalLayout'
 import { usePortalData } from '@/context/PortalDataContext'
 import { useToast } from '@/context/ToastContext'
@@ -291,6 +292,9 @@ export default function TradePage() {
   return (
     <>
       <PageTitle title="Trade" subtitle="Demo execution at live prices · MT5-ready." />
+      <div className="mb-4">
+        <Mt5Card />
+      </div>
       <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
         {/* Order ticket */}
         <div className="glass-panel h-fit p-5">

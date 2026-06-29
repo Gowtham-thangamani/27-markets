@@ -54,14 +54,14 @@ export default function HomePage() {
               <br />
               Beyond
               <br />
-              <span className="text-gradient-red">Limits</span>
+              <span className="text-white">Limits</span>
             </motion.h1>
 
             <motion.p variants={fadeUp} className="mt-5 text-sm font-medium text-brand-300/90">
               Precision · Performance · Partnership
             </motion.p>
 
-            <motion.p variants={fadeUp} className="mt-3 max-w-md text-base leading-relaxed text-gray-400">
+            <motion.p variants={fadeUp} className="mt-3 max-w-md text-base leading-relaxed text-white">
               Access global financial markets through a broker built for traders, partners, and
               long-term growth.
             </motion.p>
@@ -111,7 +111,7 @@ export default function HomePage() {
                 </span>
                 <div>
                   <div className="font-display text-xl font-bold text-white">{s.value}</div>
-                  <div className="text-xs text-gray-400">{s.label}</div>
+                  <div className="text-xs text-white">{s.label}</div>
                 </div>
               </motion.div>
             ))}
@@ -169,12 +169,12 @@ export default function HomePage() {
             <h2 className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
               Keep more of every move
             </h2>
-            <p className="mt-4 max-w-lg leading-relaxed text-gray-400">
+            <p className="mt-4 max-w-lg leading-relaxed text-white">
               Tight spreads, fast execution, and transparent pricing mean more of every winning
               trade stays in your account. Scale your strategy with leverage up to 1:500 across
               100+ global markets.
             </p>
-            <ul className="mt-6 space-y-3 text-sm text-gray-300">
+            <ul className="mt-6 space-y-3 text-sm text-white">
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand-500" /> Spreads from 0.0 pips
               </li>
