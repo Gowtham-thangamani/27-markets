@@ -23,6 +23,7 @@ export default function RegisterPage() {
   const { register: registerUser } = useAuth()
   const toast = useToast()
   const [params] = useSearchParams()
+  const ref = params.get('ref') ?? undefined
 
   const [step, setStep] = useState(0)
   const [errors, setErrors] = useState<Errors>({})
@@ -83,6 +84,7 @@ export default function RegisterPage() {
         city: form.city || undefined,
         postalCode: form.postalCode || undefined,
         acceptTerms: form.agree,
+        ...(ref ? { ref } : {}),
       })
       // Open the account type the user selected during onboarding.
       try {
@@ -120,6 +122,11 @@ export default function RegisterPage() {
       }
     >
       <h1 className="font-display text-3xl font-bold text-white">Create your account</h1>
+      {ref && (
+        <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/[0.08] px-3 py-1 text-xs text-brand-300">
+          Referred by a partner
+        </p>
+      )}
       <p className="mt-2 text-sm text-gray-400">Step {step + 1} of {steps.length} — {steps[step]}</p>
 
       {/* Stepper */}
