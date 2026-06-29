@@ -16,13 +16,9 @@ export class AdminPartnersService {
       orderBy: { createdAt: 'desc' },
       take: 200,
       select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        country: true,
-        status: true,
-        createdAt: true,
+        id: true, firstName: true, lastName: true, email: true, country: true, status: true, createdAt: true,
+        partnerProfile: { select: { referralCode: true } },
+        _count: { select: { referredClients: true } },
       },
     });
   }
