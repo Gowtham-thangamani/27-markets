@@ -28,8 +28,8 @@ export interface ExecutionProvider {
   readonly simulated: boolean;
   /** Throws if real execution can't be performed (no venue configured). */
   assertAvailable(): void;
-  /** Market fill for a symbol/side/quantity. */
-  fill(symbol: string, side: OrderSide, quantity: number): Promise<Fill>;
+  /** Market fill for a symbol/side/quantity. `mt5AccountId` routes to a client's linked account. */
+  fill(symbol: string, side: OrderSide, quantity: number, mt5AccountId?: string): Promise<Fill>;
 }
 
 /** Demo execution: fills at the real, live market price from the price feed. */
@@ -74,15 +74,15 @@ export class Mt5ExecutionProvider implements ExecutionProvider {
     }
   }
 
-  async fill(symbol: string, side: OrderSide, quantity: number): Promise<Fill> {
+  async fill(symbol: string, side: OrderSide, quantity: number, mt5AccountId?: string): Promise<Fill> {
     this.assertAvailable();
     const mt5Symbol = toMt5Symbol(symbol);
-    const deal = await this.gateway.placeMarketOrder({ symbol: mt5Symbol, side: side as 'BUY' | 'SELL', volume: quantity });
+    const deal = await this.gateway.placeMarketOrder({ symbol: mt5Symbol, side: side as 'BUY' | 'SELL', volume: quantity }, mt5AccountId);
 
     // The trade RPC confirms execution but not always the price — read the quote.
     let price = deal?.price && deal.price > 0 ? deal.price : undefined;
     if (price === undefined) {
-      const quote = await this.gateway.currentPrice(mt5Symbol).catch(() => undefined);
+      const quote = await this.gateway.currentPrice(mt5Symbol, mt5AccountId).catch(() => undefined);
       price = quote ? (side === OrderSide.BUY ? quote.ask : quote.bid) : undefined;
     }
     if (!price || !(price > 0)) {

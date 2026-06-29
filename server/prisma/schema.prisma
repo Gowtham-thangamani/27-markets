@@ -75,8 +75,31 @@ model User {
   depositRequests     DepositRequest[]
   savedCards          SavedCard[]
   verificationTokens  VerificationToken[]
+  mt5Connection       Mt5Connection?
 
   @@index([email])
+}
+
+enum Mt5ConnectionStatus {
+  PENDING
+  CONNECTED
+  FAILED
+}
+
+// A client's linked MetaTrader 5 account (account-linking model). We NEVER store
+// the MT5 password — it's sent to MetaApi to provision, and we keep only the
+// returned account id + display fields.
+model Mt5Connection {
+  id           String              @id @default(cuid())
+  userId       String              @unique
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  login        String
+  server       String
+  mt5AccountId String? // MetaApi account id, once provisioned
+  status       Mt5ConnectionStatus @default(PENDING)
+  error        String?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
 }
 
 enum VerificationTokenType {

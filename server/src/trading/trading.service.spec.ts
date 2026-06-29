@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+﻿import { Prisma } from '@prisma/client';
 import { TradingService } from './trading.service';
 
 // Constructor order: (prisma, ledger, audit, exec, market)
@@ -10,6 +10,7 @@ const simExec = (price: number) => ({
 });
 const ledgerWith = (balance: number) => ({ balanceOf: jest.fn().mockResolvedValue(balance), getSystemAccount: jest.fn().mockResolvedValue({ id: 'adj' }), post: jest.fn() });
 const marketWith = (quotes: { symbol: string; price: number }[] = []) => ({ getQuotes: jest.fn().mockResolvedValue(quotes) });
+const mt5conn = () => ({ accountIdFor: jest.fn().mockResolvedValue(undefined) });
 const audit = () => ({ record: jest.fn() });
 
 describe('TradingService.placeOrder (market)', () => {
@@ -22,11 +23,11 @@ describe('TradingService.placeOrder (market)', () => {
       position,
     } as any;
     const exec = simExec(100);
-    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, exec as any, marketWith() as any);
+    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, exec as any, marketWith() as any, mt5conn() as any);
 
     await service.placeOrder('u1', { accountId: 'acc1', symbol: 'BINANCE:BTCUSDT', side: 'BUY', quantity: 0.5 } as any);
 
-    expect(exec.fill).toHaveBeenCalledWith('BINANCE:BTCUSDT', 'BUY', 0.5);
+    expect(exec.fill).toHaveBeenCalledWith('BINANCE:BTCUSDT', 'BUY', 0.5, undefined);
     expect(position.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ entryPrice: 100, side: 'BUY', status: 'OPEN' }) }),
     );
@@ -37,7 +38,7 @@ describe('TradingService.placeOrder (market)', () => {
       tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'DEMO', leverage: '1:1', ledgerAccount: { id: 'cl' } }) },
       position: { findMany: jest.fn().mockResolvedValue([]) },
     } as any;
-    const service = new TradingService(prisma, ledgerWith(100) as any, audit() as any, simExec(1000) as any, marketWith() as any);
+    const service = new TradingService(prisma, ledgerWith(100) as any, audit() as any, simExec(1000) as any, marketWith() as any, mt5conn() as any);
     await expect(
       service.placeOrder('u1', { accountId: 'acc1', symbol: 'X', side: 'BUY', quantity: 1 } as any),
     ).rejects.toThrow('Insufficient free margin');
@@ -47,7 +48,7 @@ describe('TradingService.placeOrder (market)', () => {
     const prisma = {
       tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'LIVE', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
     } as any;
-    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, simExec(100) as any, marketWith() as any);
+    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, simExec(100) as any, marketWith() as any, mt5conn() as any);
     await expect(
       service.placeOrder('u1', { accountId: 'acc1', symbol: 'X', side: 'BUY', quantity: 1 } as any),
     ).rejects.toThrow('Live trading requires a connected MT5 venue');
@@ -63,7 +64,7 @@ describe('TradingService.placeOrder (limit/stop)', () => {
       order,
     } as any;
     const exec = simExec(100);
-    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, exec as any, marketWith() as any);
+    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, exec as any, marketWith() as any, mt5conn() as any);
 
     const res = await service.placeOrder('u1', { accountId: 'acc1', symbol: 'X', side: 'BUY', quantity: 1, type: 'LIMIT', triggerPrice: 90 } as any);
 
@@ -79,7 +80,7 @@ describe('TradingService.placeOrder (limit/stop)', () => {
       tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'DEMO', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
       position: { findMany: jest.fn().mockResolvedValue([]) },
     } as any;
-    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, simExec(100) as any, marketWith() as any);
+    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, simExec(100) as any, marketWith() as any, mt5conn() as any);
     await expect(
       service.placeOrder('u1', { accountId: 'acc1', symbol: 'X', side: 'BUY', quantity: 1, type: 'STOP' } as any),
     ).rejects.toThrow('trigger price is required');
@@ -112,7 +113,7 @@ describe('TradingService.cancelOrder', () => {
         update: jest.fn().mockResolvedValue({ id: 'po1', status: 'CANCELLED' }),
       },
     } as any;
-    const service = new TradingService(prisma, ledgerWith(0) as any, audit() as any, simExec(1) as any, marketWith() as any);
+    const service = new TradingService(prisma, ledgerWith(0) as any, audit() as any, simExec(1) as any, marketWith() as any, mt5conn() as any);
     const res = await service.cancelOrder('u1', 'po1');
     expect(prisma.order.update).toHaveBeenCalledWith({ where: { id: 'po1' }, data: { status: 'CANCELLED' } });
     expect(res.status).toBe('CANCELLED');
@@ -127,7 +128,7 @@ describe('TradingService.setProtection', () => {
         update: jest.fn().mockResolvedValue({ id: 'p1', takeProfit: 120 }),
       },
     } as any;
-    const service = new TradingService(prisma, ledgerWith(0) as any, audit() as any, simExec(1) as any, marketWith() as any);
+    const service = new TradingService(prisma, ledgerWith(0) as any, audit() as any, simExec(1) as any, marketWith() as any, mt5conn() as any);
     await service.setProtection('u1', 'p1', { takeProfit: 120, stopLoss: 90 } as any);
     expect(prisma.position.update).toHaveBeenCalledWith({ where: { id: 'p1' }, data: { takeProfit: 120, stopLoss: 90 } });
   });
@@ -147,7 +148,7 @@ describe('TradingService.closePosition', () => {
   it('full close realizes P&L and marks the position CLOSED (BUY in profit)', async () => {
     const prisma = basePrisma(openPos()) as any;
     const ledger = ledgerWith(1000);
-    const service = new TradingService(prisma, ledger as any, audit() as any, simExec(110) as any, marketWith() as any);
+    const service = new TradingService(prisma, ledger as any, audit() as any, simExec(110) as any, marketWith() as any, mt5conn() as any);
 
     const res = await service.closePosition('u1', 'p1');
 
@@ -161,7 +162,7 @@ describe('TradingService.closePosition', () => {
 
   it('partial close reduces quantity and keeps the position OPEN', async () => {
     const prisma = basePrisma(openPos()) as any;
-    const service = new TradingService(prisma, ledgerWith(1000) as any, audit() as any, simExec(110) as any, marketWith() as any);
+    const service = new TradingService(prisma, ledgerWith(1000) as any, audit() as any, simExec(110) as any, marketWith() as any, mt5conn() as any);
 
     await service.closePosition('u1', 'p1', 0.5); // close 0.5 of 2
 
@@ -176,7 +177,7 @@ describe('TradingService.marginSnapshot', () => {
     const prisma = {
       position: { findMany: jest.fn().mockResolvedValue([{ symbol: 'X', side: 'BUY', quantity: new Prisma.Decimal(10), entryPrice: new Prisma.Decimal(100) }]) },
     } as any;
-    const service = new TradingService(prisma, ledgerWith(30) as any, audit() as any, simExec(1) as any, marketWith([{ symbol: 'X', price: 95 }]) as any);
+    const service = new TradingService(prisma, ledgerWith(30) as any, audit() as any, simExec(1) as any, marketWith([{ symbol: 'X', price: 95 }]) as any, mt5conn() as any);
 
     const snap = await service.marginSnapshot({ id: 'acc1', leverage: '1:100', ledgerAccount: { id: 'cl' } } as any);
 
@@ -193,7 +194,7 @@ describe('TradingService.getMargin', () => {
       tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', leverage: '1:100', ledgerAccount: { id: 'cl' } }) },
       position: { findMany: jest.fn().mockResolvedValue([{ symbol: 'X', side: 'BUY', quantity: new Prisma.Decimal(10), entryPrice: new Prisma.Decimal(100) }]) },
     } as any;
-    const service = new TradingService(prisma, ledgerWith(1000) as any, audit() as any, simExec(1) as any, marketWith([{ symbol: 'X', price: 101 }]) as any);
+    const service = new TradingService(prisma, ledgerWith(1000) as any, audit() as any, simExec(1) as any, marketWith([{ symbol: 'X', price: 101 }]) as any, mt5conn() as any);
     const m = await service.getMargin('u1', 'acc1');
     expect(m.used).toBeCloseTo(10); // 100*10/100
     expect(m.equity).toBeCloseTo(1010); // 1000 + (101-100)*10
@@ -212,7 +213,7 @@ describe('TradingService.modifyOrder', () => {
       tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
       position: { findMany: jest.fn().mockResolvedValue([]) },
     } as any;
-    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, simExec(1) as any, marketWith() as any);
+    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, simExec(1) as any, marketWith() as any, mt5conn() as any);
     await service.modifyOrder('u1', 'po1', { triggerPrice: 80, quantity: 2 });
     expect(prisma.order.update).toHaveBeenCalledWith({ where: { id: 'po1' }, data: { triggerPrice: 80, quantity: 2 } });
   });
@@ -227,17 +228,17 @@ describe('TradingService.resetDemo', () => {
       position: { updateMany: jest.fn().mockResolvedValue({}), findMany: jest.fn().mockResolvedValue([]) },
     } as any;
     const ledger = { balanceOf: jest.fn().mockResolvedValue(30000), getSystemAccount: jest.fn().mockResolvedValue({ id: 'df' }), post } as any;
-    const service = new TradingService(prisma, ledger, audit() as any, simExec(1) as any, marketWith() as any);
+    const service = new TradingService(prisma, ledger, audit() as any, simExec(1) as any, marketWith() as any, mt5conn() as any);
     await service.resetDemo('u1', 'acc1');
     expect(prisma.order.updateMany).toHaveBeenCalled();
     expect(prisma.position.updateMany).toHaveBeenCalled();
-    const postings = post.mock.calls[0][0].postings; // delta 50000-30000=20000 → add funds
+    const postings = post.mock.calls[0][0].postings; // delta 50000-30000=20000 â†’ add funds
     expect(postings.map((p: any) => [p.ledgerAccountId, p.direction])).toEqual([['df', 'DEBIT'], ['cl', 'CREDIT']]);
   });
 
   it('refuses non-demo accounts', async () => {
     const prisma = { tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'LIVE', ledgerAccount: { id: 'cl' } }) } } as any;
-    const service = new TradingService(prisma, ledgerWith(0) as any, audit() as any, simExec(1) as any, marketWith() as any);
+    const service = new TradingService(prisma, ledgerWith(0) as any, audit() as any, simExec(1) as any, marketWith() as any, mt5conn() as any);
     await expect(service.resetDemo('u1', 'acc1')).rejects.toThrow('Only demo accounts');
   });
 });
@@ -245,7 +246,7 @@ describe('TradingService.resetDemo', () => {
 describe('TradingService validation', () => {
   it('rejects a take-profit on the wrong side of entry', async () => {
     const prisma = { position: { findUnique: jest.fn().mockResolvedValue({ id: 'p1', userId: 'u1', status: 'OPEN', side: 'BUY', entryPrice: new Prisma.Decimal(100) }) } } as any;
-    const service = new TradingService(prisma, ledgerWith(0) as any, audit() as any, simExec(1) as any, marketWith() as any);
+    const service = new TradingService(prisma, ledgerWith(0) as any, audit() as any, simExec(1) as any, marketWith() as any, mt5conn() as any);
     await expect(service.setProtection('u1', 'p1', { takeProfit: 90 } as any)).rejects.toThrow('Take-profit must be above');
   });
 
@@ -254,7 +255,7 @@ describe('TradingService validation', () => {
       tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'DEMO', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
       position: { findMany: jest.fn().mockResolvedValue([]) },
     } as any;
-    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, simExec(100) as any, marketWith([{ symbol: 'X', price: 100 }]) as any);
+    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, simExec(100) as any, marketWith([{ symbol: 'X', price: 100 }]) as any, mt5conn() as any);
     await expect(
       service.placeOrder('u1', { accountId: 'acc1', symbol: 'X', side: 'BUY', quantity: 1, type: 'LIMIT', triggerPrice: 110 } as any),
     ).rejects.toThrow('must trigger below');

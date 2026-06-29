@@ -48,6 +48,9 @@ export const envSchema = z
     MT5_GATEWAY_URL: z.string().optional(),
     MT5_API_KEY: z.string().optional(),
     MT5_ACCOUNT_ID: z.string().optional(),
+    // Per-client account linking (MetaApi provisioning) — for the account-linking model.
+    MT5_PROVISIONING_URL: z.string().optional(),
+    MT5_REGION: z.string().optional(),
 
     // ── Document storage (KYC) ──
     // 'local' (default) stores on disk; 's3' uses an S3-compatible bucket

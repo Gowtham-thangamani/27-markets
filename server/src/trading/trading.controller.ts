@@ -1,13 +1,33 @@
-import { Body, Controller, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
 import type { PositionStatus } from '@prisma/client';
 import { CurrentUser } from '../common/decorators';
 import { TradingService } from './trading.service';
-import { ClosePositionDto, ModifyOrderDto, PlaceOrderDto, SetProtectionDto } from './trading.dto';
+import { Mt5ConnectionService } from './mt5-connection.service';
+import { ClosePositionDto, ConnectMt5Dto, ModifyOrderDto, PlaceOrderDto, SetProtectionDto } from './trading.dto';
 
 /** Client trading endpoints (authenticated). Demo execution today; MT5 at go-live. */
 @Controller('trading')
 export class TradingController {
-  constructor(private readonly trading: TradingService) {}
+  constructor(
+    private readonly trading: TradingService,
+    private readonly mt5: Mt5ConnectionService,
+  ) {}
+
+  @Get('mt5')
+  mt5Connection(@CurrentUser('id') userId: string) {
+    return this.mt5.getMine(userId);
+  }
+
+  @HttpCode(200)
+  @Post('mt5/connect')
+  connectMt5(@CurrentUser('id') userId: string, @Body() dto: ConnectMt5Dto) {
+    return this.mt5.connect(userId, dto);
+  }
+
+  @Delete('mt5')
+  disconnectMt5(@CurrentUser('id') userId: string) {
+    return this.mt5.disconnect(userId);
+  }
 
   @HttpCode(200)
   @Post('orders')

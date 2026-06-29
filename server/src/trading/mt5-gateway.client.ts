@@ -50,15 +50,17 @@ export class Mt5GatewayClient {
     return this.config.get('MT5_ACCOUNT_ID', { infer: true });
   }
   get configured(): boolean {
-    return !!this.baseUrl && !!this.accountId;
+    // A per-client account id can be supplied per call, so only the gateway URL is required.
+    return !!this.baseUrl;
   }
 
-  private async request<T>(path: string, init?: RequestInit): Promise<T> {
-    if (!this.baseUrl || !this.accountId) {
-      throw new ServiceUnavailableException('MT5 gateway is not configured (MT5_GATEWAY_URL + MT5_ACCOUNT_ID).');
+  private async request<T>(path: string, init?: RequestInit, accountId?: string): Promise<T> {
+    const account = accountId ?? this.accountId;
+    if (!this.baseUrl || !account) {
+      throw new ServiceUnavailableException('MT5 gateway is not configured (MT5_GATEWAY_URL + an account id).');
     }
     const token = this.config.get('MT5_API_KEY', { infer: true });
-    const url = `${this.baseUrl.replace(/\/$/, '')}/users/current/accounts/${this.accountId}${path}`;
+    const url = `${this.baseUrl.replace(/\/$/, '')}/users/current/accounts/${account}${path}`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
     try {
@@ -86,21 +88,25 @@ export class Mt5GatewayClient {
     }
   }
 
-  /** Place a market deal (MetaApi trade RPC). */
-  placeMarketOrder(input: { symbol: string; side: 'BUY' | 'SELL'; volume: number }): Promise<Mt5Deal> {
-    return this.request<Mt5Deal>('/trade', {
-      method: 'POST',
-      body: JSON.stringify({
-        actionType: input.side === 'BUY' ? 'ORDER_TYPE_BUY' : 'ORDER_TYPE_SELL',
-        symbol: input.symbol,
-        volume: input.volume,
-      }),
-    });
+  /** Place a market deal (MetaApi trade RPC). Pass accountId to trade a client's account. */
+  placeMarketOrder(input: { symbol: string; side: 'BUY' | 'SELL'; volume: number }, accountId?: string): Promise<Mt5Deal> {
+    return this.request<Mt5Deal>(
+      '/trade',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          actionType: input.side === 'BUY' ? 'ORDER_TYPE_BUY' : 'ORDER_TYPE_SELL',
+          symbol: input.symbol,
+          volume: input.volume,
+        }),
+      },
+      accountId,
+    );
   }
 
   /** Current ask/bid for a symbol. */
-  currentPrice(symbol: string): Promise<Mt5Price> {
-    return this.request<Mt5Price>(`/symbols/${encodeURIComponent(symbol)}/current-price`);
+  currentPrice(symbol: string, accountId?: string): Promise<Mt5Price> {
+    return this.request<Mt5Price>(`/symbols/${encodeURIComponent(symbol)}/current-price`, undefined, accountId);
   }
 
   /** Live account state (balance, equity, margin) for reconciliation. */

@@ -8,10 +8,10 @@ describe('Mt5GatewayClient (MetaApi)', () => {
     global.fetch = realFetch;
   });
 
-  it('is not configured without both a URL and an account id', async () => {
+  it('is configured with a URL; firm-level calls still need an account id', async () => {
     const c = new Mt5GatewayClient(cfg({ MT5_GATEWAY_URL: 'https://gw' }));
-    expect(c.configured).toBe(false);
-    await expect(c.getAccount()).rejects.toThrow('not configured');
+    expect(c.configured).toBe(true); // per-client account ids are supplied per call
+    await expect(c.getAccount()).rejects.toThrow('not configured'); // no firm account id
   });
 
   it('places a market order with the auth-token header on the account path', async () => {

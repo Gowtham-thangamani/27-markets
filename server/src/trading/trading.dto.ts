@@ -27,6 +27,20 @@ export class PlaceOrderDto {
   triggerPrice?: number;
 }
 
+export class ConnectMt5Dto {
+  @IsString()
+  @MaxLength(40)
+  login!: string;
+
+  @IsString()
+  @MaxLength(128)
+  password!: string;
+
+  @IsString()
+  @MaxLength(80)
+  server!: string;
+}
+
 export class ListPositionsQuery {
   @IsEnum(PositionStatus)
   status?: PositionStatus;

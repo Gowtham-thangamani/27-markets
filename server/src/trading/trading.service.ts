@@ -23,6 +23,7 @@ import { MarketService } from '../market/market.service';
 import { toMoney } from '../ledger/money';
 import { generateTxReference } from '../common/reference';
 import { EXECUTION_PROVIDER, type ExecutionProvider, type Fill } from './execution-provider';
+import { Mt5ConnectionService } from './mt5-connection.service';
 import type { PlaceOrderDto, SetProtectionDto } from './trading.dto';
 
 type AccountWithLedger = Prisma.TradingAccountGetPayload<{ include: { ledgerAccount: true } }>;
@@ -44,7 +45,13 @@ export class TradingService {
     private readonly audit: AuditService,
     @Inject(EXECUTION_PROVIDER) private readonly exec: ExecutionProvider,
     private readonly market: MarketService,
+    private readonly mt5: Mt5ConnectionService,
   ) {}
+
+  /** The client's linked MT5 account id, only when the MT5 venue is active. */
+  private mt5AccountFor(userId: string): Promise<string | undefined> {
+    return this.exec.name === 'mt5' ? this.mt5.accountIdFor(userId) : Promise.resolve(undefined);
+  }
 
   private async ownedAccount(userId: string, accountId: string): Promise<AccountWithLedger> {
     const a = await this.prisma.tradingAccount.findUnique({
@@ -111,7 +118,7 @@ export class TradingService {
     const type = dto.type ?? OrderType.MARKET;
 
     if (type === OrderType.MARKET) {
-      const fill = await this.exec.fill(dto.symbol, dto.side, dto.quantity);
+      const fill = await this.exec.fill(dto.symbol, dto.side, dto.quantity, await this.mt5AccountFor(userId));
       await this.assertMargin(account, fill.price * dto.quantity);
       return this.fillAndOpen(userId, account.id, dto.symbol, dto.side, dto.quantity, fill, OrderType.MARKET);
     }
@@ -276,7 +283,7 @@ export class TradingService {
     const posQty = Number(pos.quantity);
     const closeQty = quantity && quantity > 0 && quantity < posQty ? quantity : posQty;
     const closeSide: OrderSide = pos.side === OrderSide.BUY ? OrderSide.SELL : OrderSide.BUY;
-    const fill = await this.exec.fill(pos.symbol, closeSide, closeQty);
+    const fill = await this.exec.fill(pos.symbol, closeSide, closeQty, await this.mt5AccountFor(userId));
     const pnl = await this.realizePnl(account, pos, closeQty, fill.price, '');
     const prevRealized = Number(pos.realizedPnl ?? 0);
 

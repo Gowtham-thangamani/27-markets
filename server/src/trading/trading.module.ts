@@ -6,6 +6,8 @@ import { TradingController } from './trading.controller';
 import { TradingService } from './trading.service';
 import { PendingOrderWatcher } from './pending-order.watcher';
 import { Mt5GatewayClient } from './mt5-gateway.client';
+import { Mt5ProvisioningClient } from './mt5-provisioning.client';
+import { Mt5ConnectionService } from './mt5-connection.service';
 import {
   EXECUTION_PROVIDER,
   SimulationExecutionProvider,
@@ -25,6 +27,8 @@ import {
     TradingService,
     PendingOrderWatcher,
     Mt5GatewayClient,
+    Mt5ProvisioningClient,
+    Mt5ConnectionService,
     SimulationExecutionProvider,
     Mt5ExecutionProvider,
     {
