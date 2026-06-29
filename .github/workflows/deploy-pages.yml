@@ -30,12 +30,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build (static frontend only)
+      - name: Build (frontend → Render API)
         run: npm run build
         env:
-          # No backend on Pages — leave the API base empty so calls fail
-          # gracefully (empty/error states) instead of hitting localhost.
-          VITE_API_URL: ''
+          # Public API base (Render). Override via the repo variable
+          # PUBLIC_API_URL if the deployed service URL differs.
+          VITE_API_URL: ${{ vars.PUBLIC_API_URL || 'https://27markets-api.onrender.com/api' }}
 
       - name: SPA fallback (so deep links don't 404 on refresh)
         run: cp dist/index.html dist/404.html

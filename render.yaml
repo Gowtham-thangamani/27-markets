@@ -20,11 +20,18 @@ services:
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
+      # Encrypts sensitive fields at rest (e.g. 2FA secrets).
+      - key: ENCRYPTION_KEY
+        generateValue: true
       # Frontend origin allowed by CORS (the GitHub Pages site).
       - key: CLIENT_ORIGIN
         value: https://gowtham-thangamani.github.io
       - key: TRADING_MODE
         value: SIMULATION
+      # Real-time market data (Finnhub). Secret — set the value in the Render
+      # dashboard; never commit the key. Without it, charts stay indicative.
+      - key: FINNHUB_API_KEY
+        sync: false
 
 databases:
   - name: 27markets-db
