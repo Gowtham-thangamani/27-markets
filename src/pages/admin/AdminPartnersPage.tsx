@@ -1,9 +1,24 @@
 import { useEffect, useState } from 'react'
 import { Handshake } from 'lucide-react'
-import { Badge, EmptyState, ErrorState, SkeletonRows } from '@/components/ui'
+import { Badge } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
 import { formatDate } from '@/lib/format'
 import { adminApi, type PartnerItem } from '@/lib/adminApi'
+import { DataTable, type Column } from '@/components/admin/table'
+
+const columns: Column<PartnerItem>[] = [
+  {
+    key: 'name', header: 'Partner', filter: 'text', sortable: true, accessor: (p) => `${p.firstName} ${p.lastName}`,
+    render: (p) => (<div><div className="text-white">{p.firstName} {p.lastName}</div><div className="text-xs text-gray-500">{p.email}</div></div>),
+  },
+  { key: 'email', header: 'Email', filter: 'text', accessor: (p) => p.email },
+  { key: 'country', header: 'Country', filter: 'select', accessor: (p) => p.country ?? '', render: (p) => p.country ?? '—' },
+  {
+    key: 'status', header: 'Status', filter: 'select', accessor: (p) => p.status,
+    render: (p) => <Badge tone={p.status === 'ACTIVE' ? 'success' : 'neutral'} dot>{p.status}</Badge>,
+  },
+  { key: 'joined', header: 'Joined', filter: 'date', sortable: true, accessor: (p) => p.createdAt, render: (p) => formatDate(p.createdAt) },
+]
 
 export default function AdminPartnersPage() {
   const [partners, setPartners] = useState<PartnerItem[] | null>(null)
@@ -29,43 +44,17 @@ export default function AdminPartnersPage() {
         read-only view of partner accounts.
       </div>
 
-      {error ? (
-        <ErrorState title="Could not load partners" description="Please try again shortly." />
-      ) : !partners ? (
-        <SkeletonRows rows={4} />
-      ) : partners.length === 0 ? (
-        <EmptyState icon={Handshake} title="No partners yet" description="Partner accounts will appear here." />
-      ) : (
-        <div className="glass-panel overflow-hidden p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-sm">
-              <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
-                  <th className="px-5 py-3 font-medium">Partner</th>
-                  <th className="px-5 py-3 font-medium">Country</th>
-                  <th className="px-5 py-3 font-medium">Status</th>
-                  <th className="px-5 py-3 font-medium">Joined</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/[0.04]">
-                {partners.map((p) => (
-                  <tr key={p.id}>
-                    <td className="px-5 py-3">
-                      <div className="text-white">{p.firstName} {p.lastName}</div>
-                      <div className="text-xs text-gray-500">{p.email}</div>
-                    </td>
-                    <td className="px-5 py-3 text-gray-300">{p.country ?? '—'}</td>
-                    <td className="px-5 py-3">
-                      <Badge tone={p.status === 'ACTIVE' ? 'success' : 'neutral'} dot>{p.status}</Badge>
-                    </td>
-                    <td className="px-5 py-3 text-gray-400">{formatDate(p.createdAt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        rows={partners ?? []}
+        rowKey={(p) => p.id}
+        loading={!partners && !error}
+        error={error ? 'Could not load partners' : null}
+        emptyIcon={Handshake}
+        emptyTitle="No partners yet"
+        emptyDescription="Partner accounts will appear here."
+        minWidthClass="min-w-[560px]"
+      />
     </>
   )
 }

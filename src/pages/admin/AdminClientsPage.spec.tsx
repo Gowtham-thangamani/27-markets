@@ -32,7 +32,8 @@ describe('AdminClientsPage', () => {
   it('loads and renders clients from adminApi', async () => {
     render(<AdminClientsPage />)
     await waitFor(() => expect(screen.getByText('Ada Lovelace')).toBeInTheDocument())
-    expect(screen.getByText('ada@x.com')).toBeInTheDocument()
+    // email appears twice: in the name-column sub-line and the dedicated email column
+    expect(screen.getAllByText('ada@x.com').length).toBeGreaterThanOrEqual(1)
     expect(adminApi.listClients).toHaveBeenCalled()
   })
 })

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ShieldCheck, Check, X, FileText } from 'lucide-react'
-import { Badge, Button, EmptyState, ErrorState, SkeletonRows } from '@/components/ui'
+import { Badge, Button } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
 import { kycLabel, kycTone } from '@/components/admin/adminMaps'
 import { useToast } from '@/context/ToastContext'
-import { initials } from '@/lib/format'
 import { ApiError } from '@/lib/api'
 import { adminApi, type ClientListItem, type KycDocument, type KycStepStatus } from '@/lib/adminApi'
+import { DataTable, DocumentViewerModal, type Column } from '@/components/admin/table'
 
 const isPendingClient = (c: ClientListItem) =>
   !!c.kycProfile &&
@@ -19,6 +19,16 @@ const STEPS: { key: StepKey; field: 'identityStatus' | 'addressStatus' | 'selfie
   { key: 'selfie', field: 'selfieStatus', label: 'Selfie' },
 ]
 
+interface DocRow {
+  clientId: string
+  clientName: string
+  email: string
+  step: StepKey
+  stepLabel: string
+  status: KycStepStatus
+  doc?: KycDocument
+}
+
 export default function AdminKycPage() {
   const toast = useToast()
   const [clients, setClients] = useState<ClientListItem[]>([])
@@ -26,6 +36,7 @@ export default function AdminKycPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
+  const [viewer, setViewer] = useState<{ url: string; name: string } | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -67,81 +78,108 @@ export default function AdminKycPage() {
   // Surface clients that have at least one submitted (PENDING) step first.
   const pending = clients.filter(isPendingClient)
 
+  const docRows: DocRow[] = pending.flatMap((c) =>
+    STEPS.map((s) => ({
+      clientId: c.id,
+      clientName: `${c.firstName} ${c.lastName}`,
+      email: c.email,
+      step: s.key,
+      stepLabel: s.label,
+      status: (c.kycProfile?.[s.field] ?? 'NOT_SUBMITTED') as KycStepStatus,
+      doc: docs[c.id]?.find((d) => d.step === s.key),
+    })),
+  )
+
+  const columns: Column<DocRow>[] = [
+    {
+      key: 'client',
+      header: 'Client',
+      filter: 'text',
+      sortable: true,
+      accessor: (r) => r.clientName,
+      render: (r) => (
+        <div>
+          <div className="font-medium text-white">{r.clientName}</div>
+          <div className="text-xs text-gray-500">{r.email}</div>
+        </div>
+      ),
+    },
+    { key: 'email', header: 'Email', filter: 'text', accessor: (r) => r.email },
+    { key: 'step', header: 'Document', filter: 'select', accessor: (r) => r.stepLabel },
+    {
+      key: 'status',
+      header: 'Status',
+      filter: 'select',
+      accessor: (r) => kycLabel[r.status],
+      render: (r) => (
+        <Badge tone={kycTone[r.status]} dot>
+          {kycLabel[r.status]}
+        </Badge>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      accessor: () => '',
+      render: (r) => (
+        <div className="flex items-center gap-2">
+          {r.doc && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1"
+              onClick={() => setViewer({ url: adminApi.kycDocumentUrl(r.doc!.id), name: r.doc!.fileName })}
+            >
+              <FileText className="h-3.5 w-3.5" /> View document
+            </Button>
+          )}
+          {r.status === 'PENDING' && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                loading={busy === `${r.clientId}:${r.step}`}
+                onClick={() => review(r.clientId, r.step, 'APPROVED')}
+                className="gap-1 border-success/40 text-success hover:bg-success/10"
+              >
+                <Check className="h-3.5 w-3.5" /> Approve
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => review(r.clientId, r.step, 'REJECTED')}
+                className="gap-1 border-danger/40 text-danger hover:bg-danger/10"
+              >
+                <X className="h-3.5 w-3.5" /> Reject
+              </Button>
+            </>
+          )}
+        </div>
+      ),
+    },
+  ]
+
   return (
     <>
       <PageTitle title="KYC Review" subtitle="Approve or reject submitted client documents." />
-
-      {error ? (
-        <ErrorState description={error} onRetry={load} />
-      ) : loading ? (
-        <SkeletonRows rows={4} />
-      ) : pending.length === 0 ? (
-        <EmptyState icon={ShieldCheck} title="Nothing to review" description="No clients have documents pending review." />
-      ) : (
-        <div className="space-y-4">
-          {pending.map((c) => (
-            <div key={c.id} className="glass-panel p-5">
-              <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 text-sm font-semibold text-brand-300 ring-1 ring-brand-500/30">
-                  {initials(`${c.firstName} ${c.lastName}`)}
-                </span>
-                <div>
-                  <div className="font-medium text-white">{c.firstName} {c.lastName}</div>
-                  <div className="text-xs text-gray-500">{c.email}</div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                {STEPS.map((s) => {
-                  const status = (c.kycProfile?.[s.field] ?? 'NOT_SUBMITTED') as KycStepStatus
-                  const isPending = status === 'PENDING'
-                  const doc = docs[c.id]?.find((d) => d.step === s.key)
-                  return (
-                    <div key={s.key} className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-ink-800/50 px-4 py-2.5">
-                      <span className="text-sm text-gray-300">{s.label}</span>
-                      <div className="flex items-center gap-2">
-                        {doc && (
-                          <a
-                            href={adminApi.kycDocumentUrl(doc.id)}
-                            target="_blank"
-                            rel="noreferrer"
-                            title={doc.fileName}
-                            className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-gray-300 hover:bg-white/10 hover:text-white"
-                          >
-                            <FileText className="h-3.5 w-3.5" /> View
-                          </a>
-                        )}
-                        <Badge tone={kycTone[status]} dot>{kycLabel[status]}</Badge>
-                        {isPending && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              loading={busy === `${c.id}:${s.key}`}
-                              onClick={() => review(c.id, s.key, 'APPROVED')}
-                              className="gap-1 border-success/40 text-success hover:bg-success/10"
-                            >
-                              <Check className="h-3.5 w-3.5" /> Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => review(c.id, s.key, 'REJECTED')}
-                              className="gap-1 border-danger/40 text-danger hover:bg-danger/10"
-                            >
-                              <X className="h-3.5 w-3.5" /> Reject
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        rows={docRows}
+        rowKey={(r) => `${r.clientId}:${r.step}`}
+        loading={loading}
+        error={error}
+        onRetry={load}
+        emptyIcon={ShieldCheck}
+        emptyTitle="Nothing to review"
+        emptyDescription="No clients have documents pending review."
+        minWidthClass="min-w-[720px]"
+      />
+      <DocumentViewerModal
+        open={!!viewer}
+        onClose={() => setViewer(null)}
+        url={viewer?.url ?? null}
+        fileName={viewer?.name}
+      />
     </>
   )
 }

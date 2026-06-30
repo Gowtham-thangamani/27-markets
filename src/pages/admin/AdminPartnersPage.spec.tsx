@@ -15,7 +15,7 @@ describe('AdminPartnersPage', () => {
   it('renders the read-only partner list', async () => {
     render(<AdminPartnersPage />)
     await waitFor(() => expect(screen.getByText('Ivan Broker')).toBeInTheDocument())
-    expect(screen.getByText('ivan@ib.com')).toBeInTheDocument()
+    expect(screen.getAllByText('ivan@ib.com').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText(/coming in a later phase/i)).toBeInTheDocument()
   })
 })

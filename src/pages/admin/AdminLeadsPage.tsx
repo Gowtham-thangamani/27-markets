@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { UserPlus } from 'lucide-react'
-import { Badge, Button, Input, Modal, Select, Textarea, EmptyState, ErrorState, SkeletonRows } from '@/components/ui'
+import { Badge, Button, Input, Modal, Select, Textarea } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
 import { leadSourceLabel, leadStatusLabel, leadStatusTone } from '@/components/admin/adminMaps'
 import { useToast } from '@/context/ToastContext'
@@ -14,8 +14,30 @@ import {
   type StaffMember,
 } from '@/lib/adminApi'
 import { cn } from '@/lib/cn'
+import { DataTable, type Column } from '@/components/admin/table'
 
 const STATUSES: (LeadStatus | 'ALL')[] = ['ALL', 'NEW', 'CONTACTED', 'QUALIFIED', 'CONVERTED', 'LOST']
+
+const columns: Column<Lead>[] = [
+  {
+    key: 'name', header: 'Lead', filter: 'text', sortable: true, accessor: (l) => l.name,
+    render: (l) => (
+      <div><div className="font-medium text-white">{l.name}</div><div className="text-xs text-gray-500">{l.email}</div></div>
+    ),
+  },
+  { key: 'email', header: 'Email', filter: 'text', accessor: (l) => l.email },
+  { key: 'source', header: 'Source', filter: 'select', accessor: (l) => leadSourceLabel[l.source] },
+  {
+    key: 'assigned', header: 'Assigned', filter: 'select',
+    accessor: (l) => (l.assignedTo ? `${l.assignedTo.firstName} ${l.assignedTo.lastName}` : 'Unassigned'),
+    render: (l) => l.assignedTo ? `${l.assignedTo.firstName} ${l.assignedTo.lastName}` : <span className="text-gray-600">Unassigned</span>,
+  },
+  {
+    key: 'status', header: 'Status', filter: 'select', accessor: (l) => leadStatusLabel[l.status],
+    render: (l) => <Badge tone={leadStatusTone[l.status]} dot>{leadStatusLabel[l.status]}</Badge>,
+  },
+  { key: 'created', header: 'Created', filter: 'date', sortable: true, accessor: (l) => l.createdAt, render: (l) => formatDate(l.createdAt) },
+]
 
 export default function AdminLeadsPage() {
   const toast = useToast()
@@ -55,6 +77,7 @@ export default function AdminLeadsPage() {
         {STATUSES.map((s) => (
           <button
             key={s}
+            type="button"
             onClick={() => setFilter(s)}
             className={cn(
               'shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors',
@@ -68,59 +91,19 @@ export default function AdminLeadsPage() {
         ))}
       </div>
 
-      {error ? (
-        <ErrorState description={error} onRetry={() => load(filter)} />
-      ) : loading ? (
-        <SkeletonRows rows={5} />
-      ) : leads.length === 0 ? (
-        <EmptyState icon={UserPlus} title="No leads" description="No leads in this status." />
-      ) : (
-        <div className="glass-panel overflow-hidden p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[680px]">
-              <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
-                  <th className="px-5 py-3 font-medium">Lead</th>
-                  <th className="px-5 py-3 font-medium">Source</th>
-                  <th className="px-5 py-3 font-medium">Assigned</th>
-                  <th className="px-5 py-3 font-medium">Status</th>
-                  <th className="px-5 py-3 font-medium">Created</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/[0.04] text-sm">
-                {leads.map((l) => (
-                  <tr
-                    key={l.id}
-                    onClick={async () => {
-                      try {
-                        setActive(await adminApi.getLead(l.id))
-                      } catch (e) {
-                        toast.error('Could not open lead', (e as Error).message)
-                      }
-                    }}
-                    className="cursor-pointer transition-colors hover:bg-white/[0.02]"
-                  >
-                    <td className="px-5 py-3.5">
-                      <div className="font-medium text-white">{l.name}</div>
-                      <div className="text-xs text-gray-500">{l.email}</div>
-                    </td>
-                    <td className="px-5 py-3.5 text-gray-400">{leadSourceLabel[l.source]}</td>
-                    <td className="px-5 py-3.5 text-gray-300">
-                      {l.assignedTo ? `${l.assignedTo.firstName} ${l.assignedTo.lastName}` : <span className="text-gray-600">Unassigned</span>}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <Badge tone={leadStatusTone[l.status]} dot>
-                        {leadStatusLabel[l.status]}
-                      </Badge>
-                    </td>
-                    <td className="px-5 py-3.5 text-gray-400">{formatDate(l.createdAt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        rows={leads}
+        rowKey={(l) => l.id}
+        onRowClick={async (l) => { try { setActive(await adminApi.getLead(l.id)) } catch (e) { toast.error('Could not open lead', (e as Error).message) } }}
+        loading={loading}
+        error={error}
+        onRetry={() => load(filter)}
+        emptyIcon={UserPlus}
+        emptyTitle="No leads"
+        emptyDescription="No leads in this status."
+        minWidthClass="min-w-[680px]"
+      />
 
       <LeadDetailModal
         lead={active}

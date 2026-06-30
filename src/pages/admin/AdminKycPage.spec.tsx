@@ -34,10 +34,12 @@ import { adminApi } from '@/lib/adminApi'
 describe('AdminKycPage', () => {
   it('lists clients with a pending KYC step and fetches their documents', async () => {
     render(<AdminKycPage />)
-    await waitFor(() => expect(screen.getByText('Ada Lovelace')).toBeInTheDocument())
-    expect(screen.getByText('ada@x.com')).toBeInTheDocument()
+    // The grid renders one row per step (3 steps × 1 client = 3 rows), so
+    // client name and email each appear multiple times — use getAllByText.
+    await waitFor(() => expect(screen.getAllByText('Ada Lovelace').length).toBeGreaterThan(0))
+    expect(screen.getAllByText('ada@x.com').length).toBeGreaterThan(0)
     expect(adminApi.listKycDocuments).toHaveBeenCalledWith('c1')
-    // The fetched document surfaces a "View" link for staff review.
-    expect(await screen.findByText('View')).toBeInTheDocument()
+    // The fetched document surfaces a "View document" button for staff review.
+    expect(await screen.findByText('View document')).toBeInTheDocument()
   })
 })

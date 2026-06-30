@@ -6,6 +6,15 @@ import { useToast } from '@/context/ToastContext'
 import { formatCurrency, formatDateTime } from '@/lib/format'
 import { ApiError } from '@/lib/api'
 import { financeApi, type FinanceTxn, type DepositRequestRow } from '@/lib/financeApi'
+import { DataTable, type Column } from '@/components/admin/table'
+
+const depositColumns: Column<FinanceTxn>[] = [
+  { key: 'client', header: 'Client', filter: 'text', sortable: true, accessor: (d) => d.client?.name ?? 'Unknown' },
+  { key: 'email', header: 'Email', filter: 'text', accessor: (d) => d.client?.email ?? '', render: (d) => d.client?.email ?? '—' },
+  { key: 'account', header: 'Account', filter: 'text', accessor: (d) => d.accountNumber ?? '', render: (d) => d.accountNumber ?? '—' },
+  { key: 'amount', header: 'Amount', align: 'right', sortable: true, accessor: (d) => Number(d.amount), render: (d) => formatCurrency(Number(d.amount)) },
+  { key: 'date', header: 'Date', filter: 'date', sortable: true, accessor: (d) => d.createdAt, render: (d) => formatDateTime(d.createdAt) },
+]
 
 export default function AdminFinancePage() {
   const toast = useToast()
@@ -180,14 +189,7 @@ export default function AdminFinancePage() {
             {deposits.length === 0 ? (
               <EmptyState icon={ArrowDownToLine} title="No deposits yet" description="Completed deposits will appear here." />
             ) : (
-              <div className="glass-panel divide-y divide-white/[0.04] p-0">
-                {deposits.map((d) => (
-                  <div key={d.id} className="flex items-center justify-between px-5 py-3 text-sm">
-                    <span className="text-gray-300">{d.client?.name ?? 'Unknown'} · {d.accountNumber ?? '—'}</span>
-                    <span className="font-medium text-white">{formatCurrency(Number(d.amount))}</span>
-                  </div>
-                ))}
-              </div>
+              <DataTable columns={depositColumns} rows={deposits} rowKey={(d) => d.id} minWidthClass="min-w-[640px]" />
             )}
           </section>
         </div>

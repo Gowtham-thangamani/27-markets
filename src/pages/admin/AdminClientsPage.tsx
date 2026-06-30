@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Search, Users, Pin } from 'lucide-react'
-import { Badge, Button, Input, Modal, Textarea, EmptyState, ErrorState, SkeletonRows } from '@/components/ui'
+import { Badge, Button, Input, Modal, Textarea } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
 import { kycSummary } from '@/components/admin/adminMaps'
 import { useToast } from '@/context/ToastContext'
 import { formatCurrency, formatDate, initials } from '@/lib/format'
 import { ApiError } from '@/lib/api'
 import { adminApi, type ClientDetail, type ClientListItem } from '@/lib/adminApi'
+import { DataTable, type Column } from '@/components/admin/table'
 
 export default function AdminClientsPage() {
   const toast = useToast()
@@ -46,6 +47,32 @@ export default function AdminClientsPage() {
     }
   }
 
+  const columns: Column<ClientListItem>[] = [
+    {
+      key: 'name', header: 'Client', filter: 'text', sortable: true,
+      accessor: (c) => `${c.firstName} ${c.lastName}`,
+      render: (c) => (
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-500/15 text-xs font-semibold text-brand-300 ring-1 ring-brand-500/30">
+            {initials(`${c.firstName} ${c.lastName}`)}
+          </span>
+          <div>
+            <div className="font-medium text-white">{c.firstName} {c.lastName}</div>
+            <div className="text-xs text-gray-500">{c.email}</div>
+          </div>
+        </div>
+      ),
+    },
+    { key: 'email', header: 'Email', filter: 'text', accessor: (c) => c.email },
+    { key: 'country', header: 'Country', filter: 'select', accessor: (c) => c.country ?? '', render: (c) => c.country ?? '—' },
+    { key: 'accounts', header: 'Accounts', align: 'center', accessor: (c) => c._count.tradingAccounts },
+    {
+      key: 'kyc', header: 'KYC', filter: 'select', accessor: (c) => kycSummary(c.kycProfile).label,
+      render: (c) => { const k = kycSummary(c.kycProfile); return <Badge tone={k.tone} dot>{k.label}</Badge> },
+    },
+    { key: 'joined', header: 'Joined', filter: 'date', sortable: true, accessor: (c) => c.createdAt, render: (c) => formatDate(c.createdAt) },
+  ]
+
   return (
     <>
       <PageTitle title="Clients" subtitle="Search and manage client accounts." />
@@ -60,63 +87,19 @@ export default function AdminClientsPage() {
         />
       </div>
 
-      {error ? (
-        <ErrorState description={error} onRetry={() => load(search || undefined)} />
-      ) : loading ? (
-        <SkeletonRows rows={5} />
-      ) : clients.length === 0 ? (
-        <EmptyState icon={Users} title="No clients found" description="Try a different search." />
-      ) : (
-        <div className="glass-panel overflow-hidden p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px]">
-              <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
-                  <th className="px-5 py-3 font-medium">Client</th>
-                  <th className="px-5 py-3 font-medium">Country</th>
-                  <th className="px-5 py-3 text-center font-medium">Accounts</th>
-                  <th className="px-5 py-3 font-medium">KYC</th>
-                  <th className="px-5 py-3 font-medium">Joined</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/[0.04] text-sm">
-                {clients.map((c) => {
-                  const kyc = kycSummary(c.kycProfile)
-                  return (
-                    <tr
-                      key={c.id}
-                      onClick={() => openClient(c.id)}
-                      className="cursor-pointer transition-colors hover:bg-white/[0.02]"
-                    >
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-500/15 text-xs font-semibold text-brand-300 ring-1 ring-brand-500/30">
-                            {initials(`${c.firstName} ${c.lastName}`)}
-                          </span>
-                          <div>
-                            <div className="font-medium text-white">
-                              {c.firstName} {c.lastName}
-                            </div>
-                            <div className="text-xs text-gray-500">{c.email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5 text-gray-300">{c.country ?? '—'}</td>
-                      <td className="px-5 py-3.5 text-center text-gray-300">{c._count.tradingAccounts}</td>
-                      <td className="px-5 py-3.5">
-                        <Badge tone={kyc.tone} dot>
-                          {kyc.label}
-                        </Badge>
-                      </td>
-                      <td className="px-5 py-3.5 text-gray-400">{formatDate(c.createdAt)}</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        rows={clients}
+        rowKey={(c) => c.id}
+        onRowClick={(c) => openClient(c.id)}
+        loading={loading}
+        error={error}
+        onRetry={() => load(search || undefined)}
+        emptyIcon={Users}
+        emptyTitle="No clients found"
+        emptyDescription="Try a different search."
+        minWidthClass="min-w-[640px]"
+      />
 
       <ClientDetailModal
         client={active}
