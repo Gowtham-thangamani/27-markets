@@ -1,7 +1,7 @@
 // src/components/admin/table/DataTable.tsx
 import { useMemo, useState } from 'react'
 import { ArrowDown, ArrowUp, ChevronsUpDown, Inbox } from 'lucide-react'
-import { Input, Select, EmptyState, ErrorState } from '@/components/ui'
+import { Input, Select, EmptyState, ErrorState, SkeletonRows } from '@/components/ui'
 import { cn } from '@/lib/cn'
 import type { Column, DataTableProps } from './types'
 
@@ -70,15 +70,8 @@ export function DataTable<T>({
 
   if (error) return <ErrorState description={error} onRetry={onRetry} />
 
-  // Render inline animate-pulse skeleton so tests can detect `.animate-pulse`
   if (loading) {
-    return (
-      <div className="space-y-3">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="animate-pulse h-12 w-full rounded-lg bg-ink-400/60" />
-        ))}
-      </div>
-    )
+    return <SkeletonRows rows={5} />
   }
 
   return (

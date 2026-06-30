@@ -85,7 +85,7 @@ describe('DataTable', () => {
     const { rerender } = render(
       <DataTable columns={columns} rows={[]} rowKey={(r: Row) => r.id} loading />,
     )
-    expect(document.querySelector('.animate-pulse')).toBeTruthy()
+    expect(document.querySelectorAll('.rounded-lg.bg-ink-400\\/60')).toHaveLength(5)
     rerender(<DataTable columns={columns} rows={[]} rowKey={(r: Row) => r.id} error="Boom" onRetry={onRetry} />)
     expect(screen.getByText('Boom')).toBeInTheDocument()
   })
