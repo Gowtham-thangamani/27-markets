@@ -4,6 +4,9 @@ import { PortalLayout } from './layouts/PortalLayout'
 import { AdminLayout } from './layouts/AdminLayout'
 import { RequireAuth } from './components/portal/RequireAuth'
 import { RequireStaff } from './components/admin/RequireStaff'
+import { RequirePartner } from './components/partner/RequirePartner'
+import { PartnerLayout } from './layouts/PartnerLayout'
+import PartnerDashboardPage from './pages/partner/PartnerDashboardPage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import AdminClientsPage from './pages/admin/AdminClientsPage'
 import AdminLeadsPage from './pages/admin/AdminLeadsPage'
@@ -114,6 +117,19 @@ export default function App() {
         <Route path="blog" element={<AdminBlogListPage />} />
         <Route path="blog/new" element={<AdminBlogEditorPage />} />
         <Route path="blog/:id" element={<AdminBlogEditorPage />} />
+      </Route>
+
+      {/* Secure partner / IB portal */}
+      <Route
+        path="/partner"
+        element={
+          <RequirePartner>
+            <PartnerLayout />
+          </RequirePartner>
+        }
+      >
+        <Route index element={<Navigate to="/partner/dashboard" replace />} />
+        <Route path="dashboard" element={<PartnerDashboardPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />
