@@ -204,6 +204,33 @@ async function main() {
     }
   }
 
+  // ── Demo partner (IB) with referred clients (idempotent) ──
+  const demoPartner = await prisma.user.findUnique({ where: { email: 'partner@27markets.io' } });
+  if (!demoPartner) {
+    const partner = await prisma.user.create({
+      data: {
+        email: 'partner@27markets.io',
+        passwordHash: await argon2.hash('Partner123!', { type: argon2.argon2id }),
+        firstName: 'Sasha', lastName: 'Ibragimov',
+        role: UserRole.PARTNER,
+        country: 'United Arab Emirates',
+        emailVerified: true,
+        acceptedTermsAt: new Date(),
+        partnerProfile: { create: { referralCode: 'DEMO27IB' } },
+      },
+    });
+    // Attribute ~18 existing demo clients to this partner (spread across signups).
+    const demoClients = await prisma.user.findMany({
+      where: { email: { startsWith: 'demo.client+' } },
+      orderBy: { createdAt: 'asc' },
+      take: 18,
+      select: { id: true },
+    });
+    for (const c of demoClients) {
+      await prisma.user.update({ where: { id: c.id }, data: { referredByPartnerId: partner.id } });
+    }
+  }
+
   // ── Blog posts (authored by admin) ──
   if ((await prisma.blogPost.count()) === 0) {
     await prisma.blogPost.createMany({

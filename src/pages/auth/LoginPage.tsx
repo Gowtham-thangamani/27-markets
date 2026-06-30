@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
 import { zodResolver } from '@/lib/zodResolver'
 import { loginSchema, type LoginValues } from '@/lib/validation'
-import { isStaffRole } from '@/lib/roles'
+import { isStaffRole, landingPathForRole } from '@/lib/roles'
 import { ApiError } from '@/lib/api'
 
 export default function LoginPage() {
@@ -34,7 +34,7 @@ export default function LoginPage() {
     }
     try {
       const user = await login(values.email, values.password, needTotp ? totp : undefined)
-      const dest = explicitFrom ?? (isStaffRole(user.role) ? '/admin/dashboard' : '/portal/dashboard')
+      const dest = explicitFrom ?? landingPathForRole(user.role)
       toast.success('Welcome back', isStaffRole(user.role) ? 'Signed in to the CRM.' : 'You are now signed in to your portal.')
       navigate(dest, { replace: true })
     } catch (err) {
