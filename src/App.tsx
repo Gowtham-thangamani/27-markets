@@ -7,6 +7,7 @@ import { RequireStaff } from './components/admin/RequireStaff'
 import { RequirePartner } from './components/partner/RequirePartner'
 import { PartnerLayout } from './layouts/PartnerLayout'
 import PartnerDashboardPage from './pages/partner/PartnerDashboardPage'
+import PartnerClientsPage from './pages/partner/PartnerClientsPage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import AdminClientsPage from './pages/admin/AdminClientsPage'
 import AdminLeadsPage from './pages/admin/AdminLeadsPage'
@@ -130,6 +131,7 @@ export default function App() {
       >
         <Route index element={<Navigate to="/partner/dashboard" replace />} />
         <Route path="dashboard" element={<PartnerDashboardPage />} />
+        <Route path="clients" element={<PartnerClientsPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />
