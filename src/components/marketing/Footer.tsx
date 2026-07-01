@@ -65,7 +65,7 @@ export function Footer() {
       <div className="container-x relative py-14">
         <div className="grid gap-10 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
           <div className="max-w-xs">
-            <Logo />
+            <Logo size={30} />
             <p className="mt-4 text-sm leading-relaxed text-white">
               Trade global financial markets through a broker built for traders, partners, and
               long-term growth.

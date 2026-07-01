@@ -51,7 +51,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    label: 'Partnership',
+    label: 'Partner with us',
     to: '/partnership',
     menu: [
       { label: 'IB Program', to: '/partnership', desc: 'Rebates, tools & support' },
@@ -103,7 +103,7 @@ export function Navbar() {
     >
       <nav className="container-bleed flex h-16 items-center justify-between gap-4">
         <Link to="/" aria-label="27 Markets home">
-          <Logo />
+          <Logo size={23} />
         </Link>
 
         <ul className="hidden items-center gap-1 lg:flex">

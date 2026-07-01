@@ -19,7 +19,7 @@ export function MarketCard({ category }: { category: MarketCategory }) {
               src={asset(image)}
               alt=""
               aria-hidden
-              className="mask-radial-fade h-20 w-20 shrink-0 object-contain drop-shadow-[0_4px_18px_rgba(225,29,46,0.5)]"
+              className="market-card-icon mask-radial-fade h-20 w-20 shrink-0 object-contain brightness-150 saturate-150 drop-shadow-[0_0_14px_rgba(225,29,46,0.85)]"
             />
           ) : (
             <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/20">
@@ -30,7 +30,7 @@ export function MarketCard({ category }: { category: MarketCategory }) {
         </div>
         <h3 className="font-display text-lg font-semibold text-white">{title}</h3>
         <p className="mt-1 text-sm text-white">{subtitle}</p>
-        <p className="mt-3 text-xs font-medium text-brand-300/80">{examples}</p>
+        <p className="mt-3 text-xs font-medium text-white/85">{examples}</p>
       </Link>
     </motion.div>
   )

@@ -57,13 +57,15 @@
     --gray-600: 130 142 158;
   }
 
-  /* Light-theme background: branded red ambient glows over a soft tinted base. */
+  /* Light-theme background: clean white→neutral base with a single restrained
+     red whisper at the very top. Premium-fintech look — the brand red lives in
+     accents (buttons, eyebrows, imagery), not as a page-wide pink wash. */
   html.light body {
-    background-color: #f2f4f9;
+    background-color: #f6f8fc;
     background-image:
-      radial-gradient(60% 50% at 50% -8%, rgba(225, 29, 46, 0.12), transparent 60%),
-      radial-gradient(38% 32% at 92% 4%, rgba(225, 29, 46, 0.08), transparent 70%),
-      radial-gradient(45% 45% at 0% 100%, rgba(225, 29, 46, 0.05), transparent 72%);
+      radial-gradient(46% 30% at 50% -14%, rgba(225, 29, 46, 0.05), transparent 64%),
+      linear-gradient(180deg, #ffffff 0%, #eef1f7 78%, #e9edf4 100%);
+    background-attachment: fixed;
   }
 
   /* Light-theme scrollbars */
@@ -289,6 +291,19 @@
     mask-image: radial-gradient(circle closest-side, #000 84%, transparent 100%);
   }
 
+  /* Feather all four edges of a rectangular image so its (black) background melts
+     into a dark section instead of showing a hard box edge. */
+  .edge-fade {
+    -webkit-mask-image:
+      linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%),
+      linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%),
+      linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%);
+    mask-composite: intersect;
+  }
+
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -296,6 +311,26 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+}
+
+/* Continuous left-scrolling ticker (marquee). The track holds two identical
+   copies of the list, so animating to -50% loops seamlessly. Pauses on hover. */
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.ticker-marquee {
+  display: flex;
+  width: max-content;
+  animation: ticker-scroll 45s linear infinite;
+  will-change: transform;
+}
+.ticker-marquee:hover {
+  animation-play-state: paused;
 }
 
 /* Travelling pulse dot along an SVG offset-path */
@@ -426,12 +461,35 @@
 }
 
 /* ─── Light-theme component refinements ─── */
-/* Cards: subtle top-down gradient + clear edge + layered shadow (not flat white). */
+/* Cards: premium layered elevation + top-down gradient + crisp edge (not flat). */
 html.light .glass-panel {
-  border-color: #e6e9f0;
+  border-color: #e7ebf2;
   background-color: #ffffff;
-  background-image: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 16px 36px -22px rgba(15, 23, 42, 0.22);
+  background-image: linear-gradient(180deg, #ffffff 0%, #f6f9fd 100%);
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 1px 2px rgba(15, 23, 42, 0.05),
+    0 10px 22px -12px rgba(15, 23, 42, 0.18),
+    0 30px 60px -34px rgba(15, 23, 42, 0.22);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+/* Richer hover for any light card that opts into the lift. */
+html.light .glass-panel.card-lift:hover,
+html.light .glass-panel.group:hover {
+  border-color: rgba(225, 29, 46, 0.35);
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 0 0 1px rgba(225, 29, 46, 0.14),
+    0 18px 40px -16px rgba(15, 23, 42, 0.22),
+    0 0 44px -8px rgba(225, 29, 46, 0.18);
+}
+
+/* Section rhythm: alternate flat white with a faint tinted band + hairlines so
+   the light page has structure instead of one endless white sheet. */
+html.light .section-alt {
+  background-color: #f1f4f9;
+  border-top: 1px solid #e8ecf3;
+  border-bottom: 1px solid #e8ecf3;
 }
 
 /* Brand grid texture — dark hairlines so the signature grid is visible on light. */
@@ -454,7 +512,57 @@ html.light .card-lift:hover {
   box-shadow: 0 0 0 1px rgba(225, 29, 46, 0.25), 0 16px 40px rgba(15, 23, 42, 0.12),
     0 0 30px rgba(225, 29, 46, 0.08);
 }
-/* The wordmark PNG has white text baked in — add a soft dark edge for legibility on light. */
-html.light img[alt='27 Markets'] {
-  filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.5));
+/* Ambient red "glow clouds" read as premium on dark but turn into a flat pink
+   smear on white. In light mode, greatly soften them so red stays an accent. */
+html.light .bg-radial-red {
+  background-image: radial-gradient(
+    60% 60% at 50% 40%,
+    rgba(225, 29, 46, 0.06) 0%,
+    transparent 66%
+  );
+}
+/* The signature grid: keep it crisp but quiet so the hero feels clean, not busy. */
+html.light .grid-bg,
+html.light .bg-grid-faint {
+  background-image:
+    linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+}
+/* Animated red signal streaks are distracting over a light hero — fade them. */
+html.light .signal-line {
+  opacity: 0.35;
+}
+
+/* Market category icons: on dark cards a brightness boost makes the strokes glow,
+   but on WHITE cards it washes out the pastel (teal/purple) icons. In light mode,
+   trade brightness for saturation + contrast so every icon reads crisply. */
+html.light .market-card-icon {
+  /* Pale teal/purple/gold outlines wash out on white cards — darken hard and
+     push saturation + contrast so every icon reads clearly. */
+  filter: brightness(0.55) saturate(2.4) contrast(1.6)
+    drop-shadow(0 1px 4px rgba(15, 23, 42, 0.22));
+}
+
+/* Footer blends into the page on light (both near-white). Lift it into a defined
+   white panel with a crisp top border + soft inset shadow so it reads as its own
+   region. */
+html.light footer {
+  background-color: #ffffff;
+  border-top-color: #dde3ec;
+  box-shadow: inset 0 1px 0 #ffffff, 0 -1px 24px -18px rgba(15, 23, 42, 0.25);
+}
+
+
+/* Subtle brand "veil" behind the hero — adds depth on the light theme without the
+   page-wide pink wash: a cool highlight top-left + a faint warm glow behind the
+   product shot on the right. Invisible in dark mode (the dark hero needs none). */
+.hero-light-veil {
+  display: none;
+}
+html.light .hero-light-veil {
+  display: block;
+  background-image:
+    radial-gradient(34rem 30rem at 6% -12%, rgba(99, 122, 159, 0.1), transparent 66%),
+    radial-gradient(46rem 34rem at 80% 40%, rgba(225, 29, 46, 0.12), transparent 66%),
+    radial-gradient(24rem 14rem at 78% 74%, rgba(225, 29, 46, 0.1), transparent 70%);
 }

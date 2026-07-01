@@ -22,30 +22,30 @@ export default function PartnershipPage() {
     <>
       <PageHeader breadcrumb={['Home', 'Partnership']} title="Partner with 27 Markets" />
 
-      {/* Hero with infinity ribbon */}
+      {/* Hero with 27 Markets brand mark */}
       <section className="relative overflow-hidden">
         <div className="container-x relative py-10">
           <Reveal className="relative mx-auto max-w-3xl text-center">
-            <div className="relative mx-auto mb-2 h-44 w-full max-w-xl">
-              <img
-                src={asset('infinity.png')}
-                alt=""
-                aria-hidden
-                className="globe-pulse absolute inset-0 h-full w-full select-none object-contain"
-              />
-              {/* Light sheen that sweeps across — masked to the infinity shape,
-                  so the highlight only ever appears on the red ribbon. */}
-              <span
-                className="infinity-sweep"
-                aria-hidden
-                style={{
-                  WebkitMaskImage: `url(${asset('infinity.png')})`,
-                  maskImage: `url(${asset('infinity.png')})`,
-                }}
-              />
+            <div className="mb-6 flex justify-center">
+              <span className="relative inline-block">
+                <img
+                  src={asset('logo.png')}
+                  alt="27 Markets"
+                  className="globe-pulse block h-16 w-auto select-none sm:h-20"
+                />
+                {/* Light sheen that sweeps across the logo */}
+                <span
+                  className="infinity-sweep"
+                  aria-hidden
+                  style={{
+                    WebkitMaskImage: `url(${asset('logo.png')})`,
+                    maskImage: `url(${asset('logo.png')})`,
+                  }}
+                />
+              </span>
             </div>
-            <h2 className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
-              Powerful Partnership. <span className="text-gradient-red">Lasting Success.</span>
+            <h2 className="font-display text-2xl font-bold leading-tight text-white sm:text-3xl">
+              Powerful Partnership. <span className="text-white">Lasting Success.</span>
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-white">
               Join our IB program and unlock unlimited potential with industry-leading conditions

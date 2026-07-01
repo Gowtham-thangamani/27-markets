@@ -27,6 +27,7 @@ Thumbs.db
 
 # …but the site's own images in public/ MUST be tracked (used by the deployed site)
 !public/*.png
+!public/**/*.png
 
 # Playwright
 /test-results/

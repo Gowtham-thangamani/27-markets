@@ -145,7 +145,8 @@ export const downloads: PlatformDownload[] = [
   { id: 'd3', name: '27 Mobile — iOS', platform: 'iPhone / iPad', description: 'Trade on the go with biometric login and price alerts.', size: '64 MB', version: '4.8.0', icon: 'mobile' },
   { id: 'd4', name: '27 Mobile — Android', platform: 'Android 9+', description: 'Lightweight mobile app with one-tap order execution.', size: '58 MB', version: '4.8.0', icon: 'mobile' },
   { id: 'd5', name: 'WebTrader', platform: 'Any browser', description: 'Launch the full trading experience directly in your browser.', size: '—', version: 'Live', icon: 'web' },
-  { id: 'd6', name: 'Account Terms (PDF)', platform: 'Document', description: 'Client agreement, risk disclosure, and fee schedule.', size: '1.2 MB', version: '2026.1', icon: 'doc' },
+  { id: 'd6', name: 'MetaTrader 5', platform: 'Windows 10/11', description: 'The industry-standard MT5 terminal with EAs, algo trading, and 21 timeframes.', size: '78 MB', version: '5.00', icon: 'desktop' },
+  { id: 'd7', name: 'Account Terms (PDF)', platform: 'Document', description: 'Client agreement, risk disclosure, and fee schedule.', size: '1.2 MB', version: '2026.1', icon: 'doc' },
 ]
 
 const mk = (

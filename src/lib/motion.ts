@@ -26,6 +26,25 @@ export const staggerContainer: Variants = {
   },
 }
 
+/** Card entrance: rise + slight scale for a noticeable "pop" as it scrolls in. */
+export const cardReveal: Variants = {
+  hidden: { opacity: 0, y: 36, scale: 0.94 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+  },
+}
+
+/** Slower stagger so cards reveal one-by-one (clearly sequential) on scroll. */
+export const cardStagger: Variants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.13, delayChildren: 0.05 },
+  },
+}
+
 export const slideInLeft: Variants = {
   hidden: { opacity: 0, x: -36 },
   show: { opacity: 1, x: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },

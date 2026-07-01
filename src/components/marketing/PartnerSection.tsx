@@ -1,73 +1,82 @@
 import { motion } from 'framer-motion'
-import { Check } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui'
 import { Reveal } from '@/components/Reveal'
+import { Parallax } from '@/components/Parallax'
 import { partnerBenefits } from '@/mock/content'
-import { fadeUp, staggerContainer } from '@/lib/motion'
+import { cardReveal, cardStagger } from '@/lib/motion'
 import { asset } from '@/lib/asset'
 
 export function PartnerSection() {
   return (
-    <section className="relative overflow-hidden py-12 sm:py-16">
-      <div className="container-x grid items-center gap-12 lg:grid-cols-2">
-        <div>
-          <Reveal>
-            <p className="section-eyebrow mb-3">Partner With 27 Markets</p>
-            <h2 className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
-              Grow Together. <br />
-              <span className="text-gradient-red">Succeed Together.</span>
-            </h2>
-            <p className="mt-4 max-w-md text-base leading-relaxed text-white">
-              Our IB program is built for long-term success. Enjoy competitive rebates, powerful
-              tools, and dedicated support to grow your business across global markets.
-            </p>
-          </Reveal>
+    <section className="section-alt relative overflow-hidden py-8 sm:py-12">
+      <div className="container-x">
+        <div className="grid items-center gap-12 lg:grid-cols-2">
+          <div>
+            <Reveal>
+              <p className="section-eyebrow mb-3">Partner With 27 Markets</p>
+              <h2 className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
+                Grow Together. <br />
+                <span className="text-white">Succeed Together.</span>
+              </h2>
+              <p className="mt-4 max-w-md text-base leading-relaxed text-white">
+                Our IB program is built for long-term success. Enjoy competitive rebates, powerful
+                tools, and dedicated support to grow your business across global markets.
+              </p>
+            </Reveal>
 
-          <motion.ul
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.3 }}
-            className="mt-7 grid gap-3 sm:grid-cols-2"
-          >
-            {partnerBenefits.map((b) => (
-              <motion.li key={b.title} variants={fadeUp} className="flex items-center gap-2.5">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-500/15 text-brand-400">
-                  <Check className="h-3.5 w-3.5" />
-                </span>
-                <span className="text-sm font-medium text-gray-200">{b.title}</span>
-              </motion.li>
-            ))}
-          </motion.ul>
+            <Reveal delay={0.1} className="mt-7 flex flex-wrap gap-3">
+              <Link to="/partnership">
+                <Button>Become a Partner</Button>
+              </Link>
+              <Link to="/partnership">
+                <Button variant="outline">Learn More</Button>
+              </Link>
+            </Reveal>
+          </div>
 
-          <Reveal delay={0.1} className="mt-8 flex flex-wrap gap-3">
-            <Link to="/partnership">
-              <Button>Become a Partner</Button>
-            </Link>
-            <Link to="/partnership">
-              <Button variant="outline">Learn More</Button>
-            </Link>
+          <Reveal className="relative">
+            <Parallax amount={45} className="relative mx-auto w-full max-w-2xl lg:scale-110">
+              <img
+                src={asset('globe.png')}
+                alt="27 Markets global trading network"
+                className="globe-pulse w-full select-none"
+              />
+              <span
+                className="globe-sweep"
+                aria-hidden
+                style={{
+                  WebkitMaskImage: `url(${asset('globe.png')})`,
+                  maskImage: `url(${asset('globe.png')})`,
+                }}
+              />
+            </Parallax>
           </Reveal>
         </div>
 
-        <Reveal className="relative">
-          <div className="relative mx-auto w-full max-w-2xl lg:scale-110">
-            <img
-              src={asset('globe.png')}
-              alt="27 Markets global trading network"
-              className="globe-pulse w-full select-none"
-            />
-            <span
-              className="globe-sweep"
-              aria-hidden
-              style={{
-                WebkitMaskImage: `url(${asset('globe.png')})`,
-                maskImage: `url(${asset('globe.png')})`,
-              }}
-            />
-          </div>
-        </Reveal>
+        {/* Benefit cards — one row across, matching the partner-program layout */}
+        <motion.div
+          variants={cardStagger}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.2 }}
+          className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5"
+        >
+          {partnerBenefits.map((b) => (
+            <motion.div
+              key={b.title}
+              variants={cardReveal}
+              whileHover={{ y: -5 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+              className="glass-panel group flex flex-col items-start gap-3 p-5 transition-shadow duration-300 hover:border-brand-500/40 hover:shadow-[0_0_0_1px_rgba(225,29,46,0.3),0_16px_40px_rgba(0,0,0,0.45),0_0_36px_rgba(225,29,46,0.12)]"
+            >
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/20 transition-all duration-300 group-hover:scale-110 group-hover:bg-brand-500 group-hover:text-white group-hover:shadow-[0_0_24px_rgba(225,29,46,0.5)]">
+                <b.icon className="h-5 w-5" />
+              </span>
+              <p className="font-display text-sm font-semibold leading-snug text-white">{b.title}</p>
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
     </section>
   )

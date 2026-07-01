@@ -1,17 +1,20 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, Layers, Rocket, Gauge, ShieldCheck, Headphones } from 'lucide-react'
+import { ArrowRight, Layers, Rocket, Gauge, ShieldCheck, Headphones, Lock, Zap, Building2, Eye } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui'
 import { Reveal } from '@/components/Reveal'
+import { Parallax } from '@/components/Parallax'
 import { SectionHeading } from '@/components/SectionHeading'
 import { LiveTicker } from '@/components/marketing/LiveTicker'
 import { SignalFlow } from '@/components/marketing/SignalFlow'
 import { FeatureCard } from '@/components/marketing/FeatureCard'
-import { MarketCard } from '@/components/marketing/MarketCard'
 import { PartnerSection } from '@/components/marketing/PartnerSection'
+import { FloatingCoins } from '@/components/marketing/FloatingCoins'
+import { MarketCard } from '@/components/marketing/MarketCard'
 import { CTABand } from '@/components/marketing/CTABand'
-import { fadeUp, staggerContainer, slideInLeft } from '@/lib/motion'
+import { fadeUp, staggerContainer, cardStagger, slideInLeft } from '@/lib/motion'
 import { asset } from '@/lib/asset'
+import { useThemeSafe } from '@/context/ThemeContext'
 import { whyFeatures, marketCategories } from '@/mock/content'
 
 const heroStats = [
@@ -22,16 +25,26 @@ const heroStats = [
   { icon: Headphones, value: '24/5', label: 'Customer support' },
 ]
 
+const trustPoints = [
+  { icon: ShieldCheck, label: 'Segregated client funds' },
+  { icon: Lock, label: 'Bank-grade encryption' },
+  { icon: Zap, label: 'No dealing desk' },
+  { icon: Building2, label: 'Institutional liquidity' },
+  { icon: Eye, label: 'Transparent pricing' },
+]
+
 export default function HomePage() {
+  const onLight = useThemeSafe() === 'light'
   return (
     <>
       {/* HERO */}
       <section className="relative overflow-hidden">
+        <div className="hero-light-veil pointer-events-none absolute inset-0" aria-hidden />
         <div className="grid-bg pointer-events-none absolute inset-0 opacity-40" />
         <div className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[60rem] -translate-x-1/2 bg-radial-red opacity-70 blur-2xl" />
         <SignalFlow className="opacity-60" />
 
-        <div className="container-bleed relative grid items-center gap-8 py-6 sm:grid-cols-[1fr_1.1fr] sm:gap-10 sm:py-10">
+        <div className="container-bleed relative grid items-center gap-8 py-3 sm:grid-cols-[1fr_1.1fr] sm:gap-10 sm:py-5">
           <motion.div
             variants={staggerContainer}
             initial="hidden"
@@ -40,7 +53,7 @@ export default function HomePage() {
           >
             <motion.span
               variants={fadeUp}
-              className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/[0.08] px-3 py-1 text-xs font-medium text-brand-300"
+              className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/[0.08] px-3 py-1 text-xs font-medium text-white"
             >
               <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-brand-500" />
               Next-generation multi-asset broker
@@ -54,10 +67,18 @@ export default function HomePage() {
               <br />
               Beyond
               <br />
-              <span className="text-white">Limits</span>
+              <span
+                className={
+                  onLight
+                    ? 'bg-gradient-to-br from-brand-500 to-brand-700 bg-clip-text text-transparent'
+                    : 'text-white'
+                }
+              >
+                Limits
+              </span>
             </motion.h1>
 
-            <motion.p variants={fadeUp} className="mt-5 text-sm font-medium text-brand-300/90">
+            <motion.p variants={fadeUp} className="mt-5 text-sm font-medium text-white/90">
               Precision · Performance · Partnership
             </motion.p>
 
@@ -66,7 +87,7 @@ export default function HomePage() {
               long-term growth.
             </motion.p>
 
-            <motion.div variants={fadeUp} className="mt-8 flex flex-wrap gap-3">
+            <motion.div variants={fadeUp} className="mt-6 flex flex-wrap gap-3">
               <Link to="/register">
                 <Button size="lg" className="gap-2">
                   Open Live Account <ArrowRight className="h-4 w-4" />
@@ -83,16 +104,23 @@ export default function HomePage() {
           <motion.div variants={slideInLeft} initial="hidden" animate="show" className="relative">
             <div className="drift mx-auto max-w-sm sm:max-w-none">
               <img
-                src={asset('hero-platform.png')}
+                src={asset(onLight ? 'hero-platform-light.png?v=2' : 'hero-platform.png')}
                 alt="27 Markets trading platform on laptop and mobile"
-                className="w-full select-none drop-shadow-[0_30px_90px_rgba(225,29,46,0.25)] lg:scale-105"
+                className={
+                  onLight
+                    ? 'w-full select-none lg:scale-105'
+                    : 'edge-fade w-full select-none lg:scale-105'
+                }
               />
             </div>
           </motion.div>
         </div>
 
+        {/* LIVE TICKER (real-time, backend SSE) */}
+        <LiveTicker />
+
         {/* STATS STRIP */}
-        <div className="container-bleed relative z-10 pb-14">
+        <div className="container-bleed relative z-10 pt-6 pb-8">
           <motion.div
             variants={staggerContainer}
             initial="hidden"
@@ -124,45 +152,57 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* LIVE TICKER (real-time, backend SSE) */}
-      <LiveTicker />
+      {/* TRUST STRIP */}
+      <section className="border-y border-ink-300/60 bg-ink-850/40">
+        <div className="container-x flex flex-wrap items-center justify-center gap-x-10 gap-y-3 py-4">
+          {trustPoints.map((t) => (
+            <span key={t.label} className="inline-flex items-center gap-2 text-sm font-medium text-gray-400">
+              <t.icon className="h-4 w-4 text-brand-500" />
+              {t.label}
+            </span>
+          ))}
+        </div>
+      </section>
 
       {/* WHY CHOOSE US */}
-      <section className="container-x py-20 sm:py-24">
-        <SectionHeading
-          align="left"
-          eyebrow="Why 27 Markets"
-          title={
-            <>
-              Built for traders.
-              <br />
-              Powered by technology.
-            </>
-          }
-          description="We combine advanced technology, deep liquidity, and transparent conditions to deliver a superior trading experience."
-        />
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.2 }}
-          className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
-        >
-          {whyFeatures.map((f) => (
-            <FeatureCard key={f.title} {...f} />
-          ))}
-        </motion.div>
+      <section className="section-alt relative overflow-hidden pb-16 pt-8 sm:pb-20 sm:pt-12">
+        <FloatingCoins />
+        <div className="container-x relative z-10 grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,3fr)] lg:items-start">
+          <SectionHeading
+            align="left"
+            eyebrow="Why 27 Markets"
+            title={
+              <>
+                Built for traders. Powered by technology.
+              </>
+            }
+            description="We combine advanced technology, deep liquidity, and transparent conditions to deliver a superior trading experience."
+          />
+          <motion.div
+            variants={cardStagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+            className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
+          >
+            {whyFeatures.map((f) => (
+              <FeatureCard key={f.title} {...f} />
+            ))}
+          </motion.div>
+        </div>
       </section>
 
       {/* GROWTH HIGHLIGHT */}
       <section className="container-x py-16 sm:py-20">
         <div className="grid items-center gap-10 lg:grid-cols-2">
           <Reveal>
-            <img
-              src={asset('growth-coins.png')}
-              alt="Growing returns"
-              className="mx-auto w-full max-w-md select-none drop-shadow-[0_24px_70px_rgba(225,29,46,0.3)]"
-            />
+            <Parallax amount={55}>
+              <img
+                src={asset('growth-coins.png')}
+                alt="Growing returns"
+                className="mx-auto w-full max-w-md select-none drop-shadow-[0_24px_70px_rgba(225,29,46,0.3)]"
+              />
+            </Parallax>
           </Reveal>
           <Reveal>
             <p className="section-eyebrow mb-3">Built for growth</p>
