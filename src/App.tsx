@@ -22,6 +22,8 @@ import AdminReportsPage from './pages/admin/AdminReportsPage'
 import AdminStaffPage from './pages/admin/AdminStaffPage'
 import AdminBlogListPage from './pages/admin/AdminBlogListPage'
 import AdminBlogEditorPage from './pages/admin/AdminBlogEditorPage'
+import AdminPlaceholderPage from './pages/admin/AdminPlaceholderPage'
+import { placeholderLinks } from './components/admin/adminNav'
 
 import HomePage from './pages/HomePage'
 import AboutPage from './pages/AboutPage'
@@ -119,6 +121,9 @@ export default function App() {
         <Route path="blog" element={<AdminBlogListPage />} />
         <Route path="blog/new" element={<AdminBlogEditorPage />} />
         <Route path="blog/:id" element={<AdminBlogEditorPage />} />
+        {placeholderLinks().map((l) => (
+          <Route key={l.to} path={l.to.replace('/admin/', '')} element={<AdminPlaceholderPage />} />
+        ))}
       </Route>
 
       {/* Secure partner / IB portal */}
