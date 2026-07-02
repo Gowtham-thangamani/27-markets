@@ -19,8 +19,10 @@ export function Accordion({ items }: { items: AccordionItem[] }) {
         return (
           <div key={item.id}>
             <button
+              id={`acc-trigger-${item.id}`}
               onClick={() => setOpen(isOpen ? null : item.id)}
               aria-expanded={isOpen}
+              aria-controls={`acc-panel-${item.id}`}
               className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
             >
               <span className="font-medium text-white">{item.question}</span>
@@ -34,6 +36,9 @@ export function Accordion({ items }: { items: AccordionItem[] }) {
             <AnimatePresence initial={false}>
               {isOpen && (
                 <motion.div
+                  id={`acc-panel-${item.id}`}
+                  role="region"
+                  aria-labelledby={`acc-trigger-${item.id}`}
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}

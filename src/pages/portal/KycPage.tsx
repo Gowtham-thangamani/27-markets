@@ -48,8 +48,8 @@ export default function KycPage() {
         </div>
       </div>
 
-      <div className="mb-6 flex items-start gap-3 rounded-xl border border-sky-500/20 bg-sky-500/[0.05] p-4 text-sm text-sky-200/90">
-        <Info className="mt-0.5 h-5 w-5 shrink-0 text-sky-400" />
+      <div className="mb-6 flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-4 text-sm text-gray-300">
+        <Info className="mt-0.5 h-5 w-5 shrink-0 text-brand-400" />
         <p>
           Your documents are encrypted and handled in line with our AML and data-protection
           policies. Verification is usually completed within 24 hours.

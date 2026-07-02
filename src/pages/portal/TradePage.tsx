@@ -344,9 +344,11 @@ export default function TradePage() {
         {/* Order ticket */}
         <div className="glass-panel h-fit p-5">
           <h2 className="font-display text-base font-semibold text-white">Order Ticket</h2>
-          <div className="mt-4 grid grid-cols-2 gap-2">
+          <div className="mt-4 grid grid-cols-2 gap-2" role="radiogroup" aria-label="Order side">
             <button
               type="button"
+              role="radio"
+              aria-checked={side === 'BUY'}
               onClick={() => setSide('BUY')}
               className={cn('rounded-lg py-2 text-sm font-semibold transition', side === 'BUY' ? 'bg-success/20 text-success ring-1 ring-success/40' : 'bg-ink-800 text-gray-400')}
             >
@@ -354,6 +356,8 @@ export default function TradePage() {
             </button>
             <button
               type="button"
+              role="radio"
+              aria-checked={side === 'SELL'}
               onClick={() => setSide('SELL')}
               className={cn('rounded-lg py-2 text-sm font-semibold transition', side === 'SELL' ? 'bg-danger/20 text-danger ring-1 ring-danger/40' : 'bg-ink-800 text-gray-400')}
             >
@@ -375,11 +379,13 @@ export default function TradePage() {
             />
             <div>
               <span className="mb-1.5 block text-sm font-medium text-gray-300">Order type</span>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Order type">
                 {ORDER_TYPES.map((t) => (
                   <button
                     key={t.value}
                     type="button"
+                    role="radio"
+                    aria-checked={orderType === t.value}
                     onClick={() => setOrderType(t.value)}
                     className={cn(
                       'rounded-lg py-2 text-xs font-semibold transition',

@@ -45,6 +45,12 @@ export default function AdminFinancePage() {
   }, [])
 
   const actDeposit = async (id: string, action: 'approve' | 'reject') => {
+    const ok = window.confirm(
+      action === 'approve'
+        ? 'Confirm and credit this deposit? This cannot be undone.'
+        : 'Reject this deposit request?',
+    )
+    if (!ok) return
     setBusy(id)
     try {
       if (action === 'approve') await financeApi.approveDepositRequest(id)
@@ -64,6 +70,12 @@ export default function AdminFinancePage() {
   }, [load])
 
   const act = async (id: string, action: 'approve' | 'reject') => {
+    const ok = window.confirm(
+      action === 'approve'
+        ? 'Approve this withdrawal? This releases client funds and cannot be undone.'
+        : 'Reject this withdrawal request?',
+    )
+    if (!ok) return
     setBusy(id)
     try {
       if (action === 'approve') await financeApi.approveWithdrawal(id)

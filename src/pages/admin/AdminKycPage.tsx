@@ -62,6 +62,12 @@ export default function AdminKycPage() {
   }, [load])
 
   const review = async (userId: string, step: StepKey, status: 'APPROVED' | 'REJECTED') => {
+    const ok = window.confirm(
+      status === 'APPROVED'
+        ? 'Approve this KYC document?'
+        : 'Reject this KYC document? The client will be asked to re-submit.',
+    )
+    if (!ok) return
     setBusy(`${userId}:${step}`)
     try {
       await adminApi.reviewKyc(userId, step, status)

@@ -72,7 +72,7 @@ export default function BlogListPage() {
               <motion.article key={p.id} variants={fadeUp} className="glass-panel card-lift overflow-hidden">
                 <Link to={`/blog/${p.slug}`} className="block">
                   {p.featuredImage ? (
-                    <img src={p.featuredImage} alt="" className="h-44 w-full object-cover" />
+                    <img src={p.featuredImage} alt={p.title} className="h-44 w-full object-cover" />
                   ) : (
                     <div className="h-44 w-full bg-gradient-to-br from-brand-500/15 to-transparent" />
                   )}

@@ -69,9 +69,9 @@ export default function AccountsPage() {
           <table className="w-full min-w-[640px] overflow-hidden rounded-2xl border border-white/[0.06]">
             <thead>
               <tr className="bg-ink-800/60 text-left text-sm">
-                <th className="px-5 py-4 font-medium text-gray-400">Feature</th>
+                <th scope="col" className="px-5 py-4 font-medium text-gray-400">Feature</th>
                 {accountTiers.map((t) => (
-                  <th key={t.name} className="px-5 py-4 font-semibold text-white">
+                  <th key={t.name} scope="col" className="px-5 py-4 font-semibold text-white">
                     {t.name}
                   </th>
                 ))}

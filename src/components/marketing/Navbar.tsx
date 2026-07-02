@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Globe, Menu, X, ChevronDown } from 'lucide-react'
+import { Menu, X, ChevronDown } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { Logo } from '@/components/Logo'
@@ -178,13 +178,6 @@ export function Navbar() {
         </ul>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <button
-            type="button"
-            aria-label="Language"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-white/[0.06] hover:text-white"
-          >
-            <Globe className="h-[18px] w-[18px]" />
-          </button>
           <ThemeToggle />
           <Link to="/login">
             <Button variant="ghost" size="sm">

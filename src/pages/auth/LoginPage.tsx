@@ -10,8 +10,10 @@ import { zodResolver } from '@/lib/zodResolver'
 import { loginSchema, type LoginValues } from '@/lib/validation'
 import { isStaffRole, landingPathForRole } from '@/lib/roles'
 import { ApiError } from '@/lib/api'
+import { useSeo } from '@/lib/useSeo'
 
 export default function LoginPage() {
+  useSeo({ title: 'Log In — 27 Markets' })
   const { login } = useAuth()
   const toast = useToast()
   const navigate = useNavigate()
@@ -99,11 +101,13 @@ export default function LoginPage() {
         </Link>
       </p>
 
-      <div className="mt-6 rounded-lg border border-white/[0.06] bg-ink-800/50 p-3 text-center text-xs text-gray-500">
-        <p className="font-medium text-gray-400">Demo logins (after seeding)</p>
-        <p className="mt-1">client@27markets.io · admin@27markets.io · agent@27markets.io</p>
-        <p>passwords: Client123! / Admin123! / Agent123!</p>
-      </div>
+      {import.meta.env.DEV && (
+        <div className="mt-6 rounded-lg border border-white/[0.06] bg-ink-800/50 p-3 text-center text-xs text-gray-500">
+          <p className="font-medium text-gray-400">Demo logins (dev only)</p>
+          <p className="mt-1">client@27markets.io · admin@27markets.io · agent@27markets.io</p>
+          <p>passwords: Client123! / Admin123! / Agent123!</p>
+        </div>
+      )}
     </AuthShell>
   )
 }
