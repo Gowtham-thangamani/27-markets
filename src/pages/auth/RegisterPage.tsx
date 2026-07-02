@@ -191,11 +191,13 @@ export default function RegisterPage() {
                 </div>
                 <div>
                   <p className="mb-1.5 text-sm font-medium text-gray-300">Account type</p>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Account type">
                     {accountTypes.map((t) => (
                       <button
                         key={t}
                         type="button"
+                        role="radio"
+                        aria-checked={form.accountType === t}
                         onClick={() => set('accountType', t)}
                         className={cn(
                           'rounded-xl border px-2 py-3 text-center text-sm font-medium transition-colors',
@@ -235,8 +237,22 @@ export default function RegisterPage() {
                   />
                   <span>
                     I agree to the{' '}
-                    <span className="text-brand-400">Client Agreement</span> and{' '}
-                    <span className="text-brand-400">Risk Disclosure</span>.
+                    <Link
+                      to="/legal/client-agreement"
+                      target="_blank"
+                      className="font-medium text-brand-400 underline underline-offset-2 hover:text-brand-300"
+                    >
+                      Client Agreement
+                    </Link>{' '}
+                    and{' '}
+                    <Link
+                      to="/legal/risk-disclosure"
+                      target="_blank"
+                      className="font-medium text-brand-400 underline underline-offset-2 hover:text-brand-300"
+                    >
+                      Risk Disclosure
+                    </Link>
+                    .
                   </span>
                 </label>
                 {errors.agree && <p className="text-xs text-danger">{errors.agree}</p>}

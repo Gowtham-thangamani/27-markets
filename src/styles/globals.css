@@ -179,7 +179,7 @@
   }
 
   .section-eyebrow {
-    @apply text-xs font-semibold uppercase tracking-[0.25em] text-brand-500;
+    @apply text-xs font-semibold uppercase tracking-[0.25em] text-brand-400;
   }
 
   .grid-bg {
@@ -566,6 +566,17 @@ html:not(.light) .section-motif {
   .section-motif {
     animation: none;
   }
+}
+
+/* Light theme: the light brand reds (300/400) fail WCAG contrast as text on the
+   near-white background. Darken them to brand-600 when used as base text/icon
+   utilities. Also darken the section eyebrow for AA on light. */
+html.light .text-brand-300,
+html.light .text-brand-400 {
+  color: #c41323;
+}
+html.light .section-eyebrow {
+  color: #c41323;
 }
 
 html.light .glass-panel {

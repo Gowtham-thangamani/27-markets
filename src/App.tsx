@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { MarketingLayout } from './layouts/MarketingLayout'
+import LegalPage from './pages/LegalPage'
 import { PortalLayout } from './layouts/PortalLayout'
 import { AdminLayout } from './layouts/AdminLayout'
 import { RequireAuth } from './components/portal/RequireAuth'
@@ -67,6 +68,7 @@ export default function App() {
         <Route path="/blog" element={<BlogListPage />} />
         <Route path="/blog/:slug" element={<BlogDetailPage />} />
         <Route path="/partner/apply" element={<PartnerApplyPage />} />
+        <Route path="/legal/:doc" element={<LegalPage />} />
       </Route>
 
       {/* Auth (standalone full-screen) */}
