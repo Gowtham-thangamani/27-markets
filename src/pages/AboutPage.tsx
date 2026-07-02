@@ -67,12 +67,20 @@ export default function AboutPage() {
 
       {/* KPI strip */}
       <section className="container-x py-12">
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-          <StatCard value={100} suffix="+" label="Trading instruments" />
-          <StatCard value={0.0} decimals={1} label="Pips from spreads" />
-          <StatCard value={30} prefix="<" suffix="ms" label="Execution speed" />
-          <StatCard value={500} prefix="1:" label="Max leverage" />
-          <StatCard value={24} suffix="/5" label="Customer support" />
+        <div className="flex flex-wrap justify-center gap-4">
+          {[
+            { value: 100, suffix: '+', label: 'Trading instruments' },
+            { value: 0.0, decimals: 1, label: 'Pips from spreads' },
+            { value: 30, prefix: '<', suffix: 'ms', label: 'Execution speed' },
+            { value: 500, prefix: '1:', label: 'Max leverage' },
+            { value: 24, suffix: '/5', label: 'Customer support' },
+          ].map((s) => (
+            <StatCard
+              key={s.label}
+              {...s}
+              className="w-[calc(50%-0.5rem)] md:w-[calc(33.333%-0.667rem)] lg:w-[calc(20%-0.8rem)]"
+            />
+          ))}
         </div>
       </section>
 
@@ -97,6 +105,8 @@ export default function AboutPage() {
           />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-ink-900 via-ink-900/70 to-transparent" />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-ink-900 to-transparent" />
+          {/* Left scrim so the headline stays legible regardless of the photo */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-ink-900/85 via-ink-900/45 to-transparent" />
 
           {/* Text overlay */}
           <div className="absolute inset-0 flex items-center">
