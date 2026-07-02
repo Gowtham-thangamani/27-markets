@@ -81,7 +81,7 @@ export default function PartnershipPage() {
         >
           {partnerBenefits.map((b) => (
             <motion.div key={b.title} variants={fadeUp} className="glass-panel card-lift group p-6">
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/20 transition-all group-hover:bg-brand-500 group-hover:text-white">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/20 transition-all group-hover:bg-brand-500 group-hover:text-onaccent">
                 <b.icon className="h-6 w-6" />
               </div>
               <h3 className="font-display text-lg font-semibold text-white">{b.title}</h3>

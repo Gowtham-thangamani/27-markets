@@ -14,7 +14,7 @@ const DFM_SYMBOLS = [
  */
 export function DfmBoard() {
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-ink-800/40 p-5">
+    <div className="glass-panel p-5">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h3 className="font-display text-base font-semibold text-white">DFM · Dubai Financial Market</h3>
         <span className="shrink-0 rounded-md bg-warning/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-warning ring-1 ring-warning/30">

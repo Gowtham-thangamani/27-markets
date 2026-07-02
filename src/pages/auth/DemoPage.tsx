@@ -6,8 +6,10 @@ import { useToast } from '@/context/ToastContext'
 import { zodResolver } from '@/lib/zodResolver'
 import { demoSchema, type DemoValues } from '@/lib/validation'
 import { leadsApi } from '@/lib/leadsApi'
+import { useSeo } from '@/lib/useSeo'
 
 export default function DemoPage() {
+  useSeo({ title: 'Free Demo Account — 27 Markets', description: 'Practice trading risk-free with a funded demo account.' })
   const toast = useToast()
   const navigate = useNavigate()
   const {

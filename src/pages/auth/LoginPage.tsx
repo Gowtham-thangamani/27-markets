@@ -10,8 +10,10 @@ import { zodResolver } from '@/lib/zodResolver'
 import { loginSchema, type LoginValues } from '@/lib/validation'
 import { isStaffRole, landingPathForRole } from '@/lib/roles'
 import { ApiError } from '@/lib/api'
+import { useSeo } from '@/lib/useSeo'
 
 export default function LoginPage() {
+  useSeo({ title: 'Log In — 27 Markets' })
   const { login } = useAuth()
   const toast = useToast()
   const navigate = useNavigate()

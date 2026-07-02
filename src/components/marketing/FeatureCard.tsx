@@ -18,7 +18,7 @@ export function FeatureCard({ icon: Icon, title, description }: FeatureCardProps
       transition={{ type: 'spring', stiffness: 300, damping: 22 }}
       className="glass-panel group relative h-full p-5 transition-shadow duration-300 hover:border-brand-500/40 hover:shadow-[0_0_0_1px_rgba(225,29,46,0.3),0_18px_50px_rgba(0,0,0,0.45),0_0_40px_rgba(225,29,46,0.12)]"
     >
-      <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-ink-800 text-brand-400 ring-1 ring-brand-500/25 transition-all duration-300 group-hover:scale-110 group-hover:bg-brand-500 group-hover:text-white group-hover:shadow-[0_0_24px_rgba(225,29,46,0.5)]">
+      <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-ink-800 text-brand-400 ring-1 ring-brand-500/25 transition-all duration-300 group-hover:scale-110 group-hover:bg-brand-500 group-hover:text-onaccent group-hover:shadow-[0_0_24px_rgba(225,29,46,0.5)]">
         <Icon className="h-5 w-5" />
       </div>
       <h3 className="font-display text-base font-semibold text-white">{title}</h3>

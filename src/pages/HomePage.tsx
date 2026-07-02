@@ -79,7 +79,7 @@ export default function HomePage() {
                 variants={fadeUp}
                 className="group flex items-center gap-3 p-5 transition-colors hover:bg-brand-500/[0.05]"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-400 transition-all duration-300 group-hover:bg-brand-500 group-hover:text-white group-hover:shadow-[0_0_20px_rgba(225,29,46,0.5)]">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-400 transition-all duration-300 group-hover:bg-brand-500 group-hover:text-onaccent group-hover:shadow-[0_0_20px_rgba(225,29,46,0.5)]">
                   <s.icon className="h-5 w-5" />
                 </span>
                 <div>

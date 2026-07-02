@@ -84,7 +84,7 @@ export default function BlogDetailPage() {
             </p>
           )}
           {post.featuredImage && (
-            <img src={post.featuredImage} alt="" className="mt-8 w-full rounded-2xl object-cover" />
+            <img src={post.featuredImage} alt={post.title} className="mt-8 w-full rounded-2xl object-cover" />
           )}
           <div className={PROSE} dangerouslySetInnerHTML={{ __html: html }} />
         </>

@@ -11,6 +11,7 @@ import { api, ApiError } from '@/lib/api'
 import { accountTypeToApi } from '@/lib/apiMappers'
 import { countries } from '@/lib/countries'
 import { cn } from '@/lib/cn'
+import { useSeo } from '@/lib/useSeo'
 
 type Errors = Record<string, string>
 
@@ -19,6 +20,7 @@ const steps = ['Your details', 'Account setup', 'Security']
 const accountTypes: Array<'Standard' | 'Raw Spread' | 'VIP'> = ['Standard', 'Raw Spread', 'VIP']
 
 export default function RegisterPage() {
+  useSeo({ title: 'Open an Account — 27 Markets' })
   const navigate = useNavigate()
   const { register: registerUser } = useAuth()
   const toast = useToast()
