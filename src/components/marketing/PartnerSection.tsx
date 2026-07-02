@@ -84,7 +84,7 @@ export function PartnerSection() {
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.2 }}
-          className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5"
+          className="mt-10 flex flex-wrap justify-center gap-4"
         >
           {partnerBenefits.map((b) => (
             <motion.div
@@ -92,7 +92,7 @@ export function PartnerSection() {
               variants={cardReveal}
               whileHover={{ y: -5 }}
               transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-              className="glass-panel group flex flex-col items-start gap-3 p-5 transition-shadow duration-300 hover:border-brand-500/40 hover:shadow-[0_0_0_1px_rgba(225,29,46,0.3),0_16px_40px_rgba(0,0,0,0.45),0_0_36px_rgba(225,29,46,0.12)]"
+              className="glass-panel group flex w-[calc(50%-0.5rem)] flex-col items-start gap-3 p-5 transition-shadow duration-300 hover:border-brand-500/40 hover:shadow-[0_0_0_1px_rgba(225,29,46,0.3),0_16px_40px_rgba(0,0,0,0.45),0_0_36px_rgba(225,29,46,0.12)] sm:w-[calc(33.333%-0.667rem)] lg:w-[calc(20%-0.8rem)]"
             >
               <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/20 transition-all duration-300 group-hover:scale-110 group-hover:bg-brand-500 group-hover:text-onaccent group-hover:shadow-[0_0_24px_rgba(225,29,46,0.5)]">
                 <b.icon className="h-5 w-5" />

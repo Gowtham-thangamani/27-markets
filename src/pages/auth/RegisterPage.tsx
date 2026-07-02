@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -28,6 +28,17 @@ export default function RegisterPage() {
   const ref = params.get('ref') ?? undefined
 
   const [step, setStep] = useState(0)
+  const stepWrapRef = useRef<HTMLDivElement>(null)
+  const firstRender = useRef(true)
+  // Move focus to the step region on each step change so keyboard/AT users
+  // follow the wizard (skip the initial mount to avoid stealing page focus).
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false
+      return
+    }
+    stepWrapRef.current?.focus()
+  }, [step])
   const [errors, setErrors] = useState<Errors>({})
   const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState({
@@ -154,7 +165,7 @@ export default function RegisterPage() {
         ))}
       </div>
 
-      <div className="mt-7 min-h-[260px]">
+      <div ref={stepWrapRef} tabIndex={-1} className="mt-7 min-h-[260px] outline-none">
         <AnimatePresence mode="wait">
           <motion.div
             key={step}

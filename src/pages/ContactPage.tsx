@@ -1,4 +1,5 @@
 import { useForm } from 'react-hook-form'
+import { Link } from 'react-router-dom'
 import { Mail, MessageSquare, Info, Send } from 'lucide-react'
 import { Button, Input, Textarea } from '@/components/ui'
 import { Reveal } from '@/components/Reveal'
@@ -120,10 +121,13 @@ export default function ContactPage() {
               'radial-gradient(circle at 25% 50%, rgba(225,29,46,0.10), transparent 30%), radial-gradient(circle at 70% 40%, rgba(225,29,46,0.08), transparent 35%)',
           }}
         />
-        <div className="container-x relative flex h-full items-center justify-center text-center">
-          <p className="text-sm text-gray-500">
-            27 Markets · Serving traders in 120+ countries worldwide
+        <div className="container-x relative flex h-full flex-col items-center justify-center gap-3 text-center">
+          <p className="text-sm text-gray-400">
+            Serving traders in 120+ countries worldwide
           </p>
+          <Link to="/register">
+            <Button size="sm">Open your account</Button>
+          </Link>
         </div>
       </section>
     </>
