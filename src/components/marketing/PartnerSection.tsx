@@ -7,12 +7,10 @@ import { Parallax } from '@/components/Parallax'
 import { partnerBenefits } from '@/mock/content'
 import { cardReveal, cardStagger } from '@/lib/motion'
 import { asset } from '@/lib/asset'
-import { BarChartBackdrop } from '@/components/marketing/BarChartBackdrop'
 
 export function PartnerSection() {
   return (
     <section className="section-alt relative overflow-hidden py-8 sm:py-12">
-      <BarChartBackdrop className="section-motif pointer-events-none absolute inset-x-0 bottom-0 h-[70%] w-full" />
       <div className="container-x relative z-10">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div>
