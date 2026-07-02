@@ -8,6 +8,8 @@ import { SectionHeading } from '@/components/SectionHeading'
 import { LiveTicker } from '@/components/marketing/LiveTicker'
 import { SignalFlow } from '@/components/marketing/SignalFlow'
 import { FeatureCard } from '@/components/marketing/FeatureCard'
+import { CandlestickBackdrop } from '@/components/marketing/CandlestickBackdrop'
+import { ChartLineBackdrop } from '@/components/marketing/ChartLineBackdrop'
 import { PartnerSection } from '@/components/marketing/PartnerSection'
 import { MarketCard } from '@/components/marketing/MarketCard'
 import { CTABand } from '@/components/marketing/CTABand'
@@ -164,7 +166,7 @@ export default function HomePage() {
               <img
                 src={asset(onLight ? 'hero-platform-light.png' : 'hero-platform.png')}
                 alt="27 Markets trading platform on laptop and mobile"
-                className="w-full select-none lg:scale-105"
+                className={`w-full select-none lg:scale-105 ${onLight ? '' : 'hero-media-fade'}`}
               />
             </div>
 
@@ -244,6 +246,7 @@ export default function HomePage() {
 
       {/* WHY CHOOSE US */}
       <section className="section-alt relative overflow-hidden pb-16 pt-8 sm:pb-20 sm:pt-12">
+        <CandlestickBackdrop className="section-motif pointer-events-none absolute inset-x-0 bottom-0 h-[85%] w-full" />
         <div className="container-x relative z-10 grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,3fr)] lg:items-start">
           <SectionHeading
             align="left"
@@ -270,8 +273,9 @@ export default function HomePage() {
       </section>
 
       {/* GROWTH HIGHLIGHT */}
-      <section className="container-x py-16 sm:py-20">
-        <div className="grid items-center gap-10 lg:grid-cols-2">
+      <section className="relative overflow-hidden py-16 sm:py-20">
+        <ChartLineBackdrop className="section-motif pointer-events-none absolute inset-x-0 bottom-0 h-[70%] w-full" />
+        <div className="container-x relative z-10 grid items-center gap-10 lg:grid-cols-2">
           <Reveal>
             <Parallax amount={55}>
               <img
@@ -315,7 +319,23 @@ export default function HomePage() {
       <PartnerSection />
 
       {/* MARKETS PREVIEW */}
-      <section className="container-x py-20 sm:py-24">
+      <section className="relative overflow-hidden py-20 sm:py-24">
+        <div
+          aria-hidden
+          className="section-motif pointer-events-none absolute left-1/2 top-1/2 h-[130%] w-[130%] max-w-none -translate-x-1/2 -translate-y-1/2"
+          style={{
+            background: 'rgb(225 29 46)',
+            WebkitMaskImage: `url(${asset('world-dots.png')})`,
+            maskImage: `url(${asset('world-dots.png')})`,
+            WebkitMaskRepeat: 'no-repeat',
+            maskRepeat: 'no-repeat',
+            WebkitMaskPosition: 'center',
+            maskPosition: 'center',
+            WebkitMaskSize: 'contain',
+            maskSize: 'contain',
+          }}
+        />
+        <div className="container-x relative z-10">
         <SectionHeading
           eyebrow="Global Markets"
           title="Trade 100+ global markets with confidence"
@@ -339,6 +359,7 @@ export default function HomePage() {
             </Button>
           </Link>
         </Reveal>
+        </div>
       </section>
 
       <CTABand />
