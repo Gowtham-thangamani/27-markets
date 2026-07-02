@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { ArrowUpRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { Card3D } from '@/components/Card3D'
 import { fadeUp } from '@/lib/motion'
 import { asset } from '@/lib/asset'
 import type { MarketCategory } from '@/mock/content'
@@ -8,10 +9,11 @@ import type { MarketCategory } from '@/mock/content'
 export function MarketCard({ category }: { category: MarketCategory }) {
   const { icon: Icon, image, title, subtitle, examples, key } = category
   return (
-    <motion.div variants={fadeUp}>
+    <Card3D className="h-full">
+      <motion.div variants={fadeUp} className="h-full">
       <Link
         to={`/markets?category=${key}`}
-        className="glass-panel card-lift group flex h-full flex-col p-6"
+        className="glass-panel card-lift group relative flex h-full flex-col p-6"
       >
         <div className="mb-4 flex items-center justify-between">
           {image ? (
@@ -28,10 +30,13 @@ export function MarketCard({ category }: { category: MarketCategory }) {
           )}
           <ArrowUpRight className="h-5 w-5 text-gray-600 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand-400" />
         </div>
+        <span className="card-tick mb-2" aria-hidden />
         <h3 className="font-display text-lg font-semibold text-white">{title}</h3>
         <p className="mt-1 text-sm text-white">{subtitle}</p>
         <p className="mt-3 text-xs font-medium text-white/85">{examples}</p>
+        <span className="card-corner-slash" aria-hidden />
       </Link>
-    </motion.div>
+      </motion.div>
+    </Card3D>
   )
 }

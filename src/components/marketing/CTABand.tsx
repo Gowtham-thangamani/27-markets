@@ -24,7 +24,12 @@ export function CTABand() {
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link to="/register">
-                <Button size="lg">Open Live Account</Button>
+                <Button
+                  size="lg"
+                  className="shadow-[0_0_34px_-4px_rgba(225,29,46,0.55)] transition-shadow hover:shadow-[0_0_48px_-2px_rgba(225,29,46,0.7)]"
+                >
+                  Open Live Account
+                </Button>
               </Link>
               <Link to="/demo">
                 <Button variant="outline" size="lg">

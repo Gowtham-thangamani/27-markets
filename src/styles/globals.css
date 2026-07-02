@@ -124,8 +124,9 @@
 
 @layer components {
   .glass-panel {
-    @apply rounded-2xl border border-white/[0.06] bg-ink-700/70 backdrop-blur-xl;
-    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+    @apply rounded-2xl border border-white/[0.10] bg-ink-700/80 backdrop-blur-xl;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent);
+    box-shadow: 0 10px 30px -14px rgba(0, 0, 0, 0.7);
   }
 
   .red-glow {
@@ -139,6 +140,38 @@
     @apply -translate-y-1 border-brand-500/40;
     box-shadow: 0 0 0 1px rgba(225, 29, 46, 0.3), 0 18px 50px rgba(0, 0, 0, 0.55),
       0 0 40px rgba(225, 29, 46, 0.12);
+  }
+
+  /* Reference-style card accents: a short red "tick" above the title and a thin
+     red diagonal hairline slashing the bottom-right corner. Theme-independent
+     (red reads on both dark and white surfaces). */
+  .card-tick {
+    @apply block h-[3px] w-7 rounded-full;
+    background: rgb(225 29 46);
+  }
+  .card-corner-slash {
+    position: absolute;
+    right: -2px;
+    bottom: 12px;
+    height: 2px;
+    width: 30px;
+    transform: rotate(-45deg);
+    border-radius: 9999px;
+    background: rgb(225 29 46);
+    box-shadow: 0 0 10px rgba(225, 29, 46, 0.55);
+    pointer-events: none;
+  }
+
+  /* Feather the hero product shot's edges so it melts into the hero instead of
+     showing a hard image box. Intersecting horizontal + vertical fades soften
+     all four sides. */
+  .hero-media-fade {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 5%, #000 88%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 5%, #000 88%, transparent 100%);
+    mask-composite: intersect;
   }
 
   .text-gradient-red {
@@ -333,6 +366,54 @@
   animation-play-state: paused;
 }
 
+/* Radar / sonar rings behind the hero device — a subtle trading signature.
+   Concentric thin rings, masked so they fade out toward the edges. */
+.hero-rings {
+  pointer-events: none;
+  background-image: repeating-radial-gradient(
+    circle at center,
+    transparent 0 42px,
+    rgba(225, 29, 46, 0.07) 42px 43px
+  );
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 34%, transparent 76%);
+  mask-image: radial-gradient(circle closest-side, #000 34%, transparent 76%);
+  animation: rings-pulse 6s ease-in-out infinite;
+}
+html.light .hero-rings {
+  background-image: repeating-radial-gradient(
+    circle at center,
+    transparent 0 42px,
+    rgba(15, 23, 42, 0.05) 42px 43px
+  );
+}
+@keyframes rings-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: translate(-50%, -50%) scale(1.04);
+  }
+}
+
+/* Hero headline accent — sweeps in from the left after the copy lands. */
+.hero-underline {
+  transform-origin: left;
+  animation: underline-in 0.9s cubic-bezier(0.22, 0.61, 0.36, 1) 0.6s both;
+}
+@keyframes underline-in {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
 /* Travelling pulse dot along an SVG offset-path */
 @keyframes wave-travel {
   from {
@@ -462,6 +543,31 @@
 
 /* ─── Light-theme component refinements ─── */
 /* Cards: premium layered elevation + top-down gradient + crisp edge (not flat). */
+/* Section trading-motif backdrops: a touch of visibility + a gentle breathe,
+   brighter on dark where red reads faint. Respects reduced motion. */
+.section-motif {
+  --motif-o: 0.12;
+  opacity: var(--motif-o);
+  animation: motif-breathe 8s ease-in-out infinite;
+}
+html:not(.light) .section-motif {
+  --motif-o: 0.22;
+}
+@keyframes motif-breathe {
+  0%,
+  100% {
+    opacity: var(--motif-o);
+  }
+  50% {
+    opacity: calc(var(--motif-o) * 1.55);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .section-motif {
+    animation: none;
+  }
+}
+
 html.light .glass-panel {
   border-color: #e7ebf2;
   background-color: #ffffff;
@@ -562,7 +668,56 @@ html.light footer {
 html.light .hero-light-veil {
   display: block;
   background-image:
-    radial-gradient(34rem 30rem at 6% -12%, rgba(99, 122, 159, 0.1), transparent 66%),
-    radial-gradient(46rem 34rem at 80% 40%, rgba(225, 29, 46, 0.12), transparent 66%),
-    radial-gradient(24rem 14rem at 78% 74%, rgba(225, 29, 46, 0.1), transparent 70%);
+    /* cool highlight, top-left */
+    radial-gradient(34rem 30rem at 4% -14%, rgba(99, 122, 159, 0.12), transparent 64%),
+    /* primary warm bloom behind the product shot */
+    radial-gradient(48rem 36rem at 82% 38%, rgba(225, 29, 46, 0.16), transparent 64%),
+    /* tighter core glow right behind the laptop */
+    radial-gradient(24rem 16rem at 80% 66%, rgba(225, 29, 46, 0.12), transparent 70%),
+    /* subtle top vignette for depth */
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.05), transparent 22%);
+}
+
+/* Hero mesh: concentrate the engineered grid toward the product shot (top-right)
+   and fade it out behind the headline so "Trade Beyond Limits" stays crisp.
+   Light theme only — the dark hero already reads deep without it. */
+html.light .hero-grid {
+  background-image:
+    linear-gradient(to right, rgba(15, 23, 42, 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.1) 1px, transparent 1px);
+  -webkit-mask-image: radial-gradient(125% 125% at 100% 0%, #000 30%, transparent 82%);
+  mask-image: radial-gradient(125% 125% at 100% 0%, #000 30%, transparent 82%);
+}
+
+/* Dotted world map backdrop — the mask-image (the dot silhouette) is set inline
+   in the component so it's base-path aware; here we tint it and fade it out to
+   the left so it sits behind the product shot without crowding the headline.
+   The image itself is a band of continents; place + scale it to fill the hero. */
+.hero-worldmap {
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% auto;
+  mask-size: 100% auto;
+  -webkit-mask-position: 50% 48%;
+  mask-position: 50% 48%;
+  /* Centered full-bleed: continents span the whole hero. Keep a gentle fade on
+     the left so the headline stays crisp, then hold an even tint across. */
+  background-image: linear-gradient(
+    90deg,
+    transparent 2%,
+    rgba(15, 23, 42, 0.05) 24%,
+    rgba(15, 23, 42, 0.14) 46%,
+    rgba(15, 23, 42, 0.14) 100%
+  );
+}
+/* Dark theme: same map, but dots glow faint cool-white so it reads as depth
+   rather than ink. */
+html:not(.light) .hero-worldmap {
+  background-image: linear-gradient(
+    90deg,
+    transparent 2%,
+    rgba(148, 163, 184, 0.05) 24%,
+    rgba(148, 163, 184, 0.12) 46%,
+    rgba(148, 163, 184, 0.12) 100%
+  );
 }

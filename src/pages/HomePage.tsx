@@ -8,13 +8,15 @@ import { SectionHeading } from '@/components/SectionHeading'
 import { LiveTicker } from '@/components/marketing/LiveTicker'
 import { SignalFlow } from '@/components/marketing/SignalFlow'
 import { FeatureCard } from '@/components/marketing/FeatureCard'
+import { CandlestickBackdrop } from '@/components/marketing/CandlestickBackdrop'
+import { ChartLineBackdrop } from '@/components/marketing/ChartLineBackdrop'
 import { PartnerSection } from '@/components/marketing/PartnerSection'
-import { FloatingCoins } from '@/components/marketing/FloatingCoins'
 import { MarketCard } from '@/components/marketing/MarketCard'
 import { CTABand } from '@/components/marketing/CTABand'
 import { fadeUp, staggerContainer, cardStagger, slideInLeft } from '@/lib/motion'
 import { asset } from '@/lib/asset'
 import { useThemeSafe } from '@/context/ThemeContext'
+import { useLiveQuotes } from '@/lib/useLiveQuotes'
 import { whyFeatures, marketCategories } from '@/mock/content'
 
 const heroStats = [
@@ -33,14 +35,36 @@ const trustPoints = [
   { icon: Eye, label: 'Transparent pricing' },
 ]
 
+// Live mini-quote chips that float over the hero device (foreground depth + proof).
+const HERO_CHIPS = ['BINANCE:BTCUSDT', 'OANDA:XAU_USD', 'OANDA:EUR_USD']
+const HERO_LABEL: Record<string, string> = {
+  'BINANCE:BTCUSDT': 'BTC/USD',
+  'OANDA:XAU_USD': 'Gold',
+  'OANDA:EUR_USD': 'EUR/USD',
+}
+const HERO_CHIP_POS = ['left-[-3%] top-[12%]', 'right-[-2%] bottom-[16%]']
+function heroPrice(p: number): string {
+  const d = p >= 100 ? 2 : 4
+  return p.toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d })
+}
+
 export default function HomePage() {
   const onLight = useThemeSafe() === 'light'
+  const { list: heroQuotes } = useLiveQuotes(HERO_CHIPS)
   return (
     <>
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="hero-light-veil pointer-events-none absolute inset-0" aria-hidden />
-        <div className="grid-bg pointer-events-none absolute inset-0 opacity-40" />
+        <div
+          className="hero-worldmap pointer-events-none absolute inset-0"
+          style={{
+            WebkitMaskImage: `url(${asset('world-dots.png')})`,
+            maskImage: `url(${asset('world-dots.png')})`,
+          }}
+          aria-hidden
+        />
+        <div className="grid-bg hero-grid pointer-events-none absolute inset-0 opacity-40" />
         <div className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[60rem] -translate-x-1/2 bg-radial-red opacity-70 blur-2xl" />
         <SignalFlow className="opacity-60" />
 
@@ -61,35 +85,41 @@ export default function HomePage() {
 
             <motion.h1
               variants={fadeUp}
-              className="mt-5 font-display text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-7xl"
+              className="mt-5 font-display text-5xl font-bold leading-[1.02] tracking-tight text-white sm:text-6xl lg:text-7xl xl:text-8xl"
             >
               Trade
               <br />
               Beyond
               <br />
-              <span
-                className={
-                  onLight
-                    ? 'bg-gradient-to-br from-brand-500 to-brand-700 bg-clip-text text-transparent'
-                    : 'text-white'
-                }
-              >
-                Limits
+              <span className="relative inline-block">
+                <span
+                  className={
+                    onLight
+                      ? 'bg-gradient-to-br from-brand-500 to-brand-700 bg-clip-text text-transparent'
+                      : 'text-white'
+                  }
+                >
+                  Limits
+                </span>
+                <span className="hero-underline absolute -bottom-1 left-0 h-[3px] w-full rounded-full bg-gradient-to-r from-brand-500 to-transparent" />
               </span>
             </motion.h1>
 
-            <motion.p variants={fadeUp} className="mt-5 text-sm font-medium text-white/90">
+            <motion.p variants={fadeUp} className="mt-5 text-sm font-medium tracking-wide text-white/80">
               Precision · Performance · Partnership
             </motion.p>
 
-            <motion.p variants={fadeUp} className="mt-3 max-w-md text-base leading-relaxed text-white">
+            <motion.p variants={fadeUp} className="mt-3 max-w-md text-base leading-relaxed text-gray-300">
               Access global financial markets through a broker built for traders, partners, and
               long-term growth.
             </motion.p>
 
-            <motion.div variants={fadeUp} className="mt-6 flex flex-wrap gap-3">
+            <motion.div variants={fadeUp} className="mt-7 flex flex-wrap items-center gap-3">
               <Link to="/register">
-                <Button size="lg" className="gap-2">
+                <Button
+                  size="lg"
+                  className="gap-2 shadow-[0_0_34px_-4px_rgba(225,29,46,0.55)] transition-shadow hover:shadow-[0_0_48px_-2px_rgba(225,29,46,0.7)]"
+                >
                   Open Live Account <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -99,19 +129,69 @@ export default function HomePage() {
                 </Button>
               </Link>
             </motion.div>
+
+            <motion.p
+              variants={fadeUp}
+              className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium text-gray-400"
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5 text-brand-500" /> Segregated funds
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5 text-brand-500" /> No dealing desk
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Gauge className="h-3.5 w-3.5 text-brand-500" /> 2-minute setup
+              </span>
+            </motion.p>
           </motion.div>
 
           <motion.div variants={slideInLeft} initial="hidden" animate="show" className="relative">
-            <div className="drift mx-auto max-w-sm sm:max-w-none">
+            {/* Radar-ring signature behind the device — subtle trading motif */}
+            <div
+              aria-hidden
+              className="hero-rings pointer-events-none absolute left-1/2 top-1/2 h-[130%] w-[130%] -translate-x-1/2 -translate-y-1/2"
+            />
+            {/* Focused brand glow behind the device — visible on light AND dark */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-1/2 h-[72%] w-[92%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
+              style={{
+                background: onLight
+                  ? 'radial-gradient(closest-side, rgba(225,29,46,0.20), rgba(225,29,46,0.06) 55%, transparent 76%)'
+                  : 'radial-gradient(closest-side, rgba(225,29,46,0.52), rgba(225,29,46,0.14) 55%, transparent 72%)',
+              }}
+            />
+            <div className="drift relative z-10 mx-auto max-w-sm sm:max-w-none">
               <img
-                src={asset(onLight ? 'hero-platform-light.png?v=2' : 'hero-platform.png')}
+                src={asset(onLight ? 'hero-platform-light.png' : 'hero-platform.png')}
                 alt="27 Markets trading platform on laptop and mobile"
-                className={
-                  onLight
-                    ? 'w-full select-none lg:scale-105'
-                    : 'edge-fade w-full select-none lg:scale-105'
-                }
+                className={`w-full select-none lg:scale-105 ${onLight ? '' : 'hero-media-fade'}`}
               />
+            </div>
+
+            {/* Live mini-quote chips — floating foreground proof */}
+            <div className="pointer-events-none absolute inset-0 z-20 hidden lg:block" aria-hidden>
+              {heroQuotes.slice(0, 2).map((q, i) => {
+                const up = (q.changePct ?? 0) >= 0
+                return (
+                  <div
+                    key={q.symbol}
+                    className={`glass-panel animate-float absolute ${HERO_CHIP_POS[i]} flex items-center gap-2 rounded-xl px-3 py-2 text-xs shadow-[0_10px_30px_-8px_rgba(0,0,0,0.4)] ring-1 ring-brand-500/15`}
+                    style={{ animationDuration: `${7 + i * 2}s`, animationDelay: `${i * 0.8}s` }}
+                  >
+                    <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-success" />
+                    <span className="font-semibold text-white">{HERO_LABEL[q.symbol] ?? q.symbol}</span>
+                    <span className="font-mono tabular-nums text-white">{heroPrice(q.price)}</span>
+                    {q.changePct !== undefined && (
+                      <span className={`font-mono ${up ? 'text-success' : 'text-danger'}`}>
+                        {up ? '▲' : '▼'}
+                        {Math.abs(q.changePct).toFixed(2)}%
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </motion.div>
         </div>
@@ -132,14 +212,14 @@ export default function HomePage() {
               <motion.div
                 key={s.label}
                 variants={fadeUp}
-                className="flex items-center gap-3 p-5"
+                className="group flex items-center gap-3 p-5 transition-colors hover:bg-brand-500/[0.05]"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-400">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-400 transition-all duration-300 group-hover:bg-brand-500 group-hover:text-white group-hover:shadow-[0_0_20px_rgba(225,29,46,0.5)]">
                   <s.icon className="h-5 w-5" />
                 </span>
                 <div>
-                  <div className="font-display text-xl font-bold text-white">{s.value}</div>
-                  <div className="text-xs text-white">{s.label}</div>
+                  <div className="font-display text-xl font-bold tabular-nums text-white">{s.value}</div>
+                  <div className="text-xs text-gray-400">{s.label}</div>
                 </div>
               </motion.div>
             ))}
@@ -166,7 +246,7 @@ export default function HomePage() {
 
       {/* WHY CHOOSE US */}
       <section className="section-alt relative overflow-hidden pb-16 pt-8 sm:pb-20 sm:pt-12">
-        <FloatingCoins />
+        <CandlestickBackdrop className="section-motif pointer-events-none absolute inset-x-0 bottom-0 h-[85%] w-full" />
         <div className="container-x relative z-10 grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,3fr)] lg:items-start">
           <SectionHeading
             align="left"
@@ -193,8 +273,9 @@ export default function HomePage() {
       </section>
 
       {/* GROWTH HIGHLIGHT */}
-      <section className="container-x py-16 sm:py-20">
-        <div className="grid items-center gap-10 lg:grid-cols-2">
+      <section className="relative overflow-hidden py-16 sm:py-20">
+        <ChartLineBackdrop className="section-motif pointer-events-none absolute inset-x-0 bottom-0 h-[70%] w-full" />
+        <div className="container-x relative z-10 grid items-center gap-10 lg:grid-cols-2">
           <Reveal>
             <Parallax amount={55}>
               <img
@@ -238,7 +319,23 @@ export default function HomePage() {
       <PartnerSection />
 
       {/* MARKETS PREVIEW */}
-      <section className="container-x py-20 sm:py-24">
+      <section className="relative overflow-hidden py-20 sm:py-24">
+        <div
+          aria-hidden
+          className="section-motif pointer-events-none absolute left-1/2 top-1/2 h-[130%] w-[130%] max-w-none -translate-x-1/2 -translate-y-1/2"
+          style={{
+            background: 'rgb(225 29 46)',
+            WebkitMaskImage: `url(${asset('world-dots.png')})`,
+            maskImage: `url(${asset('world-dots.png')})`,
+            WebkitMaskRepeat: 'no-repeat',
+            maskRepeat: 'no-repeat',
+            WebkitMaskPosition: 'center',
+            maskPosition: 'center',
+            WebkitMaskSize: 'contain',
+            maskSize: 'contain',
+          }}
+        />
+        <div className="container-x relative z-10">
         <SectionHeading
           eyebrow="Global Markets"
           title="Trade 100+ global markets with confidence"
@@ -262,6 +359,7 @@ export default function HomePage() {
             </Button>
           </Link>
         </Reveal>
+        </div>
       </section>
 
       <CTABand />

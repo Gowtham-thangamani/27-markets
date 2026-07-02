@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { Globe2, Coins } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui'
 import { Reveal } from '@/components/Reveal'
@@ -10,7 +11,7 @@ import { asset } from '@/lib/asset'
 export function PartnerSection() {
   return (
     <section className="section-alt relative overflow-hidden py-8 sm:py-12">
-      <div className="container-x">
+      <div className="container-x relative z-10">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div>
             <Reveal>
@@ -36,6 +37,11 @@ export function PartnerSection() {
           </div>
 
           <Reveal className="relative">
+            {/* Brand glow grounding the floating globe */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-1/2 h-[70%] w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-radial-red opacity-60 blur-3xl"
+            />
             <Parallax amount={45} className="relative mx-auto w-full max-w-2xl lg:scale-110">
               <img
                 src={asset('globe.png')}
@@ -51,6 +57,24 @@ export function PartnerSection() {
                 }}
               />
             </Parallax>
+
+            {/* Floating partner stat chips (foreground depth, mirrors the hero) */}
+            <div className="pointer-events-none absolute inset-0 z-20 hidden lg:block" aria-hidden>
+              <div
+                className="glass-panel animate-float absolute left-0 top-[20%] flex items-center gap-2 rounded-xl px-3 py-2 text-xs shadow-[0_10px_30px_-8px_rgba(0,0,0,0.4)] ring-1 ring-brand-500/15"
+                style={{ animationDuration: '7s' }}
+              >
+                <Globe2 className="h-4 w-4 text-brand-400" />
+                <span className="font-semibold text-white">120+ Countries</span>
+              </div>
+              <div
+                className="glass-panel animate-float absolute bottom-[18%] right-[2%] flex items-center gap-2 rounded-xl px-3 py-2 text-xs shadow-[0_10px_30px_-8px_rgba(0,0,0,0.4)] ring-1 ring-brand-500/15"
+                style={{ animationDuration: '9s', animationDelay: '0.8s' }}
+              >
+                <Coins className="h-4 w-4 text-brand-400" />
+                <span className="font-semibold text-white">Instant Rebates</span>
+              </div>
+            </div>
           </Reveal>
         </div>
 

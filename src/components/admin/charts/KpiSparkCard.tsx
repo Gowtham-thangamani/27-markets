@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import { TrendingUp, TrendingDown } from 'lucide-react'
 import { Area, AreaChart, ResponsiveContainer } from 'recharts'
+import { Card3D } from '@/components/Card3D'
 import { cn } from '@/lib/cn'
 
 interface Props {
@@ -16,7 +17,8 @@ export function KpiSparkCard({ icon: Icon, label, value, delta, spark }: Props) 
   const showDelta = delta !== undefined && delta !== null
   const up = (delta ?? 0) >= 0
   return (
-    <div className="glass-panel card-lift relative overflow-hidden p-5">
+    <Card3D className="h-full">
+      <div className="glass-panel card-lift relative h-full overflow-hidden p-5">
       <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 bg-radial-red opacity-40 blur-xl" />
       <div className="relative flex items-center justify-between">
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/20">
@@ -44,6 +46,7 @@ export function KpiSparkCard({ icon: Icon, label, value, delta, spark }: Props) 
           </AreaChart>
         </ResponsiveContainer>
       </div>
-    </div>
+      </div>
+    </Card3D>
   )
 }

@@ -97,11 +97,16 @@ export function Navbar() {
       className={cn(
         'fixed inset-x-0 top-0 z-50 transition-all duration-300',
         scrolled
-          ? 'border-b border-white/[0.06] bg-ink-900/85 backdrop-blur-xl'
+          ? 'border-b border-white/[0.06] bg-ink-900/85 shadow-[0_10px_30px_-16px_rgba(0,0,0,0.55)] backdrop-blur-xl'
           : 'border-b border-transparent bg-transparent'
       )}
     >
-      <nav className="container-bleed flex h-16 items-center justify-between gap-4">
+      <nav
+        className={cn(
+          'container-bleed flex items-center justify-between gap-4 transition-all duration-300',
+          scrolled ? 'h-14' : 'h-16'
+        )}
+      >
         <Link to="/" aria-label="27 Markets home">
           <Logo size={23} />
         </Link>
