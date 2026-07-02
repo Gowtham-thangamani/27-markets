@@ -44,4 +44,13 @@ describe('AdminSidebarContent', () => {
     fireEvent.click(screen.getByRole('button', { name: /User Management/ }))
     expect(screen.getByRole('link', { name: /Blocked Users/ })).toHaveTextContent(/soon/i)
   })
+
+  it('auto-expands and highlights the parent group on a nested sub-route (e.g. blog editor)', () => {
+    // /admin/blog/new is a real route not present in the nav tree; the Contents
+    // group (which owns /admin/blog) must still auto-expand and highlight Blog.
+    renderAt('/admin/blog/new')
+    const blog = screen.getByRole('link', { name: /Blog/ })
+    expect(blog).toBeInTheDocument()
+    expect(blog.className).toMatch(/bg-brand-500/)
+  })
 })

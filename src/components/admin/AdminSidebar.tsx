@@ -17,9 +17,15 @@ function loadExpanded(): Record<string, boolean> {
   }
 }
 
+/** A child matches a route if it is the exact path or a parent segment of it
+ *  (so /admin/blog also owns /admin/blog/new and /admin/blog/:id). */
+function matchesPath(to: string, pathname: string): boolean {
+  return pathname === to || pathname.startsWith(`${to}/`)
+}
+
 function groupOfPath(pathname: string): string | undefined {
   const g = adminNav.find(
-    (e): e is AdminNavGroup => isGroup(e) && e.children.some((c) => c.to === pathname),
+    (e): e is AdminNavGroup => isGroup(e) && e.children.some((c) => matchesPath(c.to, pathname)),
   )
   return g?.label
 }
@@ -103,7 +109,6 @@ export function AdminSidebarContent({ onNavigate }: { onNavigate?: () => void })
                       key={child.to}
                       to={child.to}
                       onClick={onNavigate}
-                      end
                       className={({ isActive }) =>
                         cn(
                           'flex items-center justify-between gap-2 rounded-lg px-3.5 py-2 text-sm transition-colors',
