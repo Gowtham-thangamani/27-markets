@@ -8,12 +8,13 @@ import { SectionHeading } from '@/components/SectionHeading'
 import { LiveTicker } from '@/components/marketing/LiveTicker'
 import { SignalFlow } from '@/components/marketing/SignalFlow'
 import { FeatureCard } from '@/components/marketing/FeatureCard'
+import { HeroSlider } from '@/components/marketing/HeroSlider'
 import { CandlestickBackdrop } from '@/components/marketing/CandlestickBackdrop'
 import { ChartLineBackdrop } from '@/components/marketing/ChartLineBackdrop'
 import { PartnerSection } from '@/components/marketing/PartnerSection'
 import { MarketCard } from '@/components/marketing/MarketCard'
 import { CTABand } from '@/components/marketing/CTABand'
-import { fadeUp, staggerContainer, cardStagger, slideInLeft } from '@/lib/motion'
+import { fadeUp, staggerContainer, cardStagger } from '@/lib/motion'
 import { asset } from '@/lib/asset'
 import { useThemeSafe } from '@/context/ThemeContext'
 import { useLiveQuotes } from '@/lib/useLiveQuotes'
@@ -35,18 +36,8 @@ const trustPoints = [
   { icon: Eye, label: 'Transparent pricing' },
 ]
 
-// Live mini-quote chips that float over the hero device (foreground depth + proof).
+// Live quotes powering the hero slider's floating price chips.
 const HERO_CHIPS = ['BINANCE:BTCUSDT', 'OANDA:XAU_USD', 'OANDA:EUR_USD']
-const HERO_LABEL: Record<string, string> = {
-  'BINANCE:BTCUSDT': 'BTC/USD',
-  'OANDA:XAU_USD': 'Gold',
-  'OANDA:EUR_USD': 'EUR/USD',
-}
-const HERO_CHIP_POS = ['left-[-3%] top-[12%]', 'right-[-2%] bottom-[16%]']
-function heroPrice(p: number): string {
-  const d = p >= 100 ? 2 : 4
-  return p.toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d })
-}
 
 export default function HomePage() {
   const onLight = useThemeSafe() === 'light'
@@ -68,133 +59,7 @@ export default function HomePage() {
         <div className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[60rem] -translate-x-1/2 bg-radial-red opacity-70 blur-2xl" />
         <SignalFlow className="opacity-60" />
 
-        <div className="container-bleed relative grid items-center gap-8 py-3 sm:grid-cols-[1fr_1.1fr] sm:gap-10 sm:py-5">
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            animate="show"
-            className="relative z-10"
-          >
-            <motion.span
-              variants={fadeUp}
-              className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/[0.08] px-3 py-1 text-xs font-medium text-white"
-            >
-              <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-brand-500" />
-              Next-generation multi-asset broker
-            </motion.span>
-
-            <motion.h1
-              variants={fadeUp}
-              className="mt-5 font-display text-5xl font-bold leading-[1.02] tracking-tight text-white sm:text-6xl lg:text-7xl xl:text-8xl"
-            >
-              Trade
-              <br />
-              Beyond
-              <br />
-              <span className="relative inline-block">
-                <span
-                  className={
-                    onLight
-                      ? 'bg-gradient-to-br from-brand-500 to-brand-700 bg-clip-text text-transparent'
-                      : 'text-white'
-                  }
-                >
-                  Limits
-                </span>
-                <span className="hero-underline absolute -bottom-1 left-0 h-[3px] w-full rounded-full bg-gradient-to-r from-brand-500 to-transparent" />
-              </span>
-            </motion.h1>
-
-            <motion.p variants={fadeUp} className="mt-5 text-sm font-medium tracking-wide text-white/80">
-              Precision · Performance · Partnership
-            </motion.p>
-
-            <motion.p variants={fadeUp} className="mt-3 max-w-md text-base leading-relaxed text-gray-300">
-              Access global financial markets through a broker built for traders, partners, and
-              long-term growth.
-            </motion.p>
-
-            <motion.div variants={fadeUp} className="mt-7 flex flex-wrap items-center gap-3">
-              <Link to="/register">
-                <Button
-                  size="lg"
-                  className="gap-2 shadow-[0_0_34px_-4px_rgba(225,29,46,0.55)] transition-shadow hover:shadow-[0_0_48px_-2px_rgba(225,29,46,0.7)]"
-                >
-                  Open Live Account <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link to="/demo">
-                <Button variant="outline" size="lg">
-                  Try Free Demo
-                </Button>
-              </Link>
-            </motion.div>
-
-            <motion.p
-              variants={fadeUp}
-              className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium text-gray-400"
-            >
-              <span className="inline-flex items-center gap-1.5">
-                <ShieldCheck className="h-3.5 w-3.5 text-brand-500" /> Segregated funds
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Zap className="h-3.5 w-3.5 text-brand-500" /> No dealing desk
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Gauge className="h-3.5 w-3.5 text-brand-500" /> 2-minute setup
-              </span>
-            </motion.p>
-          </motion.div>
-
-          <motion.div variants={slideInLeft} initial="hidden" animate="show" className="relative">
-            {/* Radar-ring signature behind the device — subtle trading motif */}
-            <div
-              aria-hidden
-              className="hero-rings pointer-events-none absolute left-1/2 top-1/2 h-[130%] w-[130%] -translate-x-1/2 -translate-y-1/2"
-            />
-            {/* Focused brand glow behind the device — visible on light AND dark */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute left-1/2 top-1/2 h-[72%] w-[92%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
-              style={{
-                background: onLight
-                  ? 'radial-gradient(closest-side, rgba(225,29,46,0.20), rgba(225,29,46,0.06) 55%, transparent 76%)'
-                  : 'radial-gradient(closest-side, rgba(225,29,46,0.52), rgba(225,29,46,0.14) 55%, transparent 72%)',
-              }}
-            />
-            <div className="drift relative z-10 mx-auto max-w-sm sm:max-w-none">
-              <img
-                src={asset(onLight ? 'hero-platform-light.png' : 'hero-platform.png')}
-                alt="27 Markets trading platform on laptop and mobile"
-                className={`w-full select-none lg:scale-105 ${onLight ? '' : 'hero-media-fade'}`}
-              />
-            </div>
-
-            {/* Live mini-quote chips — floating foreground proof */}
-            <div className="pointer-events-none absolute inset-0 z-20 hidden lg:block" aria-hidden>
-              {heroQuotes.slice(0, 2).map((q, i) => {
-                const up = (q.changePct ?? 0) >= 0
-                return (
-                  <div
-                    key={q.symbol}
-                    className={`glass-panel animate-float absolute ${HERO_CHIP_POS[i]} flex items-center gap-2 rounded-xl px-3 py-2 text-xs shadow-[0_10px_30px_-8px_rgba(0,0,0,0.4)] ring-1 ring-brand-500/15`}
-                    style={{ animationDuration: `${7 + i * 2}s`, animationDelay: `${i * 0.8}s` }}
-                  >
-                    <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-success" />
-                    <span className="font-semibold text-white">{HERO_LABEL[q.symbol] ?? q.symbol}</span>
-                    <span className="font-mono tabular-nums text-white">{heroPrice(q.price)}</span>
-                    {q.changePct !== undefined && (
-                      <span className={`font-mono ${up ? 'text-success' : 'text-danger'}`}>
-                        {up ? '▲' : '▼'}
-                        {Math.abs(q.changePct).toFixed(2)}%
-                      </span>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </motion.div>
-        </div>
+        <HeroSlider onLight={onLight} quotes={heroQuotes} />
 
         {/* LIVE TICKER (real-time, backend SSE) */}
         <LiveTicker />
