@@ -37,8 +37,8 @@ export default function AboutPage() {
 
         <Reveal>
           <img
-            src={asset('hero-trading.png')}
-            alt="27 Markets — bull market strength"
+            src={asset('hero-platform-light.png')}
+            alt="27 Markets trading platform on laptop and mobile"
             className="w-full select-none drop-shadow-[0_30px_90px_rgba(225,29,46,0.3)]"
           />
         </Reveal>

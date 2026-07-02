@@ -4,6 +4,7 @@ import { Button, Input, Textarea } from '@/components/ui'
 import { Reveal } from '@/components/Reveal'
 import { PageHeader } from '@/components/marketing/PageHeader'
 import { useToast } from '@/context/ToastContext'
+import { asset } from '@/lib/asset'
 import { zodResolver } from '@/lib/zodResolver'
 import { contactSchema, type ContactValues } from '@/lib/validation'
 
@@ -39,6 +40,13 @@ export default function ContactPage() {
       <section className="container-x grid gap-10 py-14 lg:grid-cols-[1fr_1.2fr]">
         {/* Contact channels */}
         <div className="space-y-4">
+          <Reveal>
+            <img
+              src={asset('hero-trading.png')}
+              alt="27 Markets — bull market strength"
+              className="mb-2 w-full select-none rounded-2xl drop-shadow-[0_30px_90px_rgba(225,29,46,0.3)]"
+            />
+          </Reveal>
           {channels.map((c) => (
             <Reveal key={c.title}>
               <div className="glass-panel card-lift flex items-start gap-4 p-6">
