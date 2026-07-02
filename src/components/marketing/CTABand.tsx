@@ -18,7 +18,7 @@ export function CTABand() {
             <h2 className="mx-auto max-w-2xl font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
               Ready to trade beyond limits?
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-white">
+            <p className="mx-auto mt-4 max-w-xl text-gray-300">
               Open a live account in minutes, or sharpen your strategy with a free demo. No hidden
               fees, no dealing desk.
             </p>

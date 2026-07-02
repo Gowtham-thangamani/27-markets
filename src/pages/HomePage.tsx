@@ -155,12 +155,12 @@ export default function HomePage() {
             <h2 className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
               Keep more of every move
             </h2>
-            <p className="mt-4 max-w-lg leading-relaxed text-white">
+            <p className="mt-4 max-w-lg leading-relaxed text-gray-300">
               Tight spreads, fast execution, and transparent pricing mean more of every winning
               trade stays in your account. Scale your strategy with leverage up to 1:500 across
               100+ global markets.
             </p>
-            <ul className="mt-6 space-y-3 text-sm text-white">
+            <ul className="mt-6 space-y-3 text-sm text-gray-200">
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand-500" /> Spreads from 0.0 pips
               </li>
