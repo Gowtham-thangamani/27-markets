@@ -42,36 +42,36 @@ interface Bubble {
 }
 
 const BUBBLES: Bubble[] = [
-  { brand: 'skrill', label: 'Skrill', top: '4%', left: '16%', size: 'md' },
-  { brand: 'visa', label: 'Visa', top: '2%', left: '48%', size: 'lg' },
-  { brand: 'perfectmoney', label: 'Perfect Money', top: '10%', left: '78%', size: 'sm' },
-  { brand: 'googlepay', label: 'Google Pay', top: '30%', left: '6%', size: 'lg' },
-  { brand: 'applepay', label: 'Apple Pay', top: '38%', left: '40%', size: 'xl' },
-  { brand: 'banktransfer', label: 'Bank Transfer', top: '30%', left: '76%', size: 'md' },
-  { brand: 'mastercard', label: 'Mastercard', top: '68%', left: '14%', size: 'lg' },
-  { brand: 'neteller', label: 'Neteller', top: '60%', left: '52%', size: 'md' },
-  { brand: 'crypto', label: 'Crypto', top: '54%', left: '86%', size: 'sm' },
-  { brand: 'paypal', label: 'PayPal', top: '84%', left: '38%', size: 'md' },
-  { brand: 'worldpay', label: 'WorldPay', top: '86%', left: '72%', size: 'sm' },
+  { brand: 'skrill', label: 'Skrill', top: '2%', left: '14%', size: 'md' },
+  { brand: 'visa', label: 'Visa', top: '1%', left: '45%', size: 'lg' },
+  { brand: 'perfectmoney', label: 'Perfect Money', top: '9%', left: '74%', size: 'sm' },
+  { brand: 'googlepay', label: 'Google Pay', top: '30%', left: '3%', size: 'lg' },
+  { brand: 'applepay', label: 'Apple Pay', top: '37%', left: '38%', size: 'xl' },
+  { brand: 'banktransfer', label: 'Bank Transfer', top: '28%', left: '74%', size: 'md' },
+  { brand: 'mastercard', label: 'Mastercard', top: '66%', left: '11%', size: 'lg' },
+  { brand: 'neteller', label: 'Neteller', top: '58%', left: '52%', size: 'md' },
+  { brand: 'crypto', label: 'Crypto', top: '52%', left: '80%', size: 'sm' },
+  { brand: 'paypal', label: 'PayPal', top: '82%', left: '40%', size: 'md' },
+  { brand: 'worldpay', label: 'WorldPay', top: '82%', left: '70%', size: 'sm' },
 ]
 
 const SIZE: Record<Bubble['size'], string> = {
-  sm: 'h-16 w-16',
-  md: 'h-20 w-20',
-  lg: 'h-24 w-24',
-  xl: 'h-28 w-28',
+  sm: 'h-20 w-20',
+  md: 'h-24 w-24',
+  lg: 'h-28 w-28',
+  xl: 'h-32 w-32',
 }
 
 const TEXT: Record<Bubble['size'], string> = {
-  sm: 'text-[10px]',
-  md: 'text-[11px]',
+  sm: 'text-[11px]',
+  md: 'text-xs',
   lg: 'text-sm',
-  xl: 'text-base',
+  xl: 'text-lg',
 }
 
 /** Hand-authored, self-contained brand marks. */
 function BrandLogo({ brand, size }: { brand: Brand; size: Bubble['size'] }) {
-  const icon = size === 'xl' ? 'h-8 w-8' : size === 'lg' ? 'h-7 w-7' : 'h-6 w-6'
+  const icon = size === 'xl' ? 'h-9 w-9' : size === 'lg' ? 'h-8 w-8' : 'h-7 w-7'
   switch (brand) {
     case 'visa':
       return (
@@ -81,7 +81,7 @@ function BrandLogo({ brand, size }: { brand: Brand; size: Bubble['size'] }) {
       )
     case 'mastercard':
       return (
-        <svg viewBox="0 0 48 30" className={size === 'lg' ? 'h-8 w-12' : 'h-7 w-11'} aria-hidden>
+        <svg viewBox="0 0 48 30" className={size === 'lg' ? 'h-9 w-14' : 'h-8 w-12'} aria-hidden>
           <circle cx="19" cy="15" r="11" fill="#EB001B" />
           <circle cx="29" cy="15" r="11" fill="#F79E1B" />
           <path d="M24 6.5a11 11 0 0 1 0 17 11 11 0 0 1 0-17z" fill="#FF5F00" />
@@ -90,7 +90,7 @@ function BrandLogo({ brand, size }: { brand: Brand; size: Bubble['size'] }) {
     case 'applepay':
       return (
         <span className="inline-flex items-center gap-1 font-semibold text-black">
-          <AppleGlyph className={size === 'xl' ? 'h-5 w-5' : 'h-4 w-4'} />
+          <AppleGlyph className={size === 'xl' ? 'h-6 w-6' : 'h-5 w-5'} />
           Pay
         </span>
       )
@@ -191,7 +191,7 @@ export function PaymentsCluster() {
             aria-hidden
             className="pointer-events-none absolute left-1/2 top-1/2 h-2/3 w-2/3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-radial-red opacity-30 blur-3xl"
           />
-          <div className="relative mx-auto aspect-square w-full max-w-lg p-4">
+          <div className="relative mx-auto aspect-square w-full max-w-xl p-4">
             {BUBBLES.map((b, i) => (
               <div
                 key={b.brand}
