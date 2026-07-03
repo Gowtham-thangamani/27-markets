@@ -9,9 +9,12 @@ import { LiveTicker } from '@/components/marketing/LiveTicker'
 import { SignalFlow } from '@/components/marketing/SignalFlow'
 import { FeatureCard } from '@/components/marketing/FeatureCard'
 import { HeroSlider } from '@/components/marketing/HeroSlider'
+import { HeroShowcase } from '@/components/marketing/HeroShowcase'
+import { ChartGridBackdrop } from '@/components/marketing/ChartGridBackdrop'
 import { CandlestickBackdrop } from '@/components/marketing/CandlestickBackdrop'
 import { ChartLineBackdrop } from '@/components/marketing/ChartLineBackdrop'
 import { PartnerSection } from '@/components/marketing/PartnerSection'
+import { PaymentsCluster } from '@/components/marketing/PaymentsCluster'
 import { MarketCard } from '@/components/marketing/MarketCard'
 import { CTABand } from '@/components/marketing/CTABand'
 import { fadeUp, staggerContainer, cardStagger } from '@/lib/motion'
@@ -36,7 +39,7 @@ const trustPoints = [
   { icon: Eye, label: 'Transparent pricing' },
 ]
 
-// Live quotes powering the hero slider's floating price chips.
+// Live quotes powering the dark-theme hero slider's floating price chips.
 const HERO_CHIPS = ['BINANCE:BTCUSDT', 'OANDA:XAU_USD', 'OANDA:EUR_USD']
 
 export default function HomePage() {
@@ -56,10 +59,19 @@ export default function HomePage() {
           aria-hidden
         />
         <div className="grid-bg hero-grid pointer-events-none absolute inset-0 opacity-40" />
+        {onLight && (
+          <ChartGridBackdrop className="pointer-events-none absolute inset-x-0 bottom-0 h-[70%] w-full opacity-[0.18]" />
+        )}
         <div className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[60rem] -translate-x-1/2 bg-radial-red opacity-70 blur-2xl" />
         <SignalFlow className="opacity-60" />
 
-        <HeroSlider onLight={onLight} quotes={heroQuotes} />
+        {/* Two homepage hero designs: GTC-style device showcase on the light theme,
+            the original auto-advancing slider on the dark theme. */}
+        {onLight ? (
+          <HeroShowcase onLight={onLight} />
+        ) : (
+          <HeroSlider onLight={onLight} quotes={heroQuotes} />
+        )}
 
         {/* LIVE TICKER (real-time, backend SSE) */}
         <LiveTicker />
@@ -240,6 +252,9 @@ export default function HomePage() {
         </Reveal>
         </div>
       </section>
+
+      {/* FUNDING & PAYMENTS (light-theme design only) */}
+      {onLight && <PaymentsCluster />}
 
       <CTABand />
     </>

@@ -568,6 +568,25 @@ html:not(.light) .section-motif {
   }
 }
 
+/* XM-style hero chart-grid: gentle breathe on the flowing lines. */
+.chartgrid-lines {
+  animation: chartgrid-breathe 7s ease-in-out infinite;
+}
+@keyframes chartgrid-breathe {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chartgrid-lines {
+    animation: none;
+  }
+}
+
 /* Light theme: the light brand reds (300/400) fail WCAG contrast as text on the
    near-white background. Darken them to brand-600 when used as base text/icon
    utilities. Also darken the section eyebrow for AA on light. */
