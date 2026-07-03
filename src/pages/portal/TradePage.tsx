@@ -460,7 +460,8 @@ export default function TradePage() {
             ) : positions.length === 0 ? (
               <p className="p-6 text-center text-sm text-gray-500">No open positions.</p>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              <div className="hidden overflow-x-auto sm:block">
                 <table className="w-full min-w-[640px] text-sm">
                   <thead>
                     <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
@@ -517,6 +518,53 @@ export default function TradePage() {
                   </tbody>
                 </table>
               </div>
+              {/* Mobile card list */}
+              <ul className="divide-y divide-white/[0.04] sm:hidden">
+                {positions.map((p) => {
+                  const entry = Number(p.entryPrice)
+                  const qty = Number(p.quantity)
+                  const cur = quotes[p.symbol]?.price
+                  const pnl = cur !== undefined ? (cur - entry) * qty * (p.side === 'BUY' ? 1 : -1) : undefined
+                  const up = (pnl ?? 0) >= 0
+                  return (
+                    <li key={p.id} className="space-y-3 px-5 py-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="font-medium text-white">{symLabel(p.symbol)}</div>
+                          {(p.takeProfit || p.stopLoss) && (
+                            <div className="mt-0.5 text-[11px] tabular-nums text-gray-500">
+                              {p.takeProfit && <span className="text-success">TP {fmtNum(Number(p.takeProfit))}</span>}
+                              {p.takeProfit && p.stopLoss && ' · '}
+                              {p.stopLoss && <span className="text-danger">SL {fmtNum(Number(p.stopLoss))}</span>}
+                            </div>
+                          )}
+                        </div>
+                        <Badge tone={p.side === 'BUY' ? 'success' : 'danger'}>{p.side}</Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                        <div className="flex justify-between"><span className="text-gray-500">Qty</span><span className="tabular-nums text-gray-300">{qty}</span></div>
+                        <div className="flex justify-between"><span className="text-gray-500">Entry</span><span className="tabular-nums text-gray-300">{fmtNum(entry)}</span></div>
+                        <div className="flex justify-between"><span className="text-gray-500">Market</span><span className="tabular-nums text-white">{cur ? fmtNum(cur) : '—'}</span></div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">P&amp;L</span>
+                          <span className={cn('font-mono tabular-nums', pnl === undefined ? 'text-gray-500' : up ? 'text-success' : 'text-danger')}>
+                            {pnl === undefined ? '—' : `${up ? '+' : ''}${fmtNum(pnl)}`}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" variant="outline" className="flex-1 gap-1" aria-label="Manage position" onClick={() => openManage(p)}>
+                          <SlidersHorizontal className="h-3.5 w-3.5" /> Manage
+                        </Button>
+                        <Button size="sm" variant="outline" className="flex-1" loading={busy === p.id} onClick={() => close(p.id)}>
+                          Close
+                        </Button>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+              </>
             )}
           </div>
 
