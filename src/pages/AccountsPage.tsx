@@ -9,7 +9,7 @@ import { staggerContainer } from '@/lib/motion'
 import { accountTiers } from '@/mock/content'
 
 const comparison = [
-  { label: 'Minimum deposit', values: ['$100', '$200', '$5,000'] },
+  { label: 'Minimum deposit', values: ['$50', '$200', '$5,000'] },
   { label: 'Spreads from', values: ['0.8 pips', '0.0 pips', '0.0 pips'] },
   { label: 'Commission', values: ['None', '$7 / lot', 'Custom'] },
   { label: 'Max leverage', values: ['1:500', '1:500', '1:500'] },

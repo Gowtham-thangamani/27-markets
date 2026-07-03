@@ -186,7 +186,7 @@ export const accountTiers: AccountTier[] = [
       'Commission free',
       'Access to all markets',
       '24/5 customer support',
-      'Minimum deposit $100',
+      'Minimum deposit $50',
     ],
   },
   {
