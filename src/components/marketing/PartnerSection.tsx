@@ -7,8 +7,10 @@ import { Parallax } from '@/components/Parallax'
 import { partnerBenefits } from '@/mock/content'
 import { cardReveal, cardStagger } from '@/lib/motion'
 import { asset } from '@/lib/asset'
+import { useThemeSafe } from '@/context/ThemeContext'
 
 export function PartnerSection() {
+  const onLight = useThemeSafe() === 'light'
   return (
     <section className="section-alt relative overflow-hidden py-8 sm:py-12">
       <div className="container-x relative z-10">
@@ -94,9 +96,18 @@ export function PartnerSection() {
               transition={{ type: 'spring', stiffness: 300, damping: 22 }}
               className="glass-panel group flex w-[calc(50%-0.5rem)] flex-col items-start gap-3 p-5 transition-shadow duration-300 hover:border-brand-500/40 hover:shadow-[0_0_0_1px_rgba(225,29,46,0.3),0_16px_40px_rgba(0,0,0,0.45),0_0_36px_rgba(225,29,46,0.12)] sm:w-[calc(33.333%-0.667rem)] lg:w-[calc(20%-0.8rem)]"
             >
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/20 transition-all duration-300 group-hover:scale-110 group-hover:bg-brand-500 group-hover:text-onaccent group-hover:shadow-[0_0_24px_rgba(225,29,46,0.5)]">
-                <b.icon className="h-5 w-5" />
-              </span>
+              {onLight && b.image ? (
+                <img
+                  src={asset(b.image)}
+                  alt=""
+                  aria-hidden
+                  className="h-12 w-12 rounded-xl object-contain transition-transform duration-300 group-hover:scale-110"
+                />
+              ) : (
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/20 transition-all duration-300 group-hover:scale-110 group-hover:bg-brand-500 group-hover:text-onaccent group-hover:shadow-[0_0_24px_rgba(225,29,46,0.5)]">
+                  <b.icon className="h-5 w-5" />
+                </span>
+              )}
               <p className="font-display text-sm font-semibold leading-snug text-white">{b.title}</p>
             </motion.div>
           ))}

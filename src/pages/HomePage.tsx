@@ -21,11 +21,11 @@ import { useLiveQuotes } from '@/lib/useLiveQuotes'
 import { whyFeatures, marketCategories } from '@/mock/content'
 
 const heroStats = [
-  { icon: Layers, value: '0.0', label: 'Pips from spreads' },
-  { icon: Rocket, value: '1:500', label: 'Up to leverage' },
-  { icon: Gauge, value: '<30ms', label: 'Ultra-fast execution' },
-  { icon: ShieldCheck, value: 'Tier-1', label: 'Liquidity providers' },
-  { icon: Headphones, value: '24/5', label: 'Customer support' },
+  { icon: Layers, image: '/stat-pips.png', value: '0.0', label: 'Pips from spreads' },
+  { icon: Rocket, image: '/stat-leverage.png', value: '1:500', label: 'Up to leverage' },
+  { icon: Gauge, image: '/stat-execution.png', value: '<30ms', label: 'Ultra-fast execution' },
+  { icon: ShieldCheck, image: '/stat-liquidity.png', value: 'Tier-1', label: 'Liquidity providers' },
+  { icon: Headphones, image: '/stat-support.png', value: '24/5', label: 'Customer support' },
 ]
 
 const trustPoints = [
@@ -79,9 +79,18 @@ export default function HomePage() {
                 variants={fadeUp}
                 className="group flex items-center gap-3 p-5 transition-colors hover:bg-brand-500/[0.05]"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-400 transition-all duration-300 group-hover:bg-brand-500 group-hover:text-onaccent group-hover:shadow-[0_0_20px_rgba(225,29,46,0.5)]">
-                  <s.icon className="h-5 w-5" />
-                </span>
+                {onLight ? (
+                  <img
+                    src={asset(s.image)}
+                    alt=""
+                    aria-hidden
+                    className="h-11 w-11 shrink-0 rounded-lg object-contain transition-transform duration-300 group-hover:scale-110"
+                  />
+                ) : (
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-400 transition-all duration-300 group-hover:bg-brand-500 group-hover:text-onaccent group-hover:shadow-[0_0_20px_rgba(225,29,46,0.5)]">
+                    <s.icon className="h-5 w-5" />
+                  </span>
+                )}
                 <div>
                   <div className="font-display text-xl font-bold tabular-nums text-white">{s.value}</div>
                   <div className="text-xs text-gray-400">{s.label}</div>
