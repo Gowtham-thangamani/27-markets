@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { SplashScreen } from './components/SplashScreen'
 import { MarketingLayout } from './layouts/MarketingLayout'
 import LegalPage from './pages/LegalPage'
 import { PortalLayout } from './layouts/PortalLayout'
@@ -55,7 +56,9 @@ import PartnerApplyPage from './pages/PartnerApplyPage'
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <SplashScreen />
+      <Routes>
       {/* Public marketing site */}
       <Route element={<MarketingLayout />}>
         <Route path="/" element={<HomePage />} />
@@ -144,6 +147,7 @@ export default function App() {
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+      </Routes>
+    </>
   )
 }
