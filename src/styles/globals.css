@@ -629,6 +629,13 @@ html.light .section-alt {
   border-bottom: 1px solid #e2e8f1;
 }
 
+/* Light theme: use more of wide monitors — content sat in a narrow column with
+   large empty side gutters. Widen the shared container so the site fills the
+   screen. Dark theme keeps its original max-w-7xl (this rule is light-scoped). */
+html.light .container-x {
+  max-width: 100rem;
+}
+
 /* Light-theme form controls: a subtle recess + cooler border so fields read as
    proper inputs on white instead of disappearing. Focus rings (Tailwind) still
    win on :focus, so keyboard visibility is preserved. */

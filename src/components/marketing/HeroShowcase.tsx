@@ -74,7 +74,7 @@ export function HeroShowcase({ onLight }: { onLight?: boolean }) {
   const right = CALLOUTS.filter((c) => c.side === 'right')
 
   return (
-    <div className="container-x relative z-10 pt-14 pb-6 sm:pt-20 lg:pt-24">
+    <div className="container-x relative z-10 pt-6 pb-6 sm:pt-8 lg:pt-10">
       {/* Headline */}
       <motion.div
         initial={{ opacity: 0, y: 24 }}
