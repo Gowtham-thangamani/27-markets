@@ -61,10 +61,10 @@
      red whisper at the very top. Premium-fintech look — the brand red lives in
      accents (buttons, eyebrows, imagery), not as a page-wide pink wash. */
   html.light body {
-    background-color: #f6f8fc;
+    background-color: #eef2f8;
     background-image:
       radial-gradient(46% 30% at 50% -14%, rgba(225, 29, 46, 0.05), transparent 64%),
-      linear-gradient(180deg, #ffffff 0%, #eef1f7 78%, #e9edf4 100%);
+      linear-gradient(180deg, #f4f7fc 0%, #eaeef6 66%, #e5ebf3 100%);
     background-attachment: fixed;
   }
 
@@ -599,14 +599,14 @@ html.light .section-eyebrow {
 }
 
 html.light .glass-panel {
-  border-color: #e7ebf2;
+  border-color: #e3e8f1;
   background-color: #ffffff;
-  background-image: linear-gradient(180deg, #ffffff 0%, #f6f9fd 100%);
+  background-image: linear-gradient(180deg, #ffffff 0%, #f7fafd 100%);
   box-shadow:
     inset 0 1px 0 #ffffff,
-    0 1px 2px rgba(15, 23, 42, 0.05),
-    0 10px 22px -12px rgba(15, 23, 42, 0.18),
-    0 30px 60px -34px rgba(15, 23, 42, 0.22);
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 5px 12px -6px rgba(15, 23, 42, 0.10),
+    0 26px 50px -30px rgba(15, 23, 42, 0.20);
   transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
 }
 /* Richer hover for any light card that opts into the lift. */
@@ -623,9 +623,34 @@ html.light .glass-panel.group:hover {
 /* Section rhythm: alternate flat white with a faint tinted band + hairlines so
    the light page has structure instead of one endless white sheet. */
 html.light .section-alt {
-  background-color: #f1f4f9;
-  border-top: 1px solid #e8ecf3;
-  border-bottom: 1px solid #e8ecf3;
+  background-color: #ebeff7;
+  background-image: linear-gradient(180deg, #edf1f8 0%, #e7ecf5 100%);
+  border-top: 1px solid #e2e8f1;
+  border-bottom: 1px solid #e2e8f1;
+}
+
+/* Light-theme form controls: a subtle recess + cooler border so fields read as
+   proper inputs on white instead of disappearing. Focus rings (Tailwind) still
+   win on :focus, so keyboard visibility is preserved. */
+html.light input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+html.light textarea,
+html.light select {
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.045);
+}
+
+/* Premium primary CTA on light: a whisper of vertical sheen + a branded soft
+   shadow. Dark theme has no .btn-primary rule, so it keeps the flat fill. */
+html.light .btn-primary {
+  background-image: linear-gradient(180deg, #ea2130 0%, #d51828 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 10px 24px -8px rgba(225, 29, 46, 0.5);
+}
+html.light .btn-primary:hover {
+  background-image: linear-gradient(180deg, #d51828 0%, #bf1424 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 14px 30px -8px rgba(225, 29, 46, 0.55);
 }
 
 /* Brand grid texture — dark hairlines so the signature grid is visible on light. */
