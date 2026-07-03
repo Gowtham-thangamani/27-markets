@@ -11,10 +11,12 @@ permissions:
   pages: write
   id-token: write
 
-# One deploy at a time; cancel superseded runs
+# One deploy at a time. Do NOT cancel in-progress runs: cancelling a Pages
+# deployment mid-flight leaves it in a bad state and makes the next run fail
+# with "Deployment failed, try again later" (GitHub's recommended setting).
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
