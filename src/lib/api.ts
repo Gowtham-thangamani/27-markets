@@ -56,17 +56,35 @@ function messageFrom(body: unknown, fallback: string): { message: string; code?:
   return { message: typeof body === 'string' && body ? body : fallback }
 }
 
+/** Hard ceiling so an unreachable/hung backend surfaces an error instead of an
+ *  infinite spinner. Generous enough to survive a Render cold start. */
+const REQUEST_TIMEOUT_MS = 30_000
+
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, _retried, skipRefresh } = options
 
   // FormData is sent as-is so the browser sets the multipart boundary header.
   const isForm = typeof FormData !== 'undefined' && body instanceof FormData
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method,
-    credentials: 'include',
-    headers: body != null && !isForm ? { 'Content-Type': 'application/json' } : undefined,
-    body: body == null ? undefined : isForm ? body : JSON.stringify(body),
-  })
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  let res: Response
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      method,
+      credentials: 'include',
+      headers: body != null && !isForm ? { 'Content-Type': 'application/json' } : undefined,
+      body: body == null ? undefined : isForm ? body : JSON.stringify(body),
+      signal: controller.signal,
+    })
+  } catch (err) {
+    if ((err as Error)?.name === 'AbortError') {
+      throw new ApiError(408, 'The server took too long to respond. Please try again.')
+    }
+    throw new ApiError(0, 'Could not reach the server. Check your connection and try again.')
+  } finally {
+    clearTimeout(timer)
+  }
 
   if (res.ok) {
     return (await parseBody(res)) as T
