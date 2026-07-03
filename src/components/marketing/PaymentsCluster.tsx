@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Landmark, ShieldCheck, Lock, BadgeCheck } from 'lucide-react'
 import { SiVisa, SiPaypal, SiApplepay, SiGooglepay, SiBitcoin } from 'react-icons/si'
 import { Reveal } from '@/components/Reveal'
+import { asset } from '@/lib/asset'
 import { cardReveal, cardStagger } from '@/lib/motion'
 
 /**
@@ -74,9 +75,26 @@ const ICON_H: Record<Bubble['size'], string> = {
   xl: 'h-8',
 }
 
+/**
+ * Real-logo overrides. Drop an official SVG/PNG into `public/payments/` and map
+ * it here — e.g. `skrill: '/payments/skrill.svg'` — and it replaces the built-in
+ * mark below. Empty entries fall through to the icon/wordmark, so no broken images.
+ */
+const LOGO_OVERRIDE: Partial<Record<Brand, string>> = {
+  // visa: '/payments/visa.svg',
+  // skrill: '/payments/skrill.svg',
+  // neteller: '/payments/neteller.svg',
+  // perfectmoney: '/payments/perfect-money.svg',
+  // worldpay: '/payments/worldpay.svg',
+}
+
 /** Brand marks — official icons where available, brand-coloured fallbacks otherwise. */
 function BrandLogo({ brand, size }: { brand: Brand; size: Bubble['size'] }) {
   const h = `${ICON_H[size]} w-auto`
+  const override = LOGO_OVERRIDE[brand]
+  if (override) {
+    return <img src={asset(override)} alt="" aria-hidden className={`${ICON_H[size]} w-auto object-contain`} />
+  }
   switch (brand) {
     case 'visa':
       return <SiVisa className={h} style={{ color: '#1434CB' }} aria-hidden />

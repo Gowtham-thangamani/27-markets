@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, Percent, Boxes, Scale, Rocket, type LucideIcon } from 'lucide-react'
+import { ArrowRight, Percent, Boxes, Scale, Rocket, TrendingUp, ShieldCheck, type LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui'
 import { fadeUp, staggerContainer } from '@/lib/motion'
@@ -119,6 +119,26 @@ export function HeroShowcase({ onLight }: { onLight?: boolean }) {
             className="animate-float relative mx-auto w-full max-w-lg select-none drop-shadow-[0_30px_80px_rgba(225,29,46,0.28)]"
             style={{ animationDuration: '9s' }}
           />
+
+          {/* Floating chips (lg only) */}
+          <div className="pointer-events-none absolute inset-0 z-10 hidden lg:block" aria-hidden>
+            <div
+              className="glass-panel animate-float absolute left-0 top-[14%] flex items-center gap-2 rounded-xl px-3 py-2 text-xs shadow-[0_10px_30px_-8px_rgba(0,0,0,0.4)] ring-1 ring-brand-500/15"
+              style={{ animationDuration: '7s' }}
+            >
+              <span className="font-semibold text-white">EUR/USD</span>
+              <span className="inline-flex items-center gap-1 font-semibold text-success">
+                <TrendingUp className="h-3.5 w-3.5" /> 1.0842
+              </span>
+            </div>
+            <div
+              className="glass-panel animate-float absolute bottom-[12%] right-0 flex items-center gap-2 rounded-xl px-3 py-2 text-xs shadow-[0_10px_30px_-8px_rgba(0,0,0,0.4)] ring-1 ring-brand-500/15"
+              style={{ animationDuration: '9s', animationDelay: '0.8s' }}
+            >
+              <ShieldCheck className="h-4 w-4 text-brand-400" />
+              <span className="font-semibold text-white">Regulated &amp; segregated</span>
+            </div>
+          </div>
         </div>
 
         {/* Right callouts */}

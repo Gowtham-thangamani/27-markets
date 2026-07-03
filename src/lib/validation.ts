@@ -44,9 +44,15 @@ export const demoSchema = z.object({
 })
 export type DemoValues = z.infer<typeof demoSchema>
 
+/** Funding terms: minimum deposit is $50; there is no minimum withdrawal; USD only. */
+export const MIN_DEPOSIT = 50
+
 export const depositSchema = z.object({
   account: z.string().min(1, 'Select an account'),
-  amount: z.coerce.number().positive('Enter an amount greater than 0').max(1_000_000, 'Amount too large'),
+  amount: z.coerce
+    .number()
+    .min(MIN_DEPOSIT, `Minimum deposit is $${MIN_DEPOSIT}`)
+    .max(1_000_000, 'Amount too large'),
 })
 
 export const transferSchema = z

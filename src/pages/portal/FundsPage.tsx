@@ -19,7 +19,7 @@ import { usePortalData } from '@/context/PortalDataContext'
 import { useToast } from '@/context/ToastContext'
 import { api } from '@/lib/api'
 import { zodResolver } from '@/lib/zodResolver'
-import { depositSchema, transferSchema } from '@/lib/validation'
+import { transferSchema, MIN_DEPOSIT } from '@/lib/validation'
 import { formatCurrency, formatDateTime } from '@/lib/format'
 import { fundingStatusLabel } from '@/lib/fundingStatus'
 import { z } from 'zod'
@@ -31,7 +31,6 @@ const tabs: TabItem[] = [
   { id: 'history', label: 'Transaction History', icon: <History className="h-4 w-4" /> },
 ]
 
-type DepositValues = z.infer<typeof depositSchema>
 type TransferValues = z.infer<typeof transferSchema>
 
 export default function FundsPage() {
@@ -123,8 +122,12 @@ function DepositTab() {
   }
 
   const submit = async () => {
-    if (!accountId || !(Number(amount) > 0)) {
-      toast.warning('Check the form', 'Pick an account and a positive amount.')
+    if (!accountId) {
+      toast.warning('Check the form', 'Pick an account to deposit to.')
+      return
+    }
+    if (!(Number(amount) >= MIN_DEPOSIT)) {
+      toast.warning('Minimum deposit', `The minimum deposit is $${MIN_DEPOSIT} (USD).`)
       return
     }
     setBusy(true)
@@ -155,7 +158,12 @@ function DepositTab() {
   return (
     <>
       <div className="glass-panel p-5">
-        <h2 className="font-display text-lg font-semibold text-white">Deposit Methods</h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-display text-lg font-semibold text-white">Deposit Methods</h2>
+          <p className="text-xs text-gray-500">
+            USD accounts · <span className="text-gray-400">${MIN_DEPOSIT} minimum deposit</span> · no minimum withdrawal
+          </p>
+        </div>
         <div className="mt-4 space-y-3">
           {(methods.length ? methods : []).map((m) => {
             const Icon = METHOD_ICON[m.id] ?? Landmark
@@ -224,7 +232,15 @@ function DepositTab() {
               onChange={(e) => setAsset(e.target.value)}
             />
           )}
-          <Input label="Amount (USD)" type="number" placeholder="1000" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          <Input
+            label="Amount (USD)"
+            type="number"
+            min={MIN_DEPOSIT}
+            placeholder="1000"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            hint={`Minimum deposit $${MIN_DEPOSIT} · USD only`}
+          />
 
           {instructions && (
             <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
@@ -326,8 +342,12 @@ function SavedCards() {
     setAmount('')
   }
   const doDeposit = async () => {
-    if (!accountId || !(Number(amount) > 0)) {
-      toast.warning('Check the form', 'Pick an account and a positive amount.')
+    if (!accountId) {
+      toast.warning('Check the form', 'Pick an account to deposit to.')
+      return
+    }
+    if (!(Number(amount) >= MIN_DEPOSIT)) {
+      toast.warning('Minimum deposit', `The minimum deposit is $${MIN_DEPOSIT} (USD).`)
       return
     }
     setBusy(true)
@@ -395,7 +415,7 @@ function SavedCards() {
       <Modal open={!!depCard} onClose={() => setDepCard(null)} title={`Deposit · ${depCard?.brand ?? ''} ••${depCard?.last4 ?? ''}`} description="Charge your saved card.">
         <div className="space-y-3">
           <Select label="Deposit to account" value={accountId} options={live.map((a) => ({ value: a.id, label: `${a.number} — ${a.type}` }))} onChange={(e) => setAccountId(e.target.value)} />
-          <Input label="Amount (USD)" type="number" placeholder="500" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          <Input label="Amount (USD)" type="number" min={MIN_DEPOSIT} placeholder="500" value={amount} onChange={(e) => setAmount(e.target.value)} hint={`Minimum $${MIN_DEPOSIT}`} />
           <Button fullWidth loading={busy} onClick={doDeposit}>Deposit</Button>
         </div>
       </Modal>
@@ -475,7 +495,7 @@ function WithdrawTab() {
           options={liveAccounts.map((a) => ({ value: a.id, label: `${a.number} — ${formatCurrency(a.balance)}` }))}
           onChange={(e) => setAccountId(e.target.value)}
         />
-        <Input label="Amount (USD)" type="number" placeholder="500" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <Input label="Amount (USD)" type="number" placeholder="500" value={amount} onChange={(e) => setAmount(e.target.value)} hint="No minimum withdrawal · USD only" />
         <Select
           label="Withdraw to"
           value={method}
