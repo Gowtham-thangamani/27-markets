@@ -1,23 +1,21 @@
 import { motion } from 'framer-motion'
-import { Landmark, Bitcoin } from 'lucide-react'
+import { Landmark, ShieldCheck, Lock, BadgeCheck } from 'lucide-react'
+import { SiVisa, SiPaypal, SiApplepay, SiGooglepay, SiBitcoin } from 'react-icons/si'
 import { Reveal } from '@/components/Reveal'
 import { cardReveal, cardStagger } from '@/lib/motion'
 
-/** Official Apple corporate logo glyph. */
-function AppleGlyph({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
-      <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-    </svg>
-  )
-}
-
 /**
- * "Method of payment" section — a floating cluster of funding-method bubbles,
- * mirroring the reference broker layout. Brand logos are hand-authored inline
- * (colored wordmarks + geometric marks) so the panel is self-contained with no
- * external assets. Absolute cluster on lg+, a wrapped pill grid on small screens.
+ * "Method of payment" section — a floating cluster of funding-method bubbles.
+ * Official brand marks come from react-icons where available (Visa, PayPal,
+ * Apple Pay, Google Pay, Bitcoin); the rest are brand-coloured inline marks.
+ * Absolute cluster on lg+, a wrapped pill grid on small screens.
  */
+
+const TRUST = [
+  { icon: ShieldCheck, label: 'PCI DSS Level 1' },
+  { icon: Lock, label: '3-D Secure' },
+  { icon: BadgeCheck, label: 'SSL Encrypted' },
+]
 
 type Brand =
   | 'visa'
@@ -69,16 +67,27 @@ const TEXT: Record<Bubble['size'], string> = {
   xl: 'text-lg',
 }
 
-/** Hand-authored, self-contained brand marks. */
+const ICON_H: Record<Bubble['size'], string> = {
+  sm: 'h-5',
+  md: 'h-6',
+  lg: 'h-7',
+  xl: 'h-8',
+}
+
+/** Brand marks — official icons where available, brand-coloured fallbacks otherwise. */
 function BrandLogo({ brand, size }: { brand: Brand; size: Bubble['size'] }) {
-  const icon = size === 'xl' ? 'h-9 w-9' : size === 'lg' ? 'h-8 w-8' : 'h-7 w-7'
+  const h = `${ICON_H[size]} w-auto`
   switch (brand) {
     case 'visa':
-      return (
-        <span className="font-display font-black italic tracking-tight" style={{ color: '#1434CB' }}>
-          VISA
-        </span>
-      )
+      return <SiVisa className={h} style={{ color: '#1434CB' }} aria-hidden />
+    case 'paypal':
+      return <SiPaypal className={h} style={{ color: '#003087' }} aria-hidden />
+    case 'applepay':
+      return <SiApplepay className={h} style={{ color: '#000000' }} aria-hidden />
+    case 'googlepay':
+      return <SiGooglepay className={h} style={{ color: '#5F6368' }} aria-hidden />
+    case 'crypto':
+      return <SiBitcoin className={h} style={{ color: '#F7931A' }} aria-hidden />
     case 'mastercard':
       return (
         <svg viewBox="0 0 48 30" className={size === 'lg' ? 'h-9 w-14' : 'h-8 w-12'} aria-hidden>
@@ -86,27 +95,6 @@ function BrandLogo({ brand, size }: { brand: Brand; size: Bubble['size'] }) {
           <circle cx="29" cy="15" r="11" fill="#F79E1B" />
           <path d="M24 6.5a11 11 0 0 1 0 17 11 11 0 0 1 0-17z" fill="#FF5F00" />
         </svg>
-      )
-    case 'applepay':
-      return (
-        <span className="inline-flex items-center gap-1 font-semibold text-black">
-          <AppleGlyph className={size === 'xl' ? 'h-6 w-6' : 'h-5 w-5'} />
-          Pay
-        </span>
-      )
-    case 'googlepay':
-      return (
-        <span className="font-display font-bold tracking-tight">
-          <span style={{ color: '#4285F4' }}>G</span>
-          <span style={{ color: '#5F6368' }}> Pay</span>
-        </span>
-      )
-    case 'paypal':
-      return (
-        <span className="font-display font-black italic tracking-tight">
-          <span style={{ color: '#003087' }}>Pay</span>
-          <span style={{ color: '#0070E0' }}>Pal</span>
-        </span>
       )
     case 'skrill':
       return (
@@ -137,14 +125,8 @@ function BrandLogo({ brand, size }: { brand: Brand; size: Bubble['size'] }) {
     case 'banktransfer':
       return (
         <span className="inline-flex flex-col items-center gap-0.5 font-semibold" style={{ color: '#334155' }}>
-          <Landmark className={icon} />
+          <Landmark className={size === 'lg' ? 'h-7 w-7' : 'h-6 w-6'} />
           <span className="leading-tight">Bank</span>
-        </span>
-      )
-    case 'crypto':
-      return (
-        <span className="inline-flex flex-col items-center gap-0.5 font-semibold" style={{ color: '#F7931A' }}>
-          <Bitcoin className={icon} />
         </span>
       )
   }
@@ -178,6 +160,19 @@ export function PaymentsCluster() {
               <span className="h-1.5 w-1.5 rounded-full bg-brand-500" /> USD accounts
             </span>
           </Reveal>
+
+          {/* Trust badges */}
+          <Reveal delay={0.15} className="mt-8 flex flex-wrap items-center gap-2.5">
+            {TRUST.map((t) => (
+              <span
+                key={t.label}
+                className="inline-flex items-center gap-2 rounded-lg border border-black/[0.08] bg-black/[0.02] px-3 py-1.5 text-xs font-medium text-gray-400"
+              >
+                <t.icon className="h-4 w-4 text-brand-500" />
+                {t.label}
+              </span>
+            ))}
+          </Reveal>
         </div>
 
         {/* Bubble cluster (lg+) */}
@@ -185,18 +180,40 @@ export function PaymentsCluster() {
           {/* Soft framed background panel behind the cluster */}
           <div
             aria-hidden
-            className="absolute inset-0 rounded-[2rem] border border-black/[0.06] bg-gradient-to-br from-[#ffffff]/80 via-[#f4f5f7]/60 to-brand-500/[0.05] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_30px_70px_-40px_rgba(0,0,0,0.35)]"
-          />
+            className="absolute inset-0 overflow-hidden rounded-[2rem] border border-black/[0.06] bg-gradient-to-br from-[#ffffff]/80 via-[#f4f5f7]/60 to-brand-500/[0.05] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_30px_70px_-40px_rgba(0,0,0,0.35)]"
+          >
+            <div className="grid-bg absolute inset-0 opacity-[0.5]" />
+          </div>
           <div
             aria-hidden
             className="pointer-events-none absolute left-1/2 top-1/2 h-2/3 w-2/3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-radial-red opacity-30 blur-3xl"
           />
           <div className="relative mx-auto aspect-square w-full max-w-xl p-4">
+            {/* Orbit rings — network of payments */}
+            <svg
+              viewBox="0 0 100 100"
+              className="pointer-events-none absolute inset-0 h-full w-full"
+              fill="none"
+              aria-hidden
+            >
+              {[47, 33, 19].map((r) => (
+                <circle
+                  key={r}
+                  cx="50"
+                  cy="50"
+                  r={r}
+                  stroke="#e11d2e"
+                  strokeOpacity="0.14"
+                  strokeWidth="0.35"
+                  strokeDasharray="1.5 3"
+                />
+              ))}
+            </svg>
+
             {BUBBLES.map((b, i) => (
               <div
                 key={b.brand}
-                title={b.label}
-                className={`animate-float absolute flex items-center justify-center rounded-full border border-black/[0.06] bg-[#ffffff] p-2 text-center shadow-[0_14px_30px_-12px_rgba(0,0,0,0.4)] ring-1 ring-black/[0.03] ${SIZE[b.size]} ${TEXT[b.size]}`}
+                className={`animate-float absolute ${SIZE[b.size]}`}
                 style={{
                   top: b.top,
                   left: b.left,
@@ -204,7 +221,15 @@ export function PaymentsCluster() {
                   animationDelay: `${(i % 5) * 0.4}s`,
                 }}
               >
-                <BrandLogo brand={b.brand} size={b.size} />
+                <div
+                  className={`group relative flex h-full w-full cursor-default items-center justify-center rounded-full border border-black/[0.06] bg-[#ffffff] p-2 text-center shadow-[0_14px_30px_-12px_rgba(0,0,0,0.4)] ring-1 ring-black/[0.03] transition-all duration-300 hover:z-10 hover:-translate-y-1 hover:scale-110 hover:shadow-[0_22px_44px_-14px_rgba(225,29,46,0.4)] hover:ring-2 hover:ring-brand-500/40 ${TEXT[b.size]}`}
+                >
+                  <BrandLogo brand={b.brand} size={b.size} />
+                  {/* Tooltip */}
+                  <span className="pointer-events-none absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#111827] px-2 py-1 text-[10px] font-medium text-[#ffffff] opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100">
+                    {b.label}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
