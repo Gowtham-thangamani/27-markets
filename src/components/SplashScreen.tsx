@@ -22,7 +22,7 @@ export function SplashScreen() {
     const t = window.setTimeout(() => {
       sessionStorage.setItem(SESSION_KEY, '1')
       setVisible(false)
-    }, reduce ? 800 : 3000)
+    }, reduce ? 700 : 2200)
     return () => {
       window.clearTimeout(t)
       document.body.style.overflow = ''
@@ -36,8 +36,8 @@ export function SplashScreen() {
           key="splash"
           className="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden bg-[#07080c]"
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.08 }}
-          transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+          exit={{ opacity: 0, scale: 1.06 }}
+          transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
           aria-hidden
         >
           <div className="grid-bg pointer-events-none absolute inset-0 opacity-20" />
@@ -47,18 +47,18 @@ export function SplashScreen() {
             className="pointer-events-none absolute left-1/2 top-1/2 h-[52rem] w-[52rem] -translate-x-1/2 -translate-y-1/2 rounded-full"
             style={{ background: 'radial-gradient(closest-side, rgba(225,29,46,0.26), transparent 70%)' }}
             initial={{ scale: 0.35, opacity: 0 }}
-            animate={{ scale: [0.35, 1.12, 0.98, 1.04], opacity: [0, 1, 0.8, 0.9] }}
-            transition={{ duration: 2.6, ease: 'easeOut', times: [0, 0.45, 0.75, 1] }}
+            animate={{ scale: [0.35, 1.12, 1], opacity: [0, 1, 0.9] }}
+            transition={{ duration: 1.8, ease: 'easeOut', times: [0, 0.55, 1] }}
           />
 
           {/* Radar-style expanding rings behind the mark */}
-          {[0.5, 1.3].map((delay, i) => (
+          {[0.35, 0.95].map((delay, i) => (
             <motion.div
               key={i}
               className="pointer-events-none absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full border border-brand-500/30"
               initial={{ scale: 0.5, opacity: 0.7 }}
               animate={{ scale: 2, opacity: 0 }}
-              transition={{ duration: 2.2, ease: 'easeOut', delay }}
+              transition={{ duration: 1.6, ease: 'easeOut', delay }}
             />
           ))}
 
@@ -73,7 +73,7 @@ export function SplashScreen() {
                 y: 0,
                 filter: ['blur(12px)', 'blur(0px)', 'blur(0px)'],
               }}
-              transition={{ duration: 1.5, ease: 'easeOut', delay: 0.2, times: [0, 0.6, 1] }}
+              transition={{ duration: 1.1, ease: 'easeOut', delay: 0.15, times: [0, 0.6, 1] }}
             >
               <img
                 src={asset('logo-white.png')}
@@ -89,13 +89,7 @@ export function SplashScreen() {
                 }}
                 initial={{ x: '-130%' }}
                 animate={{ x: '170%' }}
-                transition={{
-                  duration: 1.5,
-                  ease: 'easeInOut',
-                  delay: 0.9,
-                  repeat: 1,
-                  repeatDelay: 0.35,
-                }}
+                transition={{ duration: 1.2, ease: 'easeInOut', delay: 0.65 }}
               />
             </motion.div>
 
@@ -105,7 +99,7 @@ export function SplashScreen() {
                 className="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-600"
                 initial={{ width: '0%' }}
                 animate={{ width: '100%' }}
-                transition={{ duration: 2.3, ease: 'easeInOut', delay: 0.4 }}
+                transition={{ duration: 1.7, ease: 'easeInOut', delay: 0.3 }}
               />
             </div>
 
@@ -113,7 +107,7 @@ export function SplashScreen() {
               className="mt-4 text-[11px] font-medium uppercase text-white/50"
               initial={{ opacity: 0, letterSpacing: '0.14em' }}
               animate={{ opacity: 1, letterSpacing: '0.34em' }}
-              transition={{ delay: 1, duration: 1.1, ease: 'easeOut' }}
+              transition={{ delay: 0.7, duration: 0.85, ease: 'easeOut' }}
             >
               Trade Beyond Limits
             </motion.p>
