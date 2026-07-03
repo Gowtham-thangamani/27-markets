@@ -4,10 +4,13 @@ import { Link } from 'react-router-dom'
 import { Card3D } from '@/components/Card3D'
 import { fadeUp } from '@/lib/motion'
 import { asset } from '@/lib/asset'
+import { useThemeSafe } from '@/context/ThemeContext'
 import type { MarketCategory } from '@/mock/content'
 
 export function MarketCard({ category }: { category: MarketCategory }) {
-  const { icon: Icon, image, title, subtitle, examples, key } = category
+  const { icon: Icon, image, imageLight, title, subtitle, examples, key } = category
+  const onLight = useThemeSafe() === 'light'
+  const iconSrc = onLight && imageLight ? imageLight : image
   return (
     <Card3D className="h-full">
       <motion.div variants={fadeUp} className="h-full">
@@ -16,9 +19,9 @@ export function MarketCard({ category }: { category: MarketCategory }) {
         className="glass-panel card-lift group relative flex h-full flex-col p-6"
       >
         <div className="mb-4 flex items-center justify-between">
-          {image ? (
+          {iconSrc ? (
             <img
-              src={asset(image)}
+              src={asset(iconSrc)}
               alt=""
               aria-hidden
               className="market-card-icon mask-radial-fade h-20 w-20 shrink-0 object-contain brightness-150 saturate-150 drop-shadow-[0_0_14px_rgba(225,29,46,0.85)]"

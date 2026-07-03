@@ -21,6 +21,7 @@ import type { InstrumentCategory } from '@/lib/types'
 
 export interface Feature {
   icon: LucideIcon
+  image?: string
   title: string
   description: string
 }
@@ -28,26 +29,31 @@ export interface Feature {
 export const whyFeatures: Feature[] = [
   {
     icon: Droplets,
+    image: '/feat-liquidity.png',
     title: 'Deep Liquidity',
     description: 'Access institutional-grade liquidity aggregated from top-tier global providers.',
   },
   {
     icon: Gauge,
+    image: '/feat-spreads.png',
     title: 'Tight Spreads',
     description: 'Raw spreads from 0.0 pips on major pairs with fully transparent pricing.',
   },
   {
     icon: Zap,
+    image: '/feat-execution.png',
     title: 'Fast Execution',
     description: 'Lightning-fast order execution under 30ms with no dealing desk and no re-quotes.',
   },
   {
     icon: Eye,
+    image: '/feat-transparent.png',
     title: 'Transparent Trading',
     description: 'No hidden fees, no markups. Clear conditions you can verify on every trade.',
   },
   {
     icon: ShieldCheck,
+    image: '/feat-secure.png',
     title: 'Secure Funds',
     description: 'Segregated client accounts held with industry-leading banking partners.',
   },
@@ -55,6 +61,7 @@ export const whyFeatures: Feature[] = [
 
 export interface PartnerBenefit {
   icon: LucideIcon
+  image?: string
   title: string
   description: string
 }
@@ -62,26 +69,31 @@ export interface PartnerBenefit {
 export const partnerBenefits: PartnerBenefit[] = [
   {
     icon: Coins,
+    image: '/partner-rebates.png',
     title: 'Competitive Rebates',
     description: 'Industry-leading rebates that scale with your referred trading volume.',
   },
   {
     icon: BarChart3,
+    image: '/partner-reports.png',
     title: 'Real-Time Reports',
     description: 'Advanced reporting and earnings analytics in a dedicated partner dashboard.',
   },
   {
     icon: UserCog,
+    image: '/partner-manager.png',
     title: 'Dedicated Manager',
     description: 'A personal account manager committed to growing your business.',
   },
   {
     icon: Megaphone,
+    image: '/partner-marketing.png',
     title: 'Marketing Support',
     description: 'Banners, landing pages, and promotional materials ready to deploy.',
   },
   {
     icon: TrendingUp,
+    image: '/partner-growth.png',
     title: 'Business Growth',
     description: 'Grow your network and earn alongside a trusted global partner.',
   },
@@ -92,6 +104,8 @@ export interface MarketCategory {
   icon: LucideIcon
   /** Optional image used instead of the lucide icon (e.g. the Bitcoin coin). */
   image?: string
+  /** Optional light-theme override for `image` (falls back to `image`). */
+  imageLight?: string
   title: string
   subtitle: string
   examples: string
@@ -102,6 +116,7 @@ export const marketCategories: MarketCategory[] = [
     key: 'Forex',
     icon: Handshake,
     image: '/icon-forex.png',
+    imageLight: '/icon-forex-light.png',
     title: 'Forex',
     subtitle: 'Major, minor & exotic currency pairs',
     examples: 'EUR/USD · GBP/USD · USD/JPY',
@@ -110,6 +125,7 @@ export const marketCategories: MarketCategory[] = [
     key: 'Metals',
     icon: Coins,
     image: '/icon-metals.png',
+    imageLight: '/icon-metals-light.png',
     title: 'Metals',
     subtitle: 'Precious metals spot trading',
     examples: 'Gold (XAU) · Silver (XAG)',
@@ -118,6 +134,7 @@ export const marketCategories: MarketCategory[] = [
     key: 'Indices',
     icon: LineChart,
     image: '/icon-indices.png',
+    imageLight: '/icon-indices-light.png',
     title: 'Indices',
     subtitle: 'Global index cash & futures',
     examples: 'US500 · US100 · GER40',
@@ -126,6 +143,7 @@ export const marketCategories: MarketCategory[] = [
     key: 'Commodities',
     icon: Boxes,
     image: '/icon-commodities.png',
+    imageLight: '/icon-commodities-light.png',
     title: 'Commodities',
     subtitle: 'Energy, softs & agricultural',
     examples: 'Brent · WTI · NatGas',
@@ -142,6 +160,7 @@ export const marketCategories: MarketCategory[] = [
     key: 'Crypto',
     icon: Bitcoin,
     image: '/bitcoin-coin.png',
+    imageLight: '/icon-crypto.png',
     title: 'Crypto CFDs',
     subtitle: 'Top cryptocurrencies with competitive spreads',
     examples: 'BTC · ETH · SOL',
