@@ -116,7 +116,7 @@ export function HeroShowcase({ onLight }: { onLight?: boolean }) {
             variants={fadeUp}
             src={asset(device)}
             alt="27 Markets trading platform on desktop and mobile"
-            className="animate-float relative mx-auto w-full max-w-lg select-none drop-shadow-[0_30px_80px_rgba(225,29,46,0.28)]"
+            className="animate-float relative mx-auto w-full max-w-xl select-none drop-shadow-[0_30px_80px_rgba(225,29,46,0.28)]"
             style={{ animationDuration: '9s' }}
           />
 

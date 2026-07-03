@@ -631,9 +631,10 @@ html.light .section-alt {
 
 /* Light theme: use more of wide monitors — content sat in a narrow column with
    large empty side gutters. Widen the shared container so the site fills the
-   screen. Dark theme keeps its original max-w-7xl (this rule is light-scoped). */
+   screen (a small edge margin is kept so content never touches the bezel).
+   Dark theme keeps its original max-w-7xl (this rule is light-scoped). */
 html.light .container-x {
-  max-width: 100rem;
+  max-width: 112rem;
 }
 
 /* Light-theme form controls: a subtle recess + cooler border so fields read as
