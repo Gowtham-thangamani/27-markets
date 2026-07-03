@@ -243,7 +243,7 @@ export default function DashboardPage() {
           <div className="border-b border-white/[0.06] p-5">
             <h3 className="font-display text-base font-semibold text-white">Transaction History</h3>
           </div>
-          <div className="overflow-x-auto">
+          <div className="hidden overflow-x-auto sm:block">
             <table className="w-full min-w-[420px] text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
@@ -270,22 +270,39 @@ export default function DashboardPage() {
               </tbody>
             </table>
           </div>
+          {/* Mobile card list */}
+          <ul className="divide-y divide-white/[0.04] sm:hidden">
+            {transactions.slice(0, 6).map((t) => (
+              <li key={t.id} className="flex items-center justify-between gap-3 px-5 py-3">
+                <div>
+                  <div className="font-medium text-white">{t.kind}</div>
+                  <div className="text-xs text-gray-400">{formatDate(t.date)}</div>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="tabular-nums text-white">{formatCurrency(t.amount)}</span>
+                  <Badge tone={statusTone(t.status)}>{fundingStatusLabel(t.kind, t.status)}</Badge>
+                </div>
+              </li>
+            ))}
+            {transactions.length === 0 && (
+              <li className="px-5 py-8 text-center text-gray-500">No transactions yet.</li>
+            )}
+          </ul>
         </div>
 
         <div className="glass-panel overflow-hidden p-0">
           <div className="border-b border-white/[0.06] p-5">
             <h3 className="font-display text-base font-semibold text-white">Market Value</h3>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-sm">
+          {/* Desktop / tablet table (Mkt Cap + Volume dropped — no data source yet) */}
+          <div className="hidden overflow-x-auto sm:block">
+            <table className="w-full min-w-[460px] text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
                   <th className="px-5 py-3 font-medium">#</th>
                   <th className="px-5 py-3 font-medium">Name</th>
                   <th className="px-5 py-3 text-right font-medium">Price</th>
-                  <th className="px-5 py-3 text-right font-medium">Mkt Cap</th>
                   <th className="px-5 py-3 font-medium">Graph</th>
-                  <th className="px-5 py-3 text-right font-medium">Volume</th>
                   <th className="px-5 py-3 text-right font-medium">Change</th>
                 </tr>
               </thead>
@@ -301,11 +318,9 @@ export default function DashboardPage() {
                         <span className="text-xs text-gray-500">{short(sym)}</span>
                       </td>
                       <td className="px-5 py-3 text-right tabular-nums text-white">{fmt(mq?.price)}</td>
-                      <td className="px-5 py-3 text-right text-gray-600">—</td>
                       <td className="px-5 py-3">
                         <div className="h-7 w-24"><SymbolSparkline symbol={sym} up={up} /></div>
                       </td>
-                      <td className="px-5 py-3 text-right text-gray-600">—</td>
                       <td className="px-5 py-3 text-right">
                         {mq?.changePct !== undefined ? (
                           <span className={cn('font-mono tabular-nums', up ? 'text-success' : 'text-danger')}>
@@ -321,9 +336,33 @@ export default function DashboardPage() {
               </tbody>
             </table>
           </div>
-          <p className="px-5 pb-4 pt-1 text-[11px] text-gray-600">
-            Price · graph · change are live. Market cap & volume need a data provider that supplies them.
-          </p>
+          {/* Mobile card list */}
+          <ul className="divide-y divide-white/[0.04] sm:hidden">
+            {WATCH.map((sym) => {
+              const mq = quotes[sym]
+              const up = (mq?.changePct ?? 0) >= 0
+              return (
+                <li key={sym} className="flex items-center justify-between gap-3 px-5 py-3">
+                  <div className="min-w-0">
+                    <div className="truncate font-medium text-white">
+                      {label(sym)} <span className="text-xs text-gray-500">{short(sym)}</span>
+                    </div>
+                    <div className="text-sm tabular-nums text-white">{fmt(mq?.price)}</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="h-7 w-16"><SymbolSparkline symbol={sym} up={up} /></div>
+                    {mq?.changePct !== undefined ? (
+                      <span className={cn('font-mono text-xs tabular-nums', up ? 'text-success' : 'text-danger')}>
+                        {up ? '▲' : '▼'} {Math.abs(mq.changePct).toFixed(2)}%
+                      </span>
+                    ) : (
+                      <span className="text-gray-600">—</span>
+                    )}
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
         </div>
       </div>
     </>
