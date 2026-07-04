@@ -7,6 +7,7 @@ import { blogApi, type BlogCard } from '@/lib/blogApi'
 import { ApiError } from '@/lib/api'
 import { useSeo } from '@/lib/useSeo'
 import { staggerContainer, fadeUp } from '@/lib/motion'
+import { MarketNewsSection } from '@/components/marketing/MarketNewsSection'
 
 function formatDate(iso: string | null): string {
   if (!iso) return ''
@@ -90,6 +91,8 @@ export default function BlogListPage() {
           </motion.div>
         )}
       </section>
+
+      <MarketNewsSection />
     </>
   )
 }
