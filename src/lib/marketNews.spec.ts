@@ -23,7 +23,13 @@ describe('normalizeFinnhub', () => {
       url: 'https://example.com/a',
       image: 'https://img/1.png',
       datetime: 1_700_000_000,
+      category: 'general',
     })
+  })
+
+  it('preserves and lowercases the category (defaults to general)', () => {
+    expect(normalizeFinnhub([raw({ category: 'Forex' })])[0].category).toBe('forex')
+    expect(normalizeFinnhub([raw({ category: undefined })])[0].category).toBe('general')
   })
 
   it('drops items missing a headline or url', () => {
@@ -48,13 +54,13 @@ describe('normalizeFinnhub', () => {
     expect(item.summary.endsWith('…')).toBe(true)
   })
 
-  it('sorts newest-first and caps at 18', () => {
-    const many = Array.from({ length: 25 }, (_, i) =>
+  it('sorts newest-first and caps at 30', () => {
+    const many = Array.from({ length: 40 }, (_, i) =>
       raw({ id: i, url: `https://example.com/${i}`, datetime: i }),
     )
     const out = normalizeFinnhub(many)
-    expect(out).toHaveLength(18)
-    expect(out[0].datetime).toBe(24) // newest first
+    expect(out).toHaveLength(30)
+    expect(out[0].datetime).toBe(39) // newest first
   })
 
   it('returns [] for non-array input', () => {

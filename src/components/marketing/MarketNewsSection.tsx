@@ -57,39 +57,72 @@ function NewsCard({ item }: { item: NewsItem }) {
   )
 }
 
+const CAT_ORDER = ['forex', 'crypto', 'general'] as const
+const CAT_LABEL: Record<string, string> = {
+  all: 'All',
+  forex: 'Forex',
+  crypto: 'Crypto',
+  general: 'General',
+}
+
 export function MarketNewsSection() {
   const [items, setItems] = useState<NewsItem[]>([])
+  const [active, setActive] = useState<string>('all')
 
   useEffect(() => {
-    let active = true
+    let alive = true
     void loadMarketNews().then((n) => {
-      if (active) setItems(n)
+      if (alive) setItems(n)
     })
     return () => {
-      active = false
+      alive = false
     }
   }, [])
 
   if (items.length === 0) return null
 
+  // Only offer tabs when at least two categories are actually present.
+  const present = CAT_ORDER.filter((c) => items.some((i) => i.category === c))
+  const tabs = present.length >= 2 ? ['all', ...present] : []
+  const shown = active === 'all' ? items : items.filter((i) => i.category === active)
+
   return (
     <section className="section-alt border-t border-ink-300/60">
       <div className="container-x py-14">
-        <div className="mb-8 flex items-end justify-between gap-4">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="section-eyebrow mb-2">Live</p>
             <h2 className="font-display text-2xl font-bold text-white sm:text-3xl">Market News</h2>
           </div>
-          <p className="hidden text-xs text-gray-500 sm:block">Headlines via Finnhub</p>
+          {tabs.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {tabs.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setActive(t)}
+                  className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                    active === t
+                      ? 'bg-brand-500 text-onaccent'
+                      : 'border border-ink-300/60 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {CAT_LABEL[t] ?? t}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="hidden text-xs text-gray-500 sm:block">Headlines via Finnhub</p>
+          )}
         </div>
         <motion.div
+          key={active}
           variants={staggerContainer}
           initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.1 }}
+          animate="show"
           className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
-          {items.map((n) => (
+          {shown.map((n) => (
             <NewsCard key={n.id} item={n} />
           ))}
         </motion.div>

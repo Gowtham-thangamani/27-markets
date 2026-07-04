@@ -22,9 +22,11 @@ export interface NewsItem {
   url: string
   image: string
   datetime: number
+  /** Finnhub category the item was fetched under: general | forex | crypto. */
+  category: string
 }
 
-const MAX_ITEMS = 18
+const MAX_ITEMS = 30
 const SUMMARY_MAX = 180
 
 function trimSummary(s: string): string {
@@ -50,6 +52,7 @@ export function normalizeFinnhub(raw: FinnhubRaw[]): NewsItem[] {
       url,
       image: (r.image ?? '').trim(),
       datetime: typeof r.datetime === 'number' ? r.datetime : 0,
+      category: (r.category ?? '').trim().toLowerCase() || 'general',
     })
   }
   items.sort((a, b) => b.datetime - a.datetime)
