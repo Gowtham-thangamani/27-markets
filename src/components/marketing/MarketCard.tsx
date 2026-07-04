@@ -17,7 +17,8 @@ const ICON_SCALE_DARK: Record<string, number> = {
   Indices: 1.16,
   Commodities: 1.08,
   Stocks: 0.91,
-  Crypto: 0.89,
+  // Dark Crypto uses bitcoin-coin.png (glyph ~91px), not icon-crypto.png.
+  Crypto: 1.21,
 }
 const ICON_SCALE_LIGHT: Record<string, number> = {
   Forex: 0.98,
