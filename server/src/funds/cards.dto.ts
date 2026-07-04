@@ -1,4 +1,5 @@
 import { IsInt, IsString, Matches, Max, Min } from 'class-validator';
+import { IsMinAmount, MIN_DEPOSIT } from './dto';
 
 const AMOUNT = /^\d{1,12}(\.\d{1,2})?$/;
 
@@ -32,5 +33,6 @@ export class CardDepositDto {
 
   @IsString()
   @Matches(AMOUNT, { message: 'Amount must be a positive value with up to 2 decimals' })
+  @IsMinAmount(MIN_DEPOSIT)
   amount!: string;
 }

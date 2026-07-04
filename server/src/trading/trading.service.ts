@@ -264,7 +264,9 @@ export class TradingService {
         kind: JournalKind.ADJUSTMENT,
         reference: generateTxReference(),
         idempotencyKey: `pnl:${position.id}:${randomUUID()}`,
-        simulated: true,
+        // Reflect the actual venue: real P&L under a live venue must not be
+        // recorded as simulated.
+        simulated: this.exec.simulated,
         createdById: position.userId,
         memo: `Realized P&L · ${position.symbol}${reason ? ` (${reason})` : ''}`,
         postings,

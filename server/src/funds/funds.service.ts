@@ -140,8 +140,8 @@ export class FundsService {
       ],
     });
 
-    await this.audit.record({ userId, action: 'funds.deposit', entity: 'JournalEntry', entityId: entry.id, metadata: { amount: dto.amount, method: dto.method, simulated: true } });
-    return { reference: entry.reference, status: entry.status, simulated: true, amount: formatMoney(amount) };
+    await this.audit.record({ userId, action: 'funds.deposit', entity: 'JournalEntry', entityId: entry.id, metadata: { amount: dto.amount, method: dto.method, simulated: this.payments.simulated } });
+    return { reference: entry.reference, status: entry.status, simulated: this.payments.simulated, amount: formatMoney(amount) };
   }
 
   /**
@@ -211,8 +211,8 @@ export class FundsService {
       },
     });
 
-    await this.audit.record({ userId, action: 'funds.withdraw', entity: 'JournalEntry', entityId: entry.id, metadata: { amount: dto.amount, method: dto.method, destMethod, simulated: true, status: entry.status } });
-    return { reference: entry.reference, status: entry.status, simulated: true, amount: formatMoney(amount) };
+    await this.audit.record({ userId, action: 'funds.withdraw', entity: 'JournalEntry', entityId: entry.id, metadata: { amount: dto.amount, method: dto.method, destMethod, simulated: this.payments.simulated, status: entry.status } });
+    return { reference: entry.reference, status: entry.status, simulated: this.payments.simulated, amount: formatMoney(amount) };
   }
 
   async transfer(userId: string, dto: TransferDto) {

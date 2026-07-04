@@ -1,6 +1,40 @@
-import { IsIn, IsNumberString, IsOptional, IsString, Matches } from 'class-validator';
+import {
+  IsIn,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  Matches,
+  registerDecorator,
+  ValidationOptions,
+} from 'class-validator';
 
 const AMOUNT = /^\d{1,12}(\.\d{1,2})?$/;
+
+/** Minimum deposit enforced server-side (USD). Keep in sync with the UI. */
+export const MIN_DEPOSIT = 50;
+
+/** Validates that a numeric-string (or number) amount is at least `min`. */
+export function IsMinAmount(min: number, options?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      name: 'isMinAmount',
+      target: object.constructor,
+      propertyName,
+      constraints: [min],
+      options,
+      validator: {
+        validate(value: unknown) {
+          const n =
+            typeof value === 'string' ? Number(value) : typeof value === 'number' ? value : NaN;
+          return Number.isFinite(n) && n >= min;
+        },
+        defaultMessage() {
+          return `Amount must be at least ${min}`;
+        },
+      },
+    });
+  };
+}
 
 export class DepositDto {
   @IsString()
@@ -8,6 +42,7 @@ export class DepositDto {
 
   @IsNumberString()
   @Matches(AMOUNT, { message: 'Amount must be a positive value with up to 2 decimals' })
+  @IsMinAmount(MIN_DEPOSIT)
   amount!: string;
 
   @IsString()
@@ -31,6 +66,7 @@ export class RequestDepositDto {
 
   @IsNumberString()
   @Matches(AMOUNT, { message: 'Amount must be a positive value with up to 2 decimals' })
+  @IsMinAmount(MIN_DEPOSIT)
   amount!: string;
 }
 
