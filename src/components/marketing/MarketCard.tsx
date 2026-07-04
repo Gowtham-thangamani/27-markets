@@ -7,10 +7,32 @@ import { asset } from '@/lib/asset'
 import { useThemeSafe } from '@/context/ThemeContext'
 import type { MarketCategory } from '@/mock/content'
 
+// The category PNGs have wildly different canvases + internal padding, so at the
+// same box they render at different visual sizes. These per-icon factors (from
+// measuring each glyph's content bounding box) normalise every icon to ~the same
+// on-screen size. Light theme uses different source files, hence a separate map.
+const ICON_SCALE_DARK: Record<string, number> = {
+  Forex: 1.52,
+  Metals: 1,
+  Indices: 1.16,
+  Commodities: 1.08,
+  Stocks: 0.91,
+  Crypto: 0.89,
+}
+const ICON_SCALE_LIGHT: Record<string, number> = {
+  Forex: 0.98,
+  Metals: 1.08,
+  Indices: 1.14,
+  Commodities: 1.11,
+  Stocks: 0.91,
+  Crypto: 0.89,
+}
+
 export function MarketCard({ category }: { category: MarketCategory }) {
   const { icon: Icon, image, imageLight, title, subtitle, examples, key } = category
   const onLight = useThemeSafe() === 'light'
   const iconSrc = onLight && imageLight ? imageLight : image
+  const iconScale = (onLight ? ICON_SCALE_LIGHT : ICON_SCALE_DARK)[key] ?? 1
   return (
     <Card3D className="h-full">
       <motion.div variants={fadeUp} className="h-full">
@@ -24,6 +46,7 @@ export function MarketCard({ category }: { category: MarketCategory }) {
               src={asset(iconSrc)}
               alt=""
               aria-hidden
+              style={{ transform: `scale(${iconScale})` }}
               className="market-card-icon mask-radial-fade h-36 w-36 shrink-0 object-contain brightness-150 saturate-150 drop-shadow-[0_0_14px_rgba(225,29,46,0.85)]"
             />
           ) : (
