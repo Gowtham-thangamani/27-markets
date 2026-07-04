@@ -93,6 +93,26 @@ export const envSchema = z
           'only when that is true and you accept full regulatory responsibility.',
       });
     }
+    // Same rail for the execution venue: routing orders to a real MT5 venue is a
+    // LIVE action and must not be switchable with a single env var.
+    if (env.EXECUTION_PROVIDER === 'mt5' && !env.ALLOW_LIVE_MODE) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['EXECUTION_PROVIDER'],
+        message:
+          'EXECUTION_PROVIDER=mt5 routes orders to a real trading venue and is blocked ' +
+          'without ALLOW_LIVE_MODE=true.',
+      });
+    }
+    // And the payment rail: Stripe moves real money.
+    if (env.PSP_PROVIDER === 'stripe' && !env.ALLOW_LIVE_MODE) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['PSP_PROVIDER'],
+        message:
+          'PSP_PROVIDER=stripe processes real payments and is blocked without ALLOW_LIVE_MODE=true.',
+      });
+    }
     if (
       env.NODE_ENV === 'production' &&
       env.JWT_ACCESS_SECRET === env.JWT_REFRESH_SECRET

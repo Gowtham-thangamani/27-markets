@@ -53,6 +53,23 @@ describe('TradingService.placeOrder (market)', () => {
       service.placeOrder('u1', { accountId: 'acc1', symbol: 'X', side: 'BUY', quantity: 1 } as any),
     ).rejects.toThrow('Live trading requires a connected MT5 venue');
   });
+
+  it('refuses a demo account on a live (non-simulated) venue', async () => {
+    const liveExec = {
+      name: 'mt5',
+      simulated: false,
+      assertAvailable: jest.fn(),
+      fill: jest.fn().mockResolvedValue({ price: 100, simulated: false }),
+    };
+    const prisma = {
+      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'DEMO', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
+    } as any;
+    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, liveExec as any, marketWith() as any, mt5conn() as any);
+    await expect(
+      service.placeOrder('u1', { accountId: 'acc1', symbol: 'X', side: 'BUY', quantity: 1 } as any),
+    ).rejects.toThrow('Demo accounts cannot trade on a live venue');
+    expect(liveExec.fill).not.toHaveBeenCalled();
+  });
 });
 
 describe('TradingService.placeOrder (limit/stop)', () => {

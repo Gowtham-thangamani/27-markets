@@ -114,6 +114,11 @@ export class TradingService {
         'Live trading requires a connected MT5 venue. Use a demo account for simulated trading.',
       );
     }
+    // A demo account must never reach a real venue, whatever the execution
+    // provider is — demo orders are always simulated.
+    if (!this.exec.simulated && account.mode === 'DEMO') {
+      throw new BadRequestException('Demo accounts cannot trade on a live venue.');
+    }
     this.exec.assertAvailable();
     const type = dto.type ?? OrderType.MARKET;
 
