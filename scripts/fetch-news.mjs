@@ -35,4 +35,5 @@ async function main() {
   }
 }
 
-void main()
+// Belt-and-suspenders: even a write failure must not fail the build.
+main().catch(() => process.exit(0))
