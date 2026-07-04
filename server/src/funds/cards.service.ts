@@ -66,6 +66,11 @@ export class CardsService {
   async deposit(userId: string, id: string, dto: CardDepositDto) {
     const card = await this.prisma.savedCard.findUnique({ where: { id } });
     if (!card || card.userId !== userId) throw new NotFoundException('Card not found');
-    return this.funds.deposit(userId, { accountId: dto.accountId, amount: dto.amount, method: `Card ••${card.last4}` } as never);
+    return this.funds.deposit(userId, {
+      accountId: dto.accountId,
+      amount: dto.amount,
+      method: `Card ••${card.last4}`,
+      idempotencyKey: dto.idempotencyKey,
+    } as never);
   }
 }

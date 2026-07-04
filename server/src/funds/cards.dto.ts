@@ -1,4 +1,4 @@
-import { IsInt, IsString, Matches, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Matches, Max, Min } from 'class-validator';
 
 const AMOUNT = /^\d{1,12}(\.\d{1,2})?$/;
 
@@ -33,4 +33,8 @@ export class CardDepositDto {
   @IsString()
   @Matches(AMOUNT, { message: 'Amount must be a positive value with up to 2 decimals' })
   amount!: string;
+
+  @IsOptional()
+  @IsString()
+  idempotencyKey?: string;
 }
