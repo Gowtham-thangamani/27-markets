@@ -41,3 +41,6 @@ docs.zip
 # TS/Vite build artifacts (generated)
 *.tsbuildinfo
 vite.config.js
+
+# Build-time market-news artifact (regenerated each deploy)
+public/news.json
