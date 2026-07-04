@@ -69,16 +69,31 @@ export class TradingService {
     return n > 0 ? n : 100;
   }
 
-  private async usedMargin(accountId: string, leverage: number): Promise<number> {
-    const open = await this.prisma.position.findMany({ where: { accountId, status: PositionStatus.OPEN } });
+  private async usedMargin(
+    client: Prisma.TransactionClient,
+    accountId: string,
+    leverage: number,
+  ): Promise<number> {
+    const open = await client.position.findMany({ where: { accountId, status: PositionStatus.OPEN } });
     return open.reduce((s, p) => s + (Number(p.entryPrice) * Number(p.quantity)) / leverage, 0);
   }
 
-  private async assertMargin(account: AccountWithLedger, notional: number): Promise<void> {
+  /**
+   * `client` is the base client for a plain pre-check, or a tx client when called
+   * under an account row lock (so used-margin is read within the lock and
+   * concurrent orders can't collectively exceed the margin limit).
+   */
+  private async assertMargin(
+    client: Prisma.TransactionClient,
+    account: AccountWithLedger,
+    notional: number,
+  ): Promise<void> {
     if (!account.ledgerAccount) return;
     const leverage = this.leverageOf(account.leverage);
     const required = notional / leverage;
-    const used = await this.usedMargin(account.id, leverage);
+    const used = await this.usedMargin(client, account.id, leverage);
+    // Balance only moves on close/funding, not on open, so reading it via the
+    // base client is safe even inside the lock.
     const balance = Number(await this.ledger.balanceOf(account.ledgerAccount.id));
     if (used + required > balance + 1e-6) {
       throw new BadRequestException(
@@ -119,15 +134,15 @@ export class TradingService {
 
     if (type === OrderType.MARKET) {
       const fill = await this.exec.fill(dto.symbol, dto.side, dto.quantity, await this.mt5AccountFor(userId));
-      await this.assertMargin(account, fill.price * dto.quantity);
-      return this.fillAndOpen(userId, account.id, dto.symbol, dto.side, dto.quantity, fill, OrderType.MARKET);
+      // Margin is re-checked under an account row lock inside fillAndOpen.
+      return this.fillAndOpen(userId, account, dto.symbol, dto.side, dto.quantity, fill, OrderType.MARKET);
     }
 
     if (!dto.triggerPrice || !(dto.triggerPrice > 0)) {
       throw new BadRequestException('A trigger price is required for limit/stop orders.');
     }
     this.assertTriggerDirection(type, dto.side, dto.triggerPrice, await this.currentPrice(dto.symbol));
-    await this.assertMargin(account, dto.triggerPrice * dto.quantity);
+    await this.assertMargin(this.prisma, account, dto.triggerPrice * dto.quantity);
     const order = await this.prisma.order.create({
       data: {
         userId,
@@ -154,18 +169,27 @@ export class TradingService {
 
   private async fillAndOpen(
     userId: string,
-    accountId: string,
+    account: AccountWithLedger,
     symbol: string,
     side: OrderSide,
     quantity: number,
     fill: Fill,
     type: OrderType,
   ) {
-    const order = await this.prisma.order.create({
-      data: { userId, accountId, symbol, side, type, quantity, price: fill.price, status: 'FILLED', simulated: fill.simulated },
-    });
-    const position = await this.prisma.position.create({
-      data: { userId, accountId, symbol, side, quantity, entryPrice: fill.price, status: PositionStatus.OPEN },
+    const accountId = account.id;
+    // Serialize concurrent orders on this account: lock the account row, re-check
+    // margin against the positions visible under the lock, then open — so two
+    // simultaneous orders can't both pass the check and blow the margin limit.
+    const { order, position } = await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "TradingAccount" WHERE id = ${accountId} FOR UPDATE`;
+      await this.assertMargin(tx, account, fill.price * quantity);
+      const order = await tx.order.create({
+        data: { userId, accountId, symbol, side, type, quantity, price: fill.price, status: 'FILLED', simulated: fill.simulated },
+      });
+      const position = await tx.position.create({
+        data: { userId, accountId, symbol, side, quantity, entryPrice: fill.price, status: PositionStatus.OPEN },
+      });
+      return { order, position };
     });
     await this.audit.record({
       userId,
@@ -403,7 +427,7 @@ export class TradingService {
       });
       if (!account) continue;
       try {
-        await this.assertMargin(account, price * Number(o.quantity));
+        await this.assertMargin(this.prisma, account, price * Number(o.quantity));
       } catch {
         await this.prisma.order.update({ where: { id: o.id }, data: { status: 'REJECTED' } });
         this.logger.warn(`Pending order ${o.id} rejected at trigger (insufficient margin).`);
@@ -508,7 +532,7 @@ export class TradingService {
     if (!(quantity > 0)) throw new BadRequestException('Invalid quantity.');
 
     this.assertTriggerDirection(o.type, o.side, triggerPrice, await this.currentPrice(o.symbol));
-    await this.assertMargin(account, triggerPrice * quantity);
+    await this.assertMargin(this.prisma, account, triggerPrice * quantity);
 
     const updated = await this.prisma.order.update({ where: { id: orderId }, data: { triggerPrice, quantity } });
     await this.audit.record({

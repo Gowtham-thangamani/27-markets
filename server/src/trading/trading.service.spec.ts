@@ -14,30 +14,35 @@ const mt5conn = () => ({ accountIdFor: jest.fn().mockResolvedValue(undefined) })
 const audit = () => ({ record: jest.fn() });
 
 describe('TradingService.placeOrder (market)', () => {
-  it('fills at the live price and opens a position (demo, margin ok)', async () => {
+  it('fills at the live price and opens a position under an account row lock (demo, margin ok)', async () => {
     const order = { create: jest.fn().mockResolvedValue({ id: 'o1' }) };
     const position = { create: jest.fn().mockResolvedValue({ id: 'p1', status: 'OPEN' }), findMany: jest.fn().mockResolvedValue([]) };
-    const prisma = {
+    const prisma: any = {
       tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'DEMO', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
       order,
       position,
-    } as any;
+      $queryRaw: jest.fn().mockResolvedValue([]),
+    };
+    prisma.$transaction = (cb: any) => cb(prisma);
     const exec = simExec(100);
     const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, exec as any, marketWith() as any, mt5conn() as any);
 
     await service.placeOrder('u1', { accountId: 'acc1', symbol: 'BINANCE:BTCUSDT', side: 'BUY', quantity: 0.5 } as any);
 
     expect(exec.fill).toHaveBeenCalledWith('BINANCE:BTCUSDT', 'BUY', 0.5, undefined);
+    expect(prisma.$queryRaw).toHaveBeenCalled(); // SELECT … FOR UPDATE on the account (H5)
     expect(position.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ entryPrice: 100, side: 'BUY', status: 'OPEN' }) }),
     );
   });
 
-  it('rejects when required margin exceeds free margin', async () => {
-    const prisma = {
+  it('rejects when required margin exceeds free margin (re-checked under the lock)', async () => {
+    const prisma: any = {
       tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'DEMO', leverage: '1:1', ledgerAccount: { id: 'cl' } }) },
       position: { findMany: jest.fn().mockResolvedValue([]) },
-    } as any;
+      $queryRaw: jest.fn().mockResolvedValue([]),
+    };
+    prisma.$transaction = (cb: any) => cb(prisma);
     const service = new TradingService(prisma, ledgerWith(100) as any, audit() as any, simExec(1000) as any, marketWith() as any, mt5conn() as any);
     await expect(
       service.placeOrder('u1', { accountId: 'acc1', symbol: 'X', side: 'BUY', quantity: 1 } as any),
