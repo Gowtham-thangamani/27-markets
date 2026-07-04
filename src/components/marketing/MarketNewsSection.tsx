@@ -1,8 +1,61 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import { ArrowUpRight } from 'lucide-react'
 import { loadMarketNews, type NewsItem } from '@/lib/marketNews'
 import { relativeTime } from '@/lib/format'
 import { staggerContainer, fadeUp } from '@/lib/motion'
+
+/** One external news card. Handles broken/missing images gracefully. */
+function NewsCard({ item }: { item: NewsItem }) {
+  const [imgOk, setImgOk] = useState(Boolean(item.image))
+
+  return (
+    <motion.a
+      variants={fadeUp}
+      href={item.url}
+      target="_blank"
+      rel="noreferrer"
+      className="glass-panel card-lift group relative block overflow-hidden"
+    >
+      <div className="relative h-44 w-full overflow-hidden">
+        {imgOk ? (
+          <img
+            src={item.image}
+            alt=""
+            aria-hidden
+            loading="lazy"
+            onError={() => setImgOk(false)}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+          />
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-brand-500/20 via-ink-800 to-transparent" />
+        )}
+        {/* Legibility scrim */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
+        {item.source && (
+          <span className="absolute left-3 top-3 rounded-md bg-black/55 px-2 py-1 text-[11px] font-medium text-white backdrop-blur-sm">
+            {item.source}
+          </span>
+        )}
+        <span className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-black/45 text-white opacity-0 backdrop-blur-sm transition-all duration-300 group-hover:opacity-100">
+          <ArrowUpRight className="h-4 w-4" />
+        </span>
+      </div>
+
+      <div className="p-5">
+        <p className="text-xs text-gray-500">
+          {item.datetime ? relativeTime(new Date(item.datetime * 1000)) : 'Market news'}
+        </p>
+        <h3 className="mt-1.5 line-clamp-2 font-display text-base font-semibold leading-snug text-white transition-colors duration-300 group-hover:text-brand-300">
+          {item.headline}
+        </h3>
+        {item.summary && (
+          <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-gray-400">{item.summary}</p>
+        )}
+      </div>
+    </motion.a>
+  )
+}
 
 export function MarketNewsSection() {
   const [items, setItems] = useState<NewsItem[]>([])
@@ -22,10 +75,12 @@ export function MarketNewsSection() {
   return (
     <section className="section-alt border-t border-ink-300/60">
       <div className="container-x py-14">
-        <div className="mb-8">
-          <p className="section-eyebrow mb-2">Live</p>
-          <h2 className="font-display text-2xl font-bold text-white sm:text-3xl">Market News</h2>
-          <p className="mt-2 text-sm text-gray-400">Latest market headlines · via Finnhub</p>
+        <div className="mb-8 flex items-end justify-between gap-4">
+          <div>
+            <p className="section-eyebrow mb-2">Live</p>
+            <h2 className="font-display text-2xl font-bold text-white sm:text-3xl">Market News</h2>
+          </div>
+          <p className="hidden text-xs text-gray-500 sm:block">Headlines via Finnhub</p>
         </div>
         <motion.div
           variants={staggerContainer}
@@ -35,35 +90,7 @@ export function MarketNewsSection() {
           className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
           {items.map((n) => (
-            <motion.a
-              key={n.id}
-              variants={fadeUp}
-              href={n.url}
-              target="_blank"
-              rel="noreferrer"
-              className="glass-panel card-lift block overflow-hidden"
-            >
-              {n.image ? (
-                <img src={n.image} alt="" aria-hidden className="h-44 w-full object-cover" />
-              ) : (
-                <div className="h-44 w-full bg-gradient-to-br from-brand-500/15 to-transparent" />
-              )}
-              <div className="p-5">
-                <p className="text-xs text-gray-500">
-                  {n.source}
-                  {n.datetime ? ` · ${relativeTime(new Date(n.datetime * 1000))}` : ''}
-                </p>
-                <h3 className="mt-2 line-clamp-2 font-display text-base font-semibold leading-snug text-white">
-                  {n.headline}
-                </h3>
-                {n.summary && (
-                  <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-gray-400">{n.summary}</p>
-                )}
-                <span className="mt-3 inline-block text-sm font-medium text-brand-400">
-                  Read on {n.source || 'source'} →
-                </span>
-              </div>
-            </motion.a>
+            <NewsCard key={n.id} item={n} />
           ))}
         </motion.div>
       </div>
