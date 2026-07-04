@@ -1,4 +1,4 @@
-import { Prisma, JournalStatus, PostingDirection } from '@prisma/client';
+import { Prisma, JournalKind, JournalStatus, PostingDirection } from '@prisma/client';
 import { LedgerService } from './ledger.service';
 
 describe('LedgerService.markPosted', () => {
@@ -76,5 +76,47 @@ describe('LedgerService.reverse', () => {
     await ledger.reverse('j1', { reference: 'TX-2', idempotencyKey: 'rev:j1' });
 
     expect(create).not.toHaveBeenCalled();
+  });
+});
+
+describe('LedgerService.post — balance guard (C3)', () => {
+  const money = (n: number) => new Prisma.Decimal(n);
+  const input = (min: number) => ({
+    kind: JournalKind.WITHDRAWAL,
+    reference: 'R1',
+    idempotencyKey: 'k1',
+    simulated: true,
+    requireBalance: { ledgerAccountId: 'cl', min: money(min) },
+    postings: [
+      { ledgerAccountId: 'cl', direction: PostingDirection.DEBIT, amount: money(150) },
+      { ledgerAccountId: 'pay', direction: PostingDirection.CREDIT, amount: money(150) },
+    ],
+  });
+  // tx where the client LIABILITY account has `creditSum` credited (balance).
+  const txWith = (creditSum: number) => ({
+    journalEntry: {
+      findUnique: jest.fn().mockResolvedValue(null),
+      create: jest.fn().mockResolvedValue({ id: 'e1', postings: [] }),
+    },
+    $queryRaw: jest.fn().mockResolvedValue([]),
+    ledgerAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'cl', type: 'LIABILITY' }) },
+    posting: { groupBy: jest.fn().mockResolvedValue([{ direction: 'CREDIT', _sum: { amount: creditSum } }]) },
+  });
+
+  it('locks the row and rejects when the balance is below the minimum', async () => {
+    const tx = txWith(100);
+    const prisma = { $transaction: (cb: (t: any) => unknown) => cb(tx) } as any;
+    await expect(new LedgerService(prisma).post(input(150) as any)).rejects.toThrow(
+      'Insufficient balance',
+    );
+    expect(tx.$queryRaw).toHaveBeenCalled(); // SELECT … FOR UPDATE
+    expect(tx.journalEntry.create).not.toHaveBeenCalled();
+  });
+
+  it('posts when the guarded balance is sufficient', async () => {
+    const tx = txWith(200);
+    const prisma = { $transaction: (cb: (t: any) => unknown) => cb(tx) } as any;
+    await new LedgerService(prisma).post(input(150) as any);
+    expect(tx.journalEntry.create).toHaveBeenCalled();
   });
 });

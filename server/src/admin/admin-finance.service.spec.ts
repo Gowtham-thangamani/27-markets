@@ -12,27 +12,41 @@ const payments = () => ({
 const cfg = () => ({ get: () => 'SIMULATION' }) as any;
 
 describe('AdminFinanceService.approveWithdrawal', () => {
-  it('pays out, marks the withdrawal POSTED, and audits it', async () => {
-    const markPosted = jest.fn().mockResolvedValue({});
+  const pendingWithdrawal = () => ({
+    id: 'j1', kind: 'WITHDRAWAL', status: JournalStatus.PENDING, reference: 'TX-1',
+    postings: [{ amount: 100, currency: 'USD', ledgerAccount: { userId: 'u1' } }],
+  });
+
+  it('claims the entry (PENDING→POSTED), pays out, and audits it', async () => {
     const record = jest.fn().mockResolvedValue(undefined);
+    const updateMany = jest.fn().mockResolvedValue({ count: 1 });
     const prisma = {
-      journalEntry: {
-        findUnique: jest.fn().mockResolvedValue({
-          id: 'j1', kind: 'WITHDRAWAL', status: JournalStatus.PENDING, reference: 'TX-1',
-          postings: [{ amount: 100, currency: 'USD', ledgerAccount: { userId: 'u1' } }],
-        }),
-      },
+      journalEntry: { findUnique: jest.fn().mockResolvedValue(pendingWithdrawal()), updateMany },
     } as any;
-    const ledger = { markPosted } as any;
     const pay = payments();
-    const service = new AdminFinanceService(prisma, ledger, { record } as any, pay as any, cfg());
+    const service = new AdminFinanceService(prisma, {} as any, { record } as any, pay as any, cfg());
 
     const result = await service.approveWithdrawal('admin1', 'j1');
 
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: 'j1', status: JournalStatus.PENDING },
+      data: { status: JournalStatus.POSTED },
+    });
     expect(pay.payout).toHaveBeenCalledWith(expect.objectContaining({ reference: 'TX-1', amountMinor: 10000, currency: 'USD' }));
-    expect(markPosted).toHaveBeenCalledWith('j1');
     expect(record).toHaveBeenCalledWith(expect.objectContaining({ action: 'finance.withdrawal.approve', entityId: 'j1' }));
     expect(result).toMatchObject({ ok: true, status: JournalStatus.POSTED, payout: { simulated: true } });
+  });
+
+  it('does not pay out if another approver already claimed it (C4: no double payout)', async () => {
+    const updateMany = jest.fn().mockResolvedValue({ count: 0 });
+    const prisma = {
+      journalEntry: { findUnique: jest.fn().mockResolvedValue(pendingWithdrawal()), updateMany },
+    } as any;
+    const pay = payments();
+    const service = new AdminFinanceService(prisma, {} as any, { record: jest.fn() } as any, pay as any, cfg());
+
+    await expect(service.approveWithdrawal('admin1', 'j1')).rejects.toThrow('already processed');
+    expect(pay.payout).not.toHaveBeenCalled();
   });
 
   it('refuses to approve a non-pending withdrawal', async () => {

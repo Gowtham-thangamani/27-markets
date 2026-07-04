@@ -192,6 +192,8 @@ export class FundsService {
       status: JournalStatus.PENDING,
       createdById: userId,
       memo: `Withdrawal via ${dto.method}`,
+      // Race-safe: the balance is re-checked under a row lock inside the post.
+      requireBalance: { ledgerAccountId: clientLedgerId, min: amount },
       postings: [
         { ledgerAccountId: clientLedgerId, direction: PostingDirection.DEBIT, amount },
         { ledgerAccountId: payable.id, direction: PostingDirection.CREDIT, amount },
@@ -235,6 +237,8 @@ export class FundsService {
       simulated: this.payments.simulated,
       createdById: userId,
       memo: 'Internal transfer',
+      // Race-safe: the balance is re-checked under a row lock inside the post.
+      requireBalance: { ledgerAccountId: fromId, min: amount },
       postings: [
         { ledgerAccountId: fromId, direction: PostingDirection.DEBIT, amount },
         { ledgerAccountId: toId, direction: PostingDirection.CREDIT, amount },

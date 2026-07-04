@@ -165,15 +165,33 @@ export class AdminFinanceService {
     const amountMinor = clientLeg ? Math.round(Number(clientLeg.amount) * 100) : 0;
     const currency = clientLeg?.currency ?? 'USD';
 
-    // Send the payout FIRST — if it fails, the withdrawal stays pending (not posted).
-    const payout = await this.payments.payout({
-      reference: entry.reference,
-      amountMinor,
-      currency,
-      metadata: { entryId },
+    // Atomically claim the withdrawal (PENDING → POSTED). Only one approver can
+    // win this conditional update, so concurrent approvals can't double-pay.
+    const claimed = await this.prisma.journalEntry.updateMany({
+      where: { id: entryId, status: JournalStatus.PENDING },
+      data: { status: JournalStatus.POSTED },
     });
+    if (claimed.count === 0) {
+      throw new BadRequestException('Withdrawal is not pending (already processed).');
+    }
 
-    await this.ledger.markPosted(entryId);
+    let payout;
+    try {
+      payout = await this.payments.payout({
+        reference: entry.reference,
+        amountMinor,
+        currency,
+        metadata: { entryId },
+      });
+    } catch (err) {
+      // Roll the claim back so a transient payout failure can be retried.
+      await this.prisma.journalEntry.updateMany({
+        where: { id: entryId, status: JournalStatus.POSTED },
+        data: { status: JournalStatus.PENDING },
+      });
+      throw err;
+    }
+
     await this.audit.record({
       userId: adminId,
       action: 'finance.withdrawal.approve',
