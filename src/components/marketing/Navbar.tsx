@@ -50,6 +50,7 @@ const navItems: NavItem[] = [
     to: '/accounts',
     menu: [
       { label: 'Account Types', to: '/accounts', desc: 'Standard, Raw & VIP accounts', icon: Layers },
+      { label: 'Trading Conditions', to: '/conditions', desc: 'Spreads, commission & leverage', icon: BarChart3 },
       { label: 'Funding', to: '/funding', desc: 'Deposits from $50, no-min withdrawal', icon: Wallet },
       { label: 'Free Demo', to: '/demo', desc: 'Practice risk-free', icon: PlayCircle },
     ],
