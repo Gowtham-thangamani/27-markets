@@ -29,6 +29,11 @@ const iconMap: Record<string, LucideIcon> = {
 // Public-facing platform builds (exclude account documents).
 const platforms = downloads.filter((d) => d.icon !== 'doc')
 
+// First build of each type carries the anchor id (#web / #mobile / #desktop) so
+// nav links can deep-scroll to it — without producing duplicate DOM ids.
+const anchorFor: Record<string, string> = {}
+for (const p of platforms) if (!(p.icon in anchorFor)) anchorFor[p.icon] = p.id
+
 const features: { icon: LucideIcon; title: string; description: string }[] = [
   { icon: Gauge, title: 'Ultra-fast execution', description: 'Sub-30ms order routing with deep liquidity and minimal slippage.' },
   { icon: LineChart, title: 'Advanced charting', description: 'Pro-grade charts, 80+ indicators, and multi-timeframe analysis.' },
@@ -60,7 +65,7 @@ export default function PlatformsPage() {
             const Icon = iconMap[p.icon] ?? Globe
             const isWeb = p.icon === 'web'
             return (
-              <motion.div key={p.id} id={p.icon} variants={fadeUp} className="glass-panel card-lift flex scroll-mt-24 flex-col p-6">
+              <motion.div key={p.id} id={anchorFor[p.icon] === p.id ? p.icon : undefined} variants={fadeUp} className="glass-panel card-lift flex scroll-mt-24 flex-col p-6">
                 <div className="flex items-center justify-between">
                   <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/20">
                     <Icon className="h-6 w-6" />

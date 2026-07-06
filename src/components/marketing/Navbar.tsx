@@ -50,8 +50,6 @@ const navItems: NavItem[] = [
     to: '/accounts',
     menu: [
       { label: 'Account Types', to: '/accounts', desc: 'Standard, Raw & VIP accounts', icon: Layers },
-      { label: 'Markets', to: '/markets', desc: '100+ global instruments', icon: Globe },
-      { label: 'Trading Platforms', to: '/platforms', desc: 'Web, mobile & desktop', icon: MonitorSmartphone },
       { label: 'Funding', to: '/funding', desc: 'Deposits from $50, no-min withdrawal', icon: Wallet },
       { label: 'Free Demo', to: '/demo', desc: 'Practice risk-free', icon: PlayCircle },
     ],
@@ -63,7 +61,7 @@ const navItems: NavItem[] = [
       { label: 'All Platforms', to: '/platforms', desc: 'Compare web, mobile & desktop', icon: LayoutGrid },
       { label: 'Web Trader', to: '/platforms#web', desc: 'Trade in your browser', icon: Globe },
       { label: 'Mobile', to: '/platforms#mobile', desc: 'Trade on iOS & Android', icon: Smartphone },
-      { label: 'Try Free Demo', to: '/demo', desc: 'Test drive the platform', icon: PlayCircle },
+      { label: 'Desktop', to: '/platforms#desktop', desc: 'Focused desktop trading', icon: MonitorSmartphone },
     ],
   },
   {
@@ -84,7 +82,6 @@ const navItems: NavItem[] = [
     menu: [
       { label: 'IB Program', to: '/partnership', desc: 'Rebates, tools & support', icon: Handshake },
       { label: 'Become a Partner', to: '/partner/apply', desc: 'Apply in minutes', icon: UserPlus },
-      { label: 'Contact Us', to: '/contact', desc: 'Talk to our team', icon: Mail },
     ],
   },
   {
@@ -99,6 +96,18 @@ const navItems: NavItem[] = [
     ],
   },
 ]
+
+const basePath = (to: string) => to.split('#')[0].split('?')[0]
+
+/** A section is "active" when the current route matches its hub or any of its
+ * dropdown destinations — used to highlight the (non-navigating) top-level label. */
+function isSectionActive(item: NavItem, pathname: string): boolean {
+  if (basePath(item.to) === pathname) return true
+  return item.menu.some((s) => {
+    const b = basePath(s.to)
+    return b !== '/' && b === pathname
+  })
+}
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -141,42 +150,42 @@ export function Navbar() {
         </Link>
 
         <ul className="hidden items-center gap-1 lg:flex">
-          {navItems.map((item) => (
+          {navItems.map((item) => {
+            const active = isSectionActive(item, location.pathname)
+            return (
             <li
               key={item.label}
               className="relative"
               onMouseEnter={() => setOpenMenu(item.label)}
               onMouseLeave={() => setOpenMenu(null)}
             >
-              <NavLink
-                to={item.to}
+              {/* Top-level label opens its menu (no navigation) — every clickable
+                  destination lives once, inside the dropdown. */}
+              <button
+                type="button"
+                onClick={() => setOpenMenu((m) => (m === item.label ? null : item.label))}
                 onFocus={() => setOpenMenu(item.label)}
                 aria-expanded={openMenu === item.label}
-                className={({ isActive }) =>
-                  cn(
-                    'group relative flex items-center gap-1 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors',
-                    isActive ? 'text-white' : 'text-gray-300 hover:text-white'
-                  )
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    {item.label}
-                    <ChevronDown
-                      className={cn(
-                        'h-3.5 w-3.5 opacity-50 transition-transform duration-200',
-                        openMenu === item.label && 'rotate-180'
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        'absolute inset-x-3 -bottom-px h-px origin-left bg-brand-500 transition-transform duration-300',
-                        isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
-                      )}
-                    />
-                  </>
+                aria-haspopup="true"
+                className={cn(
+                  'group relative flex items-center gap-1 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors',
+                  active ? 'text-white' : 'text-gray-300 hover:text-white'
                 )}
-              </NavLink>
+              >
+                {item.label}
+                <ChevronDown
+                  className={cn(
+                    'h-3.5 w-3.5 opacity-50 transition-transform duration-200',
+                    openMenu === item.label && 'rotate-180'
+                  )}
+                />
+                <span
+                  className={cn(
+                    'absolute inset-x-3 -bottom-px h-px origin-left bg-brand-500 transition-transform duration-300',
+                    active ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
+                  )}
+                />
+              </button>
 
               <AnimatePresence>
                 {openMenu === item.label && (
@@ -208,7 +217,8 @@ export function Navbar() {
                 )}
               </AnimatePresence>
             </li>
-          ))}
+            )
+          })}
         </ul>
 
         <div className="hidden items-center gap-2 lg:flex">
@@ -248,28 +258,20 @@ export function Navbar() {
                 return (
                   <div key={item.label}>
                     <div className="flex items-center">
-                      <NavLink
-                        to={item.to}
-                        className={({ isActive }) =>
-                          cn(
-                            'flex-1 rounded-lg px-4 py-3 text-base font-medium transition-colors',
-                            isActive
-                              ? 'bg-brand-500/10 text-white'
-                              : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
-                          )
-                        }
-                      >
-                        {item.label}
-                      </NavLink>
                       <button
                         type="button"
                         onClick={() => setMobileExpanded(expanded ? null : item.label)}
-                        aria-label={`Toggle ${item.label} menu`}
                         aria-expanded={expanded}
-                        className="flex h-11 w-11 items-center justify-center rounded-lg text-gray-400 hover:text-white"
+                        className={cn(
+                          'flex flex-1 items-center justify-between rounded-lg px-4 py-3 text-base font-medium transition-colors',
+                          isSectionActive(item, location.pathname)
+                            ? 'bg-brand-500/10 text-white'
+                            : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                        )}
                       >
+                        {item.label}
                         <ChevronDown
-                          className={cn('h-4 w-4 transition-transform', expanded && 'rotate-180')}
+                          className={cn('h-4 w-4 text-gray-400 transition-transform', expanded && 'rotate-180')}
                         />
                       </button>
                     </div>
