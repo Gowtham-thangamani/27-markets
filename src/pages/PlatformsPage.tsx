@@ -60,7 +60,7 @@ export default function PlatformsPage() {
             const Icon = iconMap[p.icon] ?? Globe
             const isWeb = p.icon === 'web'
             return (
-              <motion.div key={p.id} variants={fadeUp} className="glass-panel card-lift flex flex-col p-6">
+              <motion.div key={p.id} id={p.icon} variants={fadeUp} className="glass-panel card-lift flex scroll-mt-24 flex-col p-6">
                 <div className="flex items-center justify-between">
                   <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/20">
                     <Icon className="h-6 w-6" />

@@ -6,10 +6,25 @@ import { MobileCTABar } from '@/components/marketing/MobileCTABar'
 import { SupportLauncher } from '@/components/marketing/SupportLauncher'
 
 export function MarketingLayout() {
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
   useEffect(() => {
+    // When a link carries a #hash, scroll to that section (offset for the fixed
+    // navbar); otherwise jump to the top on route change.
+    if (hash) {
+      const id = decodeURIComponent(hash.slice(1))
+      const scroll = () => {
+        const el = document.getElementById(id)
+        if (el) {
+          const top = el.getBoundingClientRect().top + window.scrollY - 88
+          window.scrollTo({ top, behavior: 'smooth' })
+        }
+      }
+      // Defer a frame so the target route has rendered.
+      requestAnimationFrame(scroll)
+      return
+    }
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
-  }, [pathname])
+  }, [pathname, hash])
 
   return (
     <div className="flex min-h-screen flex-col">

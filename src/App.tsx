@@ -32,6 +32,9 @@ import AboutPage from './pages/AboutPage'
 import MarketsPage from './pages/MarketsPage'
 import PlatformsPage from './pages/PlatformsPage'
 import AccountsPage from './pages/AccountsPage'
+import FundingPage from './pages/FundingPage'
+import TrustPage from './pages/TrustPage'
+import FaqPage from './pages/FaqPage'
 import PartnershipPage from './pages/PartnershipPage'
 import ContactPage from './pages/ContactPage'
 import BlogListPage from './pages/BlogListPage'
@@ -66,6 +69,9 @@ export default function App() {
         <Route path="/markets" element={<MarketsPage />} />
         <Route path="/platforms" element={<PlatformsPage />} />
         <Route path="/accounts" element={<AccountsPage />} />
+        <Route path="/funding" element={<FundingPage />} />
+        <Route path="/trust" element={<TrustPage />} />
+        <Route path="/faq" element={<FaqPage />} />
         <Route path="/partnership" element={<PartnershipPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/blog" element={<BlogListPage />} />
