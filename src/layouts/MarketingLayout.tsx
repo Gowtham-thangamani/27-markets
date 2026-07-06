@@ -3,7 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { Navbar } from '@/components/marketing/Navbar'
 import { Footer } from '@/components/marketing/Footer'
 import { MobileCTABar } from '@/components/marketing/MobileCTABar'
-import { SupportLauncher } from '@/components/marketing/SupportLauncher'
+import { ChatWidget } from '@/components/marketing/ChatWidget'
 
 export function MarketingLayout() {
   const { pathname, hash } = useLocation()
@@ -36,7 +36,7 @@ export function MarketingLayout() {
         <Outlet />
       </main>
       <Footer />
-      <SupportLauncher />
+      <ChatWidget />
       <MobileCTABar />
     </div>
   )

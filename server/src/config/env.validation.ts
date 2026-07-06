@@ -52,6 +52,12 @@ export const envSchema = z
     MT5_PROVISIONING_URL: z.string().optional(),
     MT5_REGION: z.string().optional(),
 
+    // ── Support assistant (Claude) ──
+    // Optional: when unset, the public /support-chat endpoint returns a polite
+    // "not configured" fallback instead of calling the model.
+    ANTHROPIC_API_KEY: z.string().optional(),
+    SUPPORT_CHAT_MODEL: z.string().default('claude-opus-4-8'),
+
     // ── Document storage (KYC) ──
     // 'local' (default) stores on disk; 's3' uses an S3-compatible bucket
     // (AWS, R2, MinIO) with server-side encryption. Creds via the AWS default chain.

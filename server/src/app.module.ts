@@ -24,6 +24,7 @@ import { MarketModule } from './market/market.module';
 import { TradingModule } from './trading/trading.module';
 import { LeadsModule } from './leads/leads.module';
 import { PartnersModule } from './partners/partners.module';
+import { ChatModule } from './chat/chat.module';
 import { HealthController } from './health/health.controller';
 
 @Module({
@@ -48,6 +49,7 @@ import { HealthController } from './health/health.controller';
     TradingModule,
     LeadsModule,
     PartnersModule,
+    ChatModule,
   ],
   controllers: [HealthController],
   providers: [
