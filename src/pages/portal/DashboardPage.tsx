@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight, ShieldCheck, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Badge, Button } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
@@ -45,7 +45,8 @@ const WATCH = ['BINANCE:BTCUSDT', 'BINANCE:ETHUSDT', 'OANDA:EUR_USD', 'OANDA:XAU
 export default function DashboardPage() {
   const { user } = useAuth()
   const { openNewAccount } = usePortalUI()
-  const { totals, transactions } = usePortalData()
+  const { totals, transactions, kyc, kycProgress } = usePortalData()
+  const kycDone = kyc.length > 0 && kyc.every((k) => k.status === 'Approved')
   const { quotes, connected } = useLiveQuotes()
   const [selected, setSelected] = useState(FEATURED[0])
   const { candles } = useCandles(selected, 15)
@@ -78,6 +79,40 @@ export default function DashboardPage() {
         }
       />
 
+      {/* ── Verify-to-fund nudge (drives KYC completion → first deposit) ── */}
+      {!kycDone && (
+        <Link
+          to="/portal/kyc"
+          className="group mb-4 flex flex-col gap-3 rounded-2xl border border-brand-500/25 bg-brand-500/[0.06] p-5 transition-colors hover:bg-brand-500/[0.1] sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="flex items-start gap-3">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-500/15 text-brand-400 ring-1 ring-brand-500/25">
+              <ShieldCheck className="h-5 w-5" />
+            </span>
+            <div>
+              <h3 className="text-sm font-semibold text-white">
+                Verify your identity to unlock live trading
+              </h3>
+              <p className="mt-0.5 text-sm text-gray-400">
+                Complete verification to enable deposits, withdrawals, and higher limits — usually
+                reviewed within 24 hours.
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-4 sm:pl-4">
+            <div className="text-right">
+              <div className="font-display text-lg font-bold tabular-nums text-brand-400">
+                {kycProgress}%
+              </div>
+              <div className="text-[11px] uppercase tracking-wide text-gray-500">Complete</div>
+            </div>
+            <span className="inline-flex items-center gap-1 whitespace-nowrap text-sm font-semibold text-brand-400 transition-transform group-hover:translate-x-0.5">
+              Verify now <ArrowRight className="h-4 w-4" />
+            </span>
+          </div>
+        </Link>
+      )}
+
       {/* ── Balance strip ── */}
       <div className="glass-panel grid grid-cols-1 gap-5 p-5 sm:grid-cols-2 lg:grid-cols-4 lg:items-center">
         <div>
@@ -105,7 +140,7 @@ export default function DashboardPage() {
             {formatCurrency(totals.equity)}
           </p>
         </div>
-        <div className="flex items-center gap-2 lg:justify-end">
+        <div className="flex flex-wrap items-center gap-2 lg:justify-end">
           <Link to="/portal/funds">
             <Button className="gap-1.5">
               <ArrowDownToLine className="h-4 w-4" /> Deposit
@@ -114,6 +149,11 @@ export default function DashboardPage() {
           <Link to="/portal/funds">
             <Button variant="outline" className="gap-1.5">
               <ArrowUpFromLine className="h-4 w-4" /> Withdraw
+            </Button>
+          </Link>
+          <Link to="/portal/funds">
+            <Button variant="ghost" className="gap-1.5">
+              <ArrowLeftRight className="h-4 w-4" /> Transfer
             </Button>
           </Link>
         </div>

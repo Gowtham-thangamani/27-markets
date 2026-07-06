@@ -10,8 +10,11 @@ import {
   ArrowUpFromLine,
   ArrowLeftRight,
   History,
+  ShieldCheck,
+  ArrowRight,
   type LucideIcon,
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { Badge, Button, Input, Modal, Select, Tabs, EmptyState, type TabItem } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
 import { statusTone } from '@/components/portal/statusTone'
@@ -35,9 +38,35 @@ type TransferValues = z.infer<typeof transferSchema>
 
 export default function FundsPage() {
   const [tab, setTab] = useState('deposit')
+  const { kyc } = usePortalData()
+  const kycDone = kyc.length > 0 && kyc.every((k) => k.status === 'Approved')
   return (
     <>
       <PageTitle title="Funds" subtitle="Deposit, withdraw, and transfer funds across your accounts." />
+
+      {!kycDone && (
+        <Link
+          to="/portal/kyc"
+          className="group mb-6 flex flex-col gap-3 rounded-2xl border border-warning/30 bg-warning/[0.08] p-4 transition-colors hover:bg-warning/[0.12] sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="flex items-start gap-3">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-warning/15 text-warning">
+              <ShieldCheck className="h-5 w-5" />
+            </span>
+            <div>
+              <h3 className="text-sm font-semibold text-white">Complete verification to fund live</h3>
+              <p className="mt-0.5 text-sm text-gray-400">
+                Deposits and withdrawals unlock once your identity is verified. You can still explore
+                the funding options below.
+              </p>
+            </div>
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-sm font-semibold text-warning transition-transform group-hover:translate-x-0.5 sm:pl-4">
+            Verify now <ArrowRight className="h-4 w-4" />
+          </span>
+        </Link>
+      )}
+
       <Tabs tabs={tabs} active={tab} onChange={setTab} className="mb-6" layoutId="funds-tab" />
       <AnimatePresence mode="wait">
         <motion.div
