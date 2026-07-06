@@ -1,18 +1,26 @@
 import { motion } from 'framer-motion'
-import { ShieldCheck, ShieldAlert, Clock, CircleDashed, Info } from 'lucide-react'
+import { ShieldCheck, ShieldAlert, Clock, CircleDashed, Info, Lock, Unlock } from 'lucide-react'
 import { Badge, Button, FileUpload, ProgressBar } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
 import { statusTone } from '@/components/portal/statusTone'
 import { usePortalData } from '@/context/PortalDataContext'
 import { useToast } from '@/context/ToastContext'
 import { fadeUp, staggerContainer } from '@/lib/motion'
-import type { KycStatus } from '@/lib/types'
+import type { KycStatus, KycStep } from '@/lib/types'
 
 const statusIcon: Record<KycStatus, typeof ShieldCheck> = {
   Approved: ShieldCheck,
   Pending: Clock,
   Rejected: ShieldAlert,
   'Not Submitted': CircleDashed,
+}
+
+/** What each verification level unlocks — mirrors the tiered "features unlocked /
+ * trading limit" model. Limits are indicative and can be tuned per policy. */
+const UNLOCKS: Record<KycStep['id'], { level: string; feature: string; limit: string }> = {
+  identity: { level: 'Level 1', feature: 'Open a live trading account', limit: 'Up to $2,000' },
+  address: { level: 'Level 2', feature: 'Deposits & higher trading limits', limit: 'Up to $50,000' },
+  selfie: { level: 'Level 3', feature: 'Full withdrawals & unlimited trading', limit: 'Unlimited' },
 }
 
 export default function KycPage() {
@@ -110,6 +118,43 @@ export default function KycPage() {
                   Submitted — our compliance team will review this document, usually within 24 hours.
                 </p>
               )}
+
+              {/* Features unlocked at this level */}
+              {(() => {
+                const u = UNLOCKS[step.id]
+                const unlocked = step.status === 'Approved'
+                return (
+                  <div
+                    className={`mt-4 flex items-center gap-3 rounded-xl border p-3 lg:ml-14 ${
+                      unlocked
+                        ? 'border-success/20 bg-success/[0.05]'
+                        : 'border-white/10 bg-white/[0.02]'
+                    }`}
+                  >
+                    <span
+                      className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                        unlocked ? 'bg-success/15 text-success' : 'bg-white/5 text-gray-500'
+                      }`}
+                    >
+                      {unlocked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-x-2 text-sm">
+                        <span className="font-semibold text-brand-400">{u.level}</span>
+                        <span className={unlocked ? 'text-white' : 'text-gray-300'}>{u.feature}</span>
+                      </div>
+                      <div className="text-xs text-gray-500">Trading limit: {u.limit}</div>
+                    </div>
+                    <span
+                      className={`shrink-0 text-xs font-medium ${
+                        unlocked ? 'text-success' : 'text-gray-500'
+                      }`}
+                    >
+                      {unlocked ? 'Unlocked' : 'Locked'}
+                    </span>
+                  </div>
+                )
+              })()}
             </motion.div>
           )
         })}
