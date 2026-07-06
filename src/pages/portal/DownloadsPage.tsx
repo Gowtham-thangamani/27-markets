@@ -47,20 +47,33 @@ export default function DownloadsPage() {
                 <span>{d.platform}</span>
                 <span>{d.size}</span>
               </div>
-              <Button
-                variant={isWeb ? 'primary' : 'outline'}
-                fullWidth
-                className="mt-4 gap-1.5"
-                onClick={() =>
-                  toast.info(
-                    isWeb ? 'Launching WebTrader' : 'Download started',
-                    isDoc ? 'Your document is downloading.' : `${d.name} is downloading.`
-                  )
-                }
-              >
-                <Download className="h-4 w-4" />
-                {isWeb ? 'Launch' : isDoc ? 'Download PDF' : 'Download'}
-              </Button>
+              {d.url ? (
+                <a
+                  href={d.url}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="mt-4 block"
+                >
+                  <Button variant="outline" fullWidth className="gap-1.5">
+                    <Download className="h-4 w-4" /> Download
+                  </Button>
+                </a>
+              ) : (
+                <Button
+                  variant={isWeb ? 'primary' : 'outline'}
+                  fullWidth
+                  className="mt-4 gap-1.5"
+                  onClick={() =>
+                    toast.info(
+                      isWeb ? 'Launching WebTrader' : 'Download started',
+                      isDoc ? 'Your document is downloading.' : `${d.name} is downloading.`
+                    )
+                  }
+                >
+                  <Download className="h-4 w-4" />
+                  {isWeb ? 'Launch' : isDoc ? 'Download PDF' : 'Download'}
+                </Button>
+              )}
             </motion.div>
           )
         })}

@@ -78,19 +78,27 @@ export default function PlatformsPage() {
                   <span>{p.platform}</span>
                   <span>{p.size}</span>
                 </div>
-                <Link to={isWeb ? '/register' : '/portal/downloads'} className="mt-4">
-                  <Button variant={isWeb ? 'primary' : 'outline'} fullWidth className="gap-1.5">
-                    {isWeb ? (
-                      <>
-                        <Globe className="h-4 w-4" /> Launch WebTrader
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-4 w-4" /> Download
-                      </>
-                    )}
-                  </Button>
-                </Link>
+                {p.url ? (
+                  <a href={p.url} target="_blank" rel="noreferrer noopener" className="mt-4 block">
+                    <Button variant="outline" fullWidth className="gap-1.5">
+                      <Download className="h-4 w-4" /> Download
+                    </Button>
+                  </a>
+                ) : (
+                  <Link to={isWeb ? '/register' : '/portal/downloads'} className="mt-4 block">
+                    <Button variant={isWeb ? 'primary' : 'outline'} fullWidth className="gap-1.5">
+                      {isWeb ? (
+                        <>
+                          <Globe className="h-4 w-4" /> Launch WebTrader
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4" /> Download
+                        </>
+                      )}
+                    </Button>
+                  </Link>
+                )}
               </motion.div>
             )
           })}

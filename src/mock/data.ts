@@ -140,12 +140,12 @@ export const seedNotifications: NotificationItem[] = [
 ]
 
 export const downloads: PlatformDownload[] = [
-  { id: 'd1', name: '27 Terminal — Windows', platform: 'Windows 10/11', description: 'Full-featured desktop trading terminal with advanced charting.', size: '86 MB', version: '5.2.1', icon: 'desktop' },
-  { id: 'd2', name: '27 Terminal — macOS', platform: 'macOS 12+', description: 'Native Apple Silicon build of the desktop terminal.', size: '92 MB', version: '5.2.1', icon: 'desktop' },
-  { id: 'd3', name: '27 Mobile — iOS', platform: 'iPhone / iPad', description: 'Trade on the go with biometric login and price alerts.', size: '64 MB', version: '4.8.0', icon: 'mobile' },
-  { id: 'd4', name: '27 Mobile — Android', platform: 'Android 9+', description: 'Lightweight mobile app with one-tap order execution.', size: '58 MB', version: '4.8.0', icon: 'mobile' },
+  { id: 'd1', name: 'Desktop — Windows (MT5)', platform: 'Windows 10/11', description: 'The MetaTrader 5 desktop terminal with advanced charting and algo trading.', size: '23 MB', version: '5.00', icon: 'desktop', url: 'https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe' },
+  { id: 'd2', name: 'Desktop — macOS (MT5)', platform: 'macOS 12+', description: 'The MetaTrader 5 desktop terminal for Mac.', size: '35 MB', version: '5.00', icon: 'desktop', url: 'https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/MetaTrader5.dmg' },
+  { id: 'd3', name: 'Mobile — iOS (MT5)', platform: 'iPhone / iPad', description: 'Trade on the go with the MetaTrader 5 app for iOS.', size: 'App Store', version: '5.00', icon: 'mobile', url: 'https://download.mql5.com/cdn/mobile/mt5/ios' },
+  { id: 'd4', name: 'Mobile — Android (MT5)', platform: 'Android 9+', description: 'The MetaTrader 5 app for Android with one-tap order execution.', size: 'Google Play', version: '5.00', icon: 'mobile', url: 'https://download.mql5.com/cdn/mobile/mt5/android' },
   { id: 'd5', name: 'WebTrader', platform: 'Any browser', description: 'Launch the full trading experience directly in your browser.', size: '—', version: 'Live', icon: 'web' },
-  { id: 'd6', name: 'MetaTrader 5', platform: 'Windows 10/11', description: 'The industry-standard MT5 terminal with EAs, algo trading, and 21 timeframes.', size: '78 MB', version: '5.00', icon: 'desktop' },
+  { id: 'd6', name: 'MetaTrader 5', platform: 'Windows 10/11', description: 'The industry-standard MT5 terminal with EAs, algo trading, and 21 timeframes.', size: '23 MB', version: '5.00', icon: 'desktop', url: 'https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe' },
   { id: 'd7', name: 'Account Terms (PDF)', platform: 'Document', description: 'Client agreement, risk disclosure, and fee schedule.', size: '1.2 MB', version: '2026.1', icon: 'doc' },
 ]
 

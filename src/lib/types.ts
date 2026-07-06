@@ -65,6 +65,8 @@ export interface PlatformDownload {
   size: string
   version: string
   icon: 'desktop' | 'mobile' | 'web' | 'doc'
+  /** Real external download/app-store URL. When set, the button links out to it. */
+  url?: string
 }
 
 export interface NotificationItem {
