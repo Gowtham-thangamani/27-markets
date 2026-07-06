@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, ShieldCheck } from 'lucide-react'
 import { Logo } from '@/components/Logo'
-import { asset } from '@/lib/asset'
+import { MarketWave } from '@/components/three/MarketWave'
 
 interface AuthShellProps {
   children: ReactNode
@@ -21,16 +21,9 @@ export function AuthShell({ children, aside }: AuthShellProps) {
         <div className="absolute inset-0 bg-gradient-to-br from-brand-900/30 via-transparent to-transparent" />
         <div className="pointer-events-none absolute -left-20 top-1/3 h-80 w-80 bg-radial-red opacity-70 blur-2xl" />
 
-        {/* Dashboard preview bleeding off the bottom edge */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-10 -right-16 w-[82%] max-w-2xl rotate-[-5deg] [mask-image:linear-gradient(to_top,transparent,black_42%)]"
-        >
-          <img
-            src={asset('hero-platform.png')}
-            alt=""
-            className="w-full rounded-2xl shadow-[0_40px_100px_-30px_rgba(0,0,0,0.8)] ring-1 ring-white/10"
-          />
+        {/* Animated market wave */}
+        <div className="pointer-events-none absolute inset-x-0 top-1/2 h-48 opacity-80">
+          <MarketWave />
         </div>
 
         <div className="relative flex h-full flex-col justify-between p-12">
