@@ -16,6 +16,9 @@ interface Quote {
 interface HeroSliderProps {
   onLight: boolean
   quotes: Quote[]
+  /** Render a single focused frame (no auto-advance, no carousel controls).
+   * Flip to false to restore the rotating 3-slide hero. */
+  single?: boolean
 }
 
 type Visual = 'platform' | 'globe' | 'coins'
@@ -75,7 +78,7 @@ const TRUST = [
 
 const AUTO_MS = 6000
 
-export function HeroSlider({ onLight, quotes }: HeroSliderProps) {
+export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps) {
   const reduce = useReducedMotion()
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
@@ -83,24 +86,25 @@ export function HeroSlider({ onLight, quotes }: HeroSliderProps) {
 
   const go = (n: number) => setIndex((i) => (n + SLIDES.length) % SLIDES.length)
 
-  // Auto-advance — disabled under reduced motion or while hovered/focused.
+  // Auto-advance — disabled in single mode, under reduced motion, or while hovered/focused.
   useEffect(() => {
-    if (reduce || paused) return
+    if (single || reduce || paused) return
     const t = setTimeout(() => setIndex((i) => (i + 1) % SLIDES.length), AUTO_MS)
     return () => clearTimeout(t)
-  }, [index, paused, reduce])
+  }, [index, paused, reduce, single])
 
   return (
     <div
       className="relative"
       role="region"
-      aria-roledescription="carousel"
+      aria-roledescription={single ? undefined : 'carousel'}
       aria-label="Featured highlights"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
       onBlurCapture={() => setPaused(false)}
       onKeyDown={(e) => {
+        if (single) return
         if (e.key === 'ArrowLeft') go(index - 1)
         else if (e.key === 'ArrowRight') go(index + 1)
       }}
@@ -247,39 +251,41 @@ export function HeroSlider({ onLight, quotes }: HeroSliderProps) {
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="container-bleed relative z-20 mt-1 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => go(index - 1)}
-          aria-label="Previous slide"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-gray-300 transition hover:border-brand-500/40 hover:text-white"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => go(index + 1)}
-          aria-label="Next slide"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-gray-300 transition hover:border-brand-500/40 hover:text-white"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-        <div className="ml-2 flex items-center gap-2">
-          {SLIDES.map((s, i) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => setIndex(i)}
-              aria-label={`Show slide ${i + 1}: ${s.pill}`}
-              aria-current={i === index}
-              className={`h-2 rounded-full transition-all ${
-                i === index ? 'w-6 bg-brand-500' : 'w-2 bg-white/25 hover:bg-white/40'
-              }`}
-            />
-          ))}
+      {/* Controls — hidden in single (de-carouseled) mode */}
+      {!single && (
+        <div className="container-bleed relative z-20 mt-1 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => go(index - 1)}
+            aria-label="Previous slide"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-gray-300 transition hover:border-brand-500/40 hover:text-white"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => go(index + 1)}
+            aria-label="Next slide"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-gray-300 transition hover:border-brand-500/40 hover:text-white"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+          <div className="ml-2 flex items-center gap-2">
+            {SLIDES.map((s, i) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setIndex(i)}
+                aria-label={`Show slide ${i + 1}: ${s.pill}`}
+                aria-current={i === index}
+                className={`h-2 rounded-full transition-all ${
+                  i === index ? 'w-6 bg-brand-500' : 'w-2 bg-white/25 hover:bg-white/40'
+                }`}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

@@ -67,7 +67,7 @@ export default function HomePage() {
         {onLight ? (
           <HeroShowcase onLight={onLight} />
         ) : (
-          <HeroSlider onLight={onLight} quotes={heroQuotes} />
+          <HeroSlider onLight={onLight} quotes={heroQuotes} single />
         )}
 
         {/* LIVE TICKER (real-time, backend SSE) */}
