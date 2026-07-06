@@ -18,8 +18,9 @@
     />
     <title>27 Markets — Trade Beyond Limits</title>
     <script>
-      // Apply the saved theme before paint to avoid a flash. Dark is the default.
-      try { if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light'); } catch (e) {}
+      // Dark-only brand theme. Clear any legacy 'light' preference so the site
+      // never renders the retired light theme.
+      try { document.documentElement.classList.remove('light'); localStorage.setItem('theme', 'dark'); } catch (e) {}
     </script>
   </head>
   <body>

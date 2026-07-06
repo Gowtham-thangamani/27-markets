@@ -1,10 +1,34 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Menu, X, ChevronDown } from 'lucide-react'
+import {
+  Menu,
+  X,
+  ChevronDown,
+  Layers,
+  MonitorSmartphone,
+  Globe,
+  PlayCircle,
+  LayoutGrid,
+  Smartphone,
+  DollarSign,
+  Gem,
+  BarChart3,
+  Boxes,
+  CandlestickChart,
+  Bitcoin,
+  Handshake,
+  UserPlus,
+  Mail,
+  Building2,
+  Newspaper,
+  ShieldCheck,
+  Wallet,
+  HelpCircle,
+  type LucideIcon,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui'
-import { ThemeToggle } from '@/components/ThemeToggle'
 import { useBodyScrollLock } from '@/lib/hooks'
 import { cn } from '@/lib/cn'
 
@@ -12,6 +36,7 @@ interface SubItem {
   label: string
   to: string
   desc: string
+  icon: LucideIcon
 }
 interface NavItem {
   label: string
@@ -24,49 +49,53 @@ const navItems: NavItem[] = [
     label: 'Trading',
     to: '/accounts',
     menu: [
-      { label: 'Account Types', to: '/accounts', desc: 'Standard, Raw & Pro accounts' },
-      { label: 'Trading Platforms', to: '/platforms', desc: 'Desktop, web & mobile' },
-      { label: 'Markets', to: '/markets', desc: '100+ global instruments' },
-      { label: 'Free Demo', to: '/demo', desc: 'Practice risk-free' },
+      { label: 'Account Types', to: '/accounts', desc: 'Standard, Raw & VIP accounts', icon: Layers },
+      { label: 'Markets', to: '/markets', desc: '100+ global instruments', icon: Globe },
+      { label: 'Trading Platforms', to: '/platforms', desc: 'Web, mobile & desktop', icon: MonitorSmartphone },
+      { label: 'Funding', to: '/accounts', desc: 'Deposits from $50, no-min withdrawal', icon: Wallet },
+      { label: 'Free Demo', to: '/demo', desc: 'Practice risk-free', icon: PlayCircle },
     ],
   },
   {
     label: 'Platforms',
     to: '/platforms',
     menu: [
-      { label: 'All Platforms', to: '/platforms', desc: 'Compare desktop, web & mobile' },
-      { label: 'Try Free Demo', to: '/demo', desc: 'Test drive the platform' },
+      { label: 'All Platforms', to: '/platforms', desc: 'Compare web, mobile & desktop', icon: LayoutGrid },
+      { label: 'Web Trader', to: '/demo', desc: 'Trade in your browser', icon: Globe },
+      { label: 'Mobile', to: '/platforms', desc: 'Trade on iOS & Android', icon: Smartphone },
+      { label: 'Try Free Demo', to: '/demo', desc: 'Test drive the platform', icon: PlayCircle },
     ],
   },
   {
     label: 'Markets',
     to: '/markets',
     menu: [
-      { label: 'Forex', to: '/markets?category=Forex', desc: 'Major, minor & exotic pairs' },
-      { label: 'Metals', to: '/markets?category=Metals', desc: 'Gold, silver & more' },
-      { label: 'Indices', to: '/markets?category=Indices', desc: 'Global index CFDs' },
-      { label: 'Commodities', to: '/markets?category=Commodities', desc: 'Energy & agriculture' },
-      { label: 'Stocks', to: '/markets?category=Stocks', desc: 'Global share CFDs' },
-      { label: 'Crypto', to: '/markets?category=Crypto', desc: 'Top cryptocurrencies' },
+      { label: 'Forex', to: '/markets?category=Forex', desc: 'Major, minor & exotic pairs', icon: DollarSign },
+      { label: 'Metals', to: '/markets?category=Metals', desc: 'Gold, silver & more', icon: Gem },
+      { label: 'Indices', to: '/markets?category=Indices', desc: 'Global index CFDs', icon: BarChart3 },
+      { label: 'Commodities', to: '/markets?category=Commodities', desc: 'Energy & agriculture', icon: Boxes },
+      { label: 'Stocks', to: '/markets?category=Stocks', desc: 'Global share CFDs', icon: CandlestickChart },
+      { label: 'Crypto', to: '/markets?category=Crypto', desc: 'Top cryptocurrencies', icon: Bitcoin },
     ],
   },
   {
     label: 'Partner with us',
     to: '/partnership',
     menu: [
-      { label: 'IB Program', to: '/partnership', desc: 'Rebates, tools & support' },
-      { label: 'Become a Partner', to: '/partner/apply', desc: 'Apply in minutes' },
-      { label: 'Contact Us', to: '/contact', desc: 'Talk to our team' },
+      { label: 'IB Program', to: '/partnership', desc: 'Rebates, tools & support', icon: Handshake },
+      { label: 'Become a Partner', to: '/partner/apply', desc: 'Apply in minutes', icon: UserPlus },
+      { label: 'Contact Us', to: '/contact', desc: 'Talk to our team', icon: Mail },
     ],
   },
   {
     label: 'Company',
     to: '/about',
     menu: [
-      { label: 'About Us', to: '/about', desc: 'Our story & mission' },
-      { label: 'Blog', to: '/blog', desc: 'News & insights' },
-      { label: 'Partnership', to: '/partnership', desc: 'Grow with us' },
-      { label: 'Contact', to: '/contact', desc: 'Get in touch' },
+      { label: 'About Us', to: '/about', desc: 'Our story & mission', icon: Building2 },
+      { label: 'Trust & Safety', to: '/legal/risk-disclosure', desc: 'How we protect you', icon: ShieldCheck },
+      { label: 'Market News', to: '/blog', desc: 'Insights & analysis', icon: Newspaper },
+      { label: 'Help & FAQ', to: '/contact', desc: 'Answers & support', icon: HelpCircle },
+      { label: 'Contact', to: '/contact', desc: 'Get in touch', icon: Mail },
     ],
   },
 ]
@@ -158,15 +187,20 @@ export function Navbar() {
                     transition={{ duration: 0.16 }}
                     className="absolute left-0 top-full pt-3"
                   >
-                    <div className="w-72 overflow-hidden rounded-xl border border-white/[0.08] bg-ink-900/95 p-1.5 shadow-2xl shadow-black/40 backdrop-blur-xl">
+                    <div className="w-80 overflow-hidden rounded-2xl border border-white/[0.08] bg-ink-900/95 p-2 shadow-2xl shadow-black/40 backdrop-blur-xl">
                       {item.menu.map((sub) => (
                         <Link
                           key={sub.label}
                           to={sub.to}
-                          className="block rounded-lg px-3 py-2 transition-colors hover:bg-white/[0.06]"
+                          className="group/sub flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/[0.06]"
                         >
-                          <div className="text-sm font-medium text-white">{sub.label}</div>
-                          <div className="text-xs text-gray-400">{sub.desc}</div>
+                          <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/15 transition-colors group-hover/sub:bg-brand-500 group-hover/sub:text-white">
+                            <sub.icon className="h-[18px] w-[18px]" />
+                          </span>
+                          <span>
+                            <span className="block text-sm font-semibold text-white">{sub.label}</span>
+                            <span className="block text-xs leading-snug text-gray-400">{sub.desc}</span>
+                          </span>
                         </Link>
                       ))}
                     </div>
@@ -178,7 +212,6 @@ export function Navbar() {
         </ul>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <ThemeToggle />
           <Link to="/login">
             <Button variant="ghost" size="sm">
               Login
@@ -254,8 +287,11 @@ export function Navbar() {
                               <NavLink
                                 key={sub.label}
                                 to={sub.to}
-                                className="block rounded-lg px-4 py-2.5 text-sm text-gray-300 transition-colors hover:bg-white/[0.04] hover:text-white"
+                                className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm text-gray-300 transition-colors hover:bg-white/[0.04] hover:text-white"
                               >
+                                <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-brand-500/10 text-brand-400">
+                                  <sub.icon className="h-4 w-4" />
+                                </span>
                                 {sub.label}
                               </NavLink>
                             ))}

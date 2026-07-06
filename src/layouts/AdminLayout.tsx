@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Menu } from 'lucide-react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { AdminSidebarContent } from '@/components/admin/AdminSidebar'
-import { ThemeToggle } from '@/components/ThemeToggle'
 import { useAuth } from '@/context/AuthContext'
 import { useBodyScrollLock } from '@/lib/hooks'
 import { initials } from '@/lib/format'
@@ -65,7 +64,6 @@ export function AdminLayout() {
             <p className="text-sm font-semibold text-white">{user?.name ?? 'Staff'}</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <ThemeToggle />
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 text-sm font-semibold text-brand-300 ring-1 ring-brand-500/30">
               {initials(user?.name ?? 'Staff')}
             </span>

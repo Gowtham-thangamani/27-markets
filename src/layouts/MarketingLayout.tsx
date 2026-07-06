@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Navbar } from '@/components/marketing/Navbar'
 import { Footer } from '@/components/marketing/Footer'
+import { MobileCTABar } from '@/components/marketing/MobileCTABar'
+import { SupportLauncher } from '@/components/marketing/SupportLauncher'
 
 export function MarketingLayout() {
   const { pathname } = useLocation()
@@ -19,6 +21,8 @@ export function MarketingLayout() {
         <Outlet />
       </main>
       <Footer />
+      <SupportLauncher />
+      <MobileCTABar />
     </div>
   )
 }

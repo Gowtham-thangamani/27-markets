@@ -167,11 +167,20 @@ export function Footer() {
           </div>
         </div>
 
-        <p className="mt-6 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-xs leading-relaxed text-gray-400">
-          <span className="font-semibold text-gray-300">Risk warning:</span> CFDs are complex
-          instruments and carry a high risk of losing money rapidly due to leverage. This is a
-          demonstration product and not a real brokerage.
-        </p>
+        <div className="mt-6 space-y-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-xs leading-relaxed text-gray-400">
+          <p>
+            <span className="font-semibold text-gray-300">Risk warning:</span> Trading leveraged
+            products such as CFDs carries a high risk of losing money rapidly due to leverage and may
+            not be suitable for all investors. You should consider whether you understand how these
+            products work and whether you can afford to take the high risk of losing your money.
+          </p>
+          <p>
+            <span className="font-semibold text-gray-300">Regulatory status:</span> 27 Markets is
+            finalising its regulatory authorization. This platform currently operates as a
+            demonstration product and is not yet a live, licensed brokerage. Nothing here constitutes
+            investment advice.
+          </p>
+        </div>
       </div>
     </footer>
   )

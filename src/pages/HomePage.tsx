@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, Layers, Rocket, Gauge, ShieldCheck, Headphones, Lock, Zap, Building2, Eye } from 'lucide-react'
+import { ArrowRight, Layers, Rocket, Gauge, ShieldCheck, Headphones } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui'
 import { Reveal } from '@/components/Reveal'
@@ -17,6 +17,11 @@ import { PartnerSection } from '@/components/marketing/PartnerSection'
 import { PaymentsCluster } from '@/components/marketing/PaymentsCluster'
 import { MarketCard } from '@/components/marketing/MarketCard'
 import { CTABand } from '@/components/marketing/CTABand'
+import { TrustRegulationBand } from '@/components/marketing/TrustRegulationBand'
+import { PlatformShowcase } from '@/components/marketing/PlatformShowcase'
+import { OnboardingSteps } from '@/components/marketing/OnboardingSteps'
+import { Testimonials } from '@/components/marketing/Testimonials'
+import { FaqSection } from '@/components/marketing/FaqSection'
 import { fadeUp, staggerContainer, cardStagger } from '@/lib/motion'
 import { asset } from '@/lib/asset'
 import { useThemeSafe } from '@/context/ThemeContext'
@@ -29,14 +34,6 @@ const heroStats = [
   { icon: Gauge, image: '/stat-execution.png', value: '<30ms', label: 'Ultra-fast execution' },
   { icon: ShieldCheck, image: '/stat-liquidity.png', value: 'Tier-1', label: 'Liquidity providers' },
   { icon: Headphones, image: '/stat-support.png', value: '24/5', label: 'Customer support' },
-]
-
-const trustPoints = [
-  { icon: ShieldCheck, label: 'Segregated client funds' },
-  { icon: Lock, label: 'Bank-grade encryption' },
-  { icon: Zap, label: 'No dealing desk' },
-  { icon: Building2, label: 'Institutional liquidity' },
-  { icon: Eye, label: 'Transparent pricing' },
 ]
 
 // Live quotes powering the dark-theme hero slider's floating price chips.
@@ -101,6 +98,10 @@ export default function HomePage() {
               </motion.div>
             ))}
           </motion.div>
+          <p className="mt-3 px-1 text-center text-[11px] text-gray-500">
+            Figures shown are indicative of target trading conditions and may vary by account type
+            and market.
+          </p>
         </div>
 
         {/* Scroll cue */}
@@ -109,17 +110,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* TRUST STRIP */}
-      <section className="border-y border-ink-300/60 bg-ink-850/40">
-        <div className="container-x flex flex-wrap items-center justify-center gap-x-10 gap-y-3 py-4">
-          {trustPoints.map((t) => (
-            <span key={t.label} className="inline-flex items-center gap-2 text-sm font-medium text-gray-400">
-              <t.icon className="h-4 w-4 text-brand-500" />
-              {t.label}
-            </span>
-          ))}
-        </div>
-      </section>
+      {/* TRUST · REGULATION · SECURITY BAND */}
+      <TrustRegulationBand />
 
       {/* WHY CHOOSE US */}
       <section className="section-alt relative overflow-hidden pb-16 pt-8 sm:pb-20 sm:pt-12">
@@ -197,6 +189,9 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* PLATFORM & MOBILE SHOWCASE */}
+      <PlatformShowcase />
+
       {/* PARTNER */}
       <PartnerSection />
 
@@ -246,6 +241,15 @@ export default function HomePage() {
 
       {/* FUNDING & PAYMENTS (light-theme design only) */}
       {onLight && <PaymentsCluster />}
+
+      {/* GETTING STARTED — 4 STEPS */}
+      <OnboardingSteps />
+
+      {/* SOCIAL PROOF */}
+      <Testimonials />
+
+      {/* FAQ */}
+      <FaqSection />
 
       <CTABand />
     </>

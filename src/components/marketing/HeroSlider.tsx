@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui'
 import { asset } from '@/lib/asset'
 import { fadeUp, staggerContainer } from '@/lib/motion'
+import { HeroFloatingCards } from '@/components/marketing/HeroFloatingCards'
 
 interface Quote {
   symbol: string
@@ -71,17 +72,6 @@ const TRUST = [
   { icon: Zap, label: 'No dealing desk' },
   { icon: Gauge, label: '2-minute setup' },
 ]
-
-const CHIP_LABEL: Record<string, string> = {
-  'BINANCE:BTCUSDT': 'BTC/USD',
-  'OANDA:XAU_USD': 'Gold',
-  'OANDA:EUR_USD': 'EUR/USD',
-}
-const CHIP_POS = ['left-[-3%] top-[12%]', 'right-[-2%] bottom-[16%]']
-const chipPrice = (p: number) => {
-  const d = p >= 100 ? 2 : 4
-  return p.toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d })
-}
 
 const AUTO_MS = 6000
 
@@ -225,28 +215,7 @@ export function HeroSlider({ onLight, quotes }: HeroSliderProps) {
                     alt="27 Markets trading platform on laptop and mobile"
                     className={`w-full select-none lg:scale-105 ${onLight ? '' : 'hero-media-fade'}`}
                   />
-                  <div className="pointer-events-none absolute inset-0 z-20 hidden lg:block" aria-hidden>
-                    {quotes.slice(0, 2).map((q, i) => {
-                      const up = (q.changePct ?? 0) >= 0
-                      return (
-                        <div
-                          key={q.symbol}
-                          className={`glass-panel animate-float absolute ${CHIP_POS[i]} flex items-center gap-2 rounded-xl px-3 py-2 text-xs shadow-[0_10px_30px_-8px_rgba(0,0,0,0.4)] ring-1 ring-brand-500/15`}
-                          style={{ animationDuration: `${7 + i * 2}s`, animationDelay: `${i * 0.8}s` }}
-                        >
-                          <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-success" />
-                          <span className="font-semibold text-white">{CHIP_LABEL[q.symbol] ?? q.symbol}</span>
-                          <span className="font-mono tabular-nums text-white">{chipPrice(q.price)}</span>
-                          {q.changePct !== undefined && (
-                            <span className={`font-mono ${up ? 'text-success' : 'text-danger'}`}>
-                              {up ? '▲' : '▼'}
-                              {Math.abs(q.changePct).toFixed(2)}%
-                            </span>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
+                  <HeroFloatingCards quotes={quotes} />
                 </>
               )}
               {slide.visual === 'globe' && (

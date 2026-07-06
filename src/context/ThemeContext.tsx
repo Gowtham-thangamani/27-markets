@@ -16,14 +16,10 @@ function apply(theme: Theme) {
   document.documentElement.classList.toggle('light', theme === 'light')
 }
 
+// The light theme has been retired — the brand is dark-only. `initial()` always
+// resolves to dark (any legacy saved 'light' preference is ignored/overwritten).
 function initial(): Theme {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved === 'light' || saved === 'dark') return saved
-  } catch {
-    /* ignore */
-  }
-  return 'dark' // brand default
+  return 'dark'
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
