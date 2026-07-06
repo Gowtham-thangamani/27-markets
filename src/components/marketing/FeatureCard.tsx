@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Card3D } from '@/components/Card3D'
 import { useThemeSafe } from '@/context/ThemeContext'
+import { useT } from '@/i18n/LanguageContext'
 import { cardReveal } from '@/lib/motion'
 
 interface FeatureCardProps {
@@ -9,10 +10,13 @@ interface FeatureCardProps {
   image?: string
   title: string
   description: string
+  titleKey?: string
+  descKey?: string
 }
 
-export function FeatureCard({ icon: Icon, title, description }: FeatureCardProps) {
+export function FeatureCard({ icon: Icon, title, description, titleKey, descKey }: FeatureCardProps) {
   const onLight = useThemeSafe() === 'light'
+  const t = useT()
   return (
     <Card3D className="h-full">
       <motion.div
@@ -30,9 +34,9 @@ export function FeatureCard({ icon: Icon, title, description }: FeatureCardProps
           <Icon className="h-5 w-5" />
         </div>
       )}
-      <h3 className="font-display text-base font-semibold text-white">{title}</h3>
+      <h3 className="font-display text-base font-semibold text-white">{titleKey ? t(titleKey) : title}</h3>
       <span className="card-tick mt-2" aria-hidden />
-      <p className="mt-2 text-[13px] leading-relaxed text-gray-100">{description}</p>
+      <p className="mt-2 text-[13px] leading-relaxed text-gray-100">{descKey ? t(descKey) : description}</p>
       <span className="card-corner-slash" aria-hidden />
       </motion.div>
     </Card3D>

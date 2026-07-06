@@ -24,6 +24,8 @@ export interface Feature {
   image?: string
   title: string
   description: string
+  titleKey?: string
+  descKey?: string
 }
 
 export const whyFeatures: Feature[] = [
@@ -32,30 +34,40 @@ export const whyFeatures: Feature[] = [
     image: '/feat-liquidity.png',
     title: 'Deep Liquidity',
     description: 'Access institutional-grade liquidity aggregated from top-tier global providers.',
+    titleKey: 'why.f1t',
+    descKey: 'why.f1d',
   },
   {
     icon: Gauge,
     image: '/feat-spreads.png',
     title: 'Tight Spreads',
     description: 'Raw spreads from 0.0 pips on major pairs with fully transparent pricing.',
+    titleKey: 'why.f2t',
+    descKey: 'why.f2d',
   },
   {
     icon: Zap,
     image: '/feat-execution.png',
     title: 'Fast Execution',
     description: 'Lightning-fast order execution under 30ms with no dealing desk and no re-quotes.',
+    titleKey: 'why.f3t',
+    descKey: 'why.f3d',
   },
   {
     icon: Eye,
     image: '/feat-transparent.png',
     title: 'Transparent Trading',
     description: 'No hidden fees, no markups. Clear conditions you can verify on every trade.',
+    titleKey: 'why.f4t',
+    descKey: 'why.f4d',
   },
   {
     icon: ShieldCheck,
     image: '/feat-secure.png',
     title: 'Secure Funds',
     description: 'Segregated client accounts held with industry-leading banking partners.',
+    titleKey: 'why.f5t',
+    descKey: 'why.f5d',
   },
 ]
 

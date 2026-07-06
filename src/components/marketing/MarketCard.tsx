@@ -5,6 +5,7 @@ import { Card3D } from '@/components/Card3D'
 import { fadeUp } from '@/lib/motion'
 import { asset } from '@/lib/asset'
 import { useThemeSafe } from '@/context/ThemeContext'
+import { useT } from '@/i18n/LanguageContext'
 import type { MarketCategory } from '@/mock/content'
 
 // The category PNGs have wildly different canvases + internal padding, so at the
@@ -32,6 +33,7 @@ const ICON_SCALE_LIGHT: Record<string, number> = {
 export function MarketCard({ category }: { category: MarketCategory }) {
   const { icon: Icon, image, imageLight, title, subtitle, examples, key } = category
   const onLight = useThemeSafe() === 'light'
+  const t = useT()
   const iconSrc = onLight && imageLight ? imageLight : image
   const iconScale = (onLight ? ICON_SCALE_LIGHT : ICON_SCALE_DARK)[key] ?? 1
   return (
@@ -58,8 +60,8 @@ export function MarketCard({ category }: { category: MarketCategory }) {
           <ArrowUpRight className="h-5 w-5 text-gray-600 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand-400" />
         </div>
         <span className="card-tick mb-2" aria-hidden />
-        <h3 className="font-display text-lg font-semibold text-white">{title}</h3>
-        <p className="mt-1 text-sm text-white">{subtitle}</p>
+        <h3 className="font-display text-lg font-semibold text-white">{t(`cat.${key}.title`)}</h3>
+        <p className="mt-1 text-sm text-white">{t(`cat.${key}.sub`)}</p>
         <p className="mt-3 text-xs font-medium text-white/85">{examples}</p>
         <span className="card-corner-slash" aria-hidden />
       </Link>

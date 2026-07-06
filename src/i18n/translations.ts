@@ -77,6 +77,81 @@ const en: Dict = {
   'footer.regBody':
     '27 Markets is finalising its regulatory authorization. This platform currently operates as a demonstration product and is not yet a live, licensed brokerage. Nothing here constitutes investment advice.',
 
+  // ── Trust band ──
+  'trustBand.p1t': 'Segregated client funds',
+  'trustBand.p1b': 'Client money is kept in accounts separate from company operating capital.',
+  'trustBand.p2t': 'Bank-grade security',
+  'trustBand.p2b': 'Encrypted sessions and optional two-factor authentication on every account.',
+  'trustBand.p3t': 'Authorization in progress',
+  'trustBand.p3b': 'We are finalising our regulatory authorization and operate transparently in the meantime.',
+  'trustBand.p4t': 'Transparent pricing',
+  'trustBand.p4b': 'The spread you see is the spread you trade — no hidden mark-ups or re-quotes.',
+  'trustBand.risk':
+    'Risk warning: Trading leveraged products such as CFDs carries a high risk of loss and may not be suitable for all investors. Ensure you understand the risks before trading.',
+  'trustBand.link': 'Read Trust & Safety →',
+
+  // ── Why 27 Markets ──
+  'why.eyebrow': 'Why 27 Markets',
+  'why.title': 'Built for traders. Powered by technology.',
+  'why.desc': 'We combine advanced technology, deep liquidity, and transparent conditions to deliver a superior trading experience.',
+  'why.f1t': 'Deep Liquidity',
+  'why.f1d': 'Access institutional-grade liquidity aggregated from top-tier global providers.',
+  'why.f2t': 'Tight Spreads',
+  'why.f2d': 'Raw spreads from 0.0 pips on major pairs with fully transparent pricing.',
+  'why.f3t': 'Fast Execution',
+  'why.f3d': 'Lightning-fast order execution under 30ms with no dealing desk and no re-quotes.',
+  'why.f4t': 'Transparent Trading',
+  'why.f4d': 'No hidden fees, no markups. Clear conditions you can verify on every trade.',
+  'why.f5t': 'Secure Funds',
+  'why.f5d': 'Segregated client accounts held with industry-leading banking partners.',
+
+  // ── Growth ──
+  'growth.eyebrow': 'Built for growth',
+  'growth.title': 'Keep more of every move',
+  'growth.desc': 'Tight spreads, fast execution, and transparent pricing mean more of every winning trade stays in your account. Scale your strategy with leverage up to 1:500 across 100+ global markets.',
+  'growth.b1': 'Spreads from 0.0 pips',
+  'growth.b2': 'Sub-30ms execution, no dealing desk',
+  'growth.b3': 'Transparent pricing — no hidden fees',
+  'growth.cta': 'Explore accounts',
+
+  // ── Platform showcase ──
+  'platform.eyebrow': 'Platforms',
+  'platform.title': 'Trade on web or desktop',
+  'platform.desc': 'One account across our web trader and the MetaTrader 5 desktop terminal. Pick up exactly where you left off.',
+  'platform.webT': 'Web Trader',
+  'platform.webB': 'Trade instantly in your browser — nothing to install.',
+  'platform.deskT': 'Desktop',
+  'platform.deskB': 'The MetaTrader 5 desktop terminal for serious sessions.',
+  'platform.feat1': 'Advanced charting & indicators',
+  'platform.feat2': 'Multiple order types & risk controls',
+  'platform.feat3': 'Real-time price alerts & watchlists',
+  'platform.launch': 'Launch Web Trader',
+  'platform.all': 'See all platforms',
+
+  // ── Markets preview ──
+  'mkt.eyebrow': 'Global Markets',
+  'mkt.title': 'Trade 100+ global markets with confidence',
+  'mkt.desc': 'Diversify your portfolio with 100+ instruments across multiple asset classes.',
+  'mkt.viewAll': 'View All Instruments',
+  'cat.Forex.sub': 'Major, minor & exotic currency pairs',
+  'cat.Metals.sub': 'Precious metals spot trading',
+  'cat.Indices.sub': 'Global index cash & futures',
+  'cat.Commodities.sub': 'Energy, softs & agricultural',
+  'cat.Stocks.sub': 'Global share CFDs',
+  'cat.Crypto.sub': 'Top cryptocurrencies with competitive spreads',
+  'cat.Forex.title': 'Forex',
+  'cat.Metals.title': 'Metals',
+  'cat.Indices.title': 'Indices',
+  'cat.Commodities.title': 'Commodities',
+  'cat.Stocks.title': 'Stocks',
+  'cat.Crypto.title': 'Crypto CFDs',
+
+  // ── Final CTA band ──
+  'cta.title': 'Ready to trade beyond limits?',
+  'cta.desc': 'Open a live account in minutes, or sharpen your strategy with a free demo. No hidden fees, no dealing desk.',
+  'cta.primary': 'Open Live Account',
+  'cta.secondary': 'Try Free Demo',
+
   // ── Language switcher ──
   'lang.label': 'Language',
   'lang.en': 'English',
@@ -84,6 +159,81 @@ const en: Dict = {
 }
 
 const ar: Dict = {
+  // ── Trust band ──
+  'trustBand.p1t': 'أموال العملاء منفصلة',
+  'trustBand.p1b': 'تُحفظ أموال العملاء في حسابات منفصلة عن رأس مال تشغيل الشركة.',
+  'trustBand.p2t': 'أمان بمستوى البنوك',
+  'trustBand.p2b': 'جلسات مشفّرة ومصادقة ثنائية اختيارية على كل حساب.',
+  'trustBand.p3t': 'الترخيص قيد الإنجاز',
+  'trustBand.p3b': 'نعمل على استكمال ترخيصنا التنظيمي ونعمل بشفافية في هذه الأثناء.',
+  'trustBand.p4t': 'تسعير شفّاف',
+  'trustBand.p4b': 'السبريد الذي تراه هو السبريد الذي تتداول به — بدون رسوم خفية أو إعادة تسعير.',
+  'trustBand.risk':
+    'تحذير المخاطر: ينطوي تداول المنتجات ذات الرافعة المالية مثل عقود الفروقات على مخاطر عالية للخسارة وقد لا يكون مناسباً لجميع المستثمرين. تأكد من فهمك للمخاطر قبل التداول.',
+  'trustBand.link': 'اقرأ عن الأمان والثقة ←',
+
+  // ── Why 27 Markets ──
+  'why.eyebrow': 'لماذا 27 ماركتس',
+  'why.title': 'مبني للمتداولين. مدعوم بالتقنية.',
+  'why.desc': 'نجمع بين التقنية المتقدمة والسيولة العميقة والشروط الشفافة لنقدّم تجربة تداول متميّزة.',
+  'why.f1t': 'سيولة عميقة',
+  'why.f1d': 'وصول إلى سيولة بمستوى مؤسسي مجمّعة من كبار مزوّدي السيولة العالميين.',
+  'why.f2t': 'سبريد ضيّق',
+  'why.f2d': 'سبريد خام من 0.0 نقطة على الأزواج الرئيسية مع تسعير شفّاف بالكامل.',
+  'why.f3t': 'تنفيذ سريع',
+  'why.f3d': 'تنفيذ فائق السرعة للأوامر في أقل من 30 مللي ثانية بدون مكتب تداول أو إعادة تسعير.',
+  'why.f4t': 'تداول شفّاف',
+  'why.f4d': 'بدون رسوم خفية أو زيادات. شروط واضحة يمكنك التحقق منها في كل صفقة.',
+  'why.f5t': 'أموال آمنة',
+  'why.f5d': 'حسابات عملاء منفصلة محفوظة لدى شركاء مصرفيين رائدين.',
+
+  // ── Growth ──
+  'growth.eyebrow': 'مبني للنمو',
+  'growth.title': 'احتفظ بالمزيد من كل حركة',
+  'growth.desc': 'السبريد الضيّق والتنفيذ السريع والتسعير الشفّاف يعني بقاء جزء أكبر من كل صفقة رابحة في حسابك. وسّع استراتيجيتك برافعة مالية تصل إلى 1:500 عبر أكثر من 100 سوق عالمي.',
+  'growth.b1': 'سبريد من 0.0 نقطة',
+  'growth.b2': 'تنفيذ في أقل من 30 مللي ثانية، بدون مكتب تداول',
+  'growth.b3': 'تسعير شفّاف — بدون رسوم خفية',
+  'growth.cta': 'استكشف الحسابات',
+
+  // ── Platform showcase ──
+  'platform.eyebrow': 'المنصات',
+  'platform.title': 'تداول على الويب أو سطح المكتب',
+  'platform.desc': 'حساب واحد عبر منصة الويب ومنصة ميتاتريدر 5 لسطح المكتب. تابع من حيث توقفت تماماً.',
+  'platform.webT': 'منصة الويب',
+  'platform.webB': 'تداول فوراً من متصفحك — بدون أي تثبيت.',
+  'platform.deskT': 'سطح المكتب',
+  'platform.deskB': 'منصة ميتاتريدر 5 لسطح المكتب للجلسات الجادة.',
+  'platform.feat1': 'رسوم بيانية ومؤشرات متقدمة',
+  'platform.feat2': 'أنواع أوامر متعددة وأدوات لإدارة المخاطر',
+  'platform.feat3': 'تنبيهات أسعار وقوائم متابعة فورية',
+  'platform.launch': 'افتح منصة الويب',
+  'platform.all': 'عرض جميع المنصات',
+
+  // ── Markets preview ──
+  'mkt.eyebrow': 'الأسواق العالمية',
+  'mkt.title': 'تداول أكثر من 100 سوق عالمي بثقة',
+  'mkt.desc': 'نوّع محفظتك بأكثر من 100 أداة عبر فئات أصول متعددة.',
+  'mkt.viewAll': 'عرض جميع الأدوات',
+  'cat.Forex.sub': 'أزواج عملات رئيسية وثانوية ونادرة',
+  'cat.Metals.sub': 'تداول المعادن الثمينة الفوري',
+  'cat.Indices.sub': 'مؤشرات عالمية نقدية وآجلة',
+  'cat.Commodities.sub': 'الطاقة والسلع اللينة والزراعية',
+  'cat.Stocks.sub': 'عقود فروقات على الأسهم العالمية',
+  'cat.Crypto.sub': 'أبرز العملات الرقمية بأسعار تنافسية',
+  'cat.Forex.title': 'الفوركس',
+  'cat.Metals.title': 'المعادن',
+  'cat.Indices.title': 'المؤشرات',
+  'cat.Commodities.title': 'السلع',
+  'cat.Stocks.title': 'الأسهم',
+  'cat.Crypto.title': 'عقود فروقات العملات الرقمية',
+
+  // ── Final CTA band ──
+  'cta.title': 'هل أنت مستعد للتداول بلا حدود؟',
+  'cta.desc': 'افتح حساباً حقيقياً في دقائق، أو طوّر استراتيجيتك بحساب تجريبي مجاني. بدون رسوم خفية، بدون مكتب تداول.',
+  'cta.primary': 'افتح حساباً حقيقياً',
+  'cta.secondary': 'جرّب حساباً تجريبياً',
+
   // ── Nav ──
   'nav.login': 'تسجيل الدخول',
   'nav.openAccount': 'افتح حساباً',
