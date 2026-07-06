@@ -73,6 +73,13 @@ export function PortalLayout() {
             <div className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8">
               <VerifyEmailBanner />
               <Outlet />
+              <p className="mt-10 border-t border-white/[0.06] pt-5 text-[11px] leading-relaxed text-gray-500">
+                <span className="font-semibold text-gray-400">Risk warning:</span> Trading leveraged
+                products such as CFDs carries a high risk of losing money rapidly due to leverage and
+                may not be suitable for all investors. 27 Markets is finalising its regulatory
+                authorization and currently operates as a demonstration product. Nothing here is
+                investment advice.
+              </p>
             </div>
           </main>
         </div>
