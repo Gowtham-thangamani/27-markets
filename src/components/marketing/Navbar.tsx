@@ -8,7 +8,6 @@ import {
   Globe,
   PlayCircle,
   LayoutGrid,
-  Smartphone,
   DollarSign,
   Gem,
   BarChart3,
@@ -29,17 +28,21 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { useT } from '@/i18n/LanguageContext'
 import { useBodyScrollLock } from '@/lib/hooks'
 import { cn } from '@/lib/cn'
 
 interface SubItem {
   label: string
+  labelKey: string
   to: string
   desc: string
   icon: LucideIcon
 }
 interface NavItem {
   label: string
+  labelKey: string
   to: string
   menu: SubItem[]
 }
@@ -47,53 +50,57 @@ interface NavItem {
 const navItems: NavItem[] = [
   {
     label: 'Trading',
+    labelKey: 'nav.trading',
     to: '/accounts',
     menu: [
-      { label: 'Account Types', to: '/accounts', desc: 'Standard, Raw & VIP accounts', icon: Layers },
-      { label: 'Trading Conditions', to: '/conditions', desc: 'Spreads, commission & leverage', icon: BarChart3 },
-      { label: 'Funding', to: '/funding', desc: 'Deposits from $50, no-min withdrawal', icon: Wallet },
-      { label: 'Free Demo', to: '/demo', desc: 'Practice risk-free', icon: PlayCircle },
+      { label: 'Account Types', labelKey: 'nav.accountTypes', to: '/accounts', desc: 'Standard, Raw & VIP accounts', icon: Layers },
+      { label: 'Trading Conditions', labelKey: 'nav.conditions', to: '/conditions', desc: 'Spreads, commission & leverage', icon: BarChart3 },
+      { label: 'Funding', labelKey: 'nav.funding', to: '/funding', desc: 'Deposits from $50, no-min withdrawal', icon: Wallet },
+      { label: 'Free Demo', labelKey: 'nav.demo', to: '/demo', desc: 'Practice risk-free', icon: PlayCircle },
     ],
   },
   {
     label: 'Platforms',
+    labelKey: 'nav.platforms',
     to: '/platforms',
     menu: [
-      { label: 'All Platforms', to: '/platforms', desc: 'Compare web, mobile & desktop', icon: LayoutGrid },
-      { label: 'Web Trader', to: '/platforms#web', desc: 'Trade in your browser', icon: Globe },
-      { label: 'Mobile', to: '/platforms#mobile', desc: 'Trade on iOS & Android', icon: Smartphone },
-      { label: 'Desktop', to: '/platforms#desktop', desc: 'Focused desktop trading', icon: MonitorSmartphone },
+      { label: 'All Platforms', labelKey: 'nav.allPlatforms', to: '/platforms', desc: 'Web trader & desktop', icon: LayoutGrid },
+      { label: 'Web Trader', labelKey: 'nav.webTrader', to: '/platforms#web', desc: 'Trade in your browser', icon: Globe },
+      { label: 'Desktop', labelKey: 'nav.desktop', to: '/platforms#desktop', desc: 'MetaTrader 5 desktop', icon: MonitorSmartphone },
     ],
   },
   {
     label: 'Markets',
+    labelKey: 'nav.markets',
     to: '/markets',
     menu: [
-      { label: 'Forex', to: '/markets?category=Forex', desc: 'Major, minor & exotic pairs', icon: DollarSign },
-      { label: 'Metals', to: '/markets?category=Metals', desc: 'Gold, silver & more', icon: Gem },
-      { label: 'Indices', to: '/markets?category=Indices', desc: 'Global index CFDs', icon: BarChart3 },
-      { label: 'Commodities', to: '/markets?category=Commodities', desc: 'Energy & agriculture', icon: Boxes },
-      { label: 'Stocks', to: '/markets?category=Stocks', desc: 'Global share CFDs', icon: CandlestickChart },
-      { label: 'Crypto', to: '/markets?category=Crypto', desc: 'Top cryptocurrencies', icon: Bitcoin },
+      { label: 'Forex', labelKey: 'nav.forex', to: '/markets?category=Forex', desc: 'Major, minor & exotic pairs', icon: DollarSign },
+      { label: 'Metals', labelKey: 'nav.metals', to: '/markets?category=Metals', desc: 'Gold, silver & more', icon: Gem },
+      { label: 'Indices', labelKey: 'nav.indices', to: '/markets?category=Indices', desc: 'Global index CFDs', icon: BarChart3 },
+      { label: 'Commodities', labelKey: 'nav.commodities', to: '/markets?category=Commodities', desc: 'Energy & agriculture', icon: Boxes },
+      { label: 'Stocks', labelKey: 'nav.stocks', to: '/markets?category=Stocks', desc: 'Global share CFDs', icon: CandlestickChart },
+      { label: 'Crypto', labelKey: 'nav.crypto', to: '/markets?category=Crypto', desc: 'Top cryptocurrencies', icon: Bitcoin },
     ],
   },
   {
     label: 'Partner with us',
+    labelKey: 'nav.partner',
     to: '/partnership',
     menu: [
-      { label: 'IB Program', to: '/partnership', desc: 'Rebates, tools & support', icon: Handshake },
-      { label: 'Become a Partner', to: '/partner/apply', desc: 'Apply in minutes', icon: UserPlus },
+      { label: 'IB Program', labelKey: 'nav.ibProgram', to: '/partnership', desc: 'Rebates, tools & support', icon: Handshake },
+      { label: 'Become a Partner', labelKey: 'nav.becomePartner', to: '/partner/apply', desc: 'Apply in minutes', icon: UserPlus },
     ],
   },
   {
     label: 'Company',
+    labelKey: 'nav.company',
     to: '/about',
     menu: [
-      { label: 'About Us', to: '/about', desc: 'Our story & mission', icon: Building2 },
-      { label: 'Trust & Safety', to: '/trust', desc: 'How we protect you', icon: ShieldCheck },
-      { label: 'Market News', to: '/blog', desc: 'Insights & analysis', icon: Newspaper },
-      { label: 'Help & FAQ', to: '/faq', desc: 'Answers & support', icon: HelpCircle },
-      { label: 'Contact', to: '/contact', desc: 'Get in touch', icon: Mail },
+      { label: 'About Us', labelKey: 'nav.about', to: '/about', desc: 'Our story & mission', icon: Building2 },
+      { label: 'Trust & Safety', labelKey: 'nav.trust', to: '/trust', desc: 'How we protect you', icon: ShieldCheck },
+      { label: 'Market News', labelKey: 'nav.marketNews', to: '/blog', desc: 'Insights & analysis', icon: Newspaper },
+      { label: 'Help & FAQ', labelKey: 'nav.help', to: '/faq', desc: 'Answers & support', icon: HelpCircle },
+      { label: 'Contact', labelKey: 'nav.contact', to: '/contact', desc: 'Get in touch', icon: Mail },
     ],
   },
 ]
@@ -116,6 +123,7 @@ export function Navbar() {
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null)
   const location = useLocation()
+  const t = useT()
   useBodyScrollLock(open)
 
   useEffect(() => {
@@ -173,7 +181,7 @@ export function Navbar() {
                   active ? 'text-white' : 'text-gray-300 hover:text-white'
                 )}
               >
-                {item.label}
+                {t(item.labelKey)}
                 <ChevronDown
                   className={cn(
                     'h-3.5 w-3.5 opacity-50 transition-transform duration-200',
@@ -208,7 +216,7 @@ export function Navbar() {
                             <sub.icon className="h-[18px] w-[18px]" />
                           </span>
                           <span>
-                            <span className="block text-sm font-semibold text-white">{sub.label}</span>
+                            <span className="block text-sm font-semibold text-white">{t(sub.labelKey)}</span>
                             <span className="block text-xs leading-snug text-gray-400">{sub.desc}</span>
                           </span>
                         </Link>
@@ -223,13 +231,14 @@ export function Navbar() {
         </ul>
 
         <div className="hidden items-center gap-2 lg:flex">
+          <LanguageSwitcher />
           <Link to="/login">
             <Button variant="ghost" size="sm">
-              Login
+              {t('nav.login')}
             </Button>
           </Link>
           <Link to="/register">
-            <Button size="sm">Open Account</Button>
+            <Button size="sm">{t('nav.openAccount')}</Button>
           </Link>
         </div>
 
@@ -270,7 +279,7 @@ export function Navbar() {
                             : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
                         )}
                       >
-                        {item.label}
+                        {t(item.labelKey)}
                         <ChevronDown
                           className={cn('h-4 w-4 text-gray-400 transition-transform', expanded && 'rotate-180')}
                         />
@@ -295,7 +304,7 @@ export function Navbar() {
                                 <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-brand-500/10 text-brand-400">
                                   <sub.icon className="h-4 w-4" />
                                 </span>
-                                {sub.label}
+                                {t(sub.labelKey)}
                               </NavLink>
                             ))}
                           </div>
@@ -305,14 +314,15 @@ export function Navbar() {
                   </div>
                 )
               })}
-              <div className="flex gap-3 pt-3">
+              <div className="flex items-center gap-3 pt-3">
+                <LanguageSwitcher className="border border-white/10" />
                 <Link to="/login" className="flex-1">
                   <Button variant="outline" fullWidth>
-                    Login
+                    {t('nav.login')}
                   </Button>
                 </Link>
                 <Link to="/register" className="flex-1">
-                  <Button fullWidth>Open Account</Button>
+                  <Button fullWidth>{t('nav.openAccount')}</Button>
                 </Link>
               </div>
             </div>

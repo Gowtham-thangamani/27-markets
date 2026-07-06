@@ -6,6 +6,7 @@ import { Button } from '@/components/ui'
 import { asset } from '@/lib/asset'
 import { fadeUp, staggerContainer } from '@/lib/motion'
 import { HeroFloatingCards } from '@/components/marketing/HeroFloatingCards'
+import { useT } from '@/i18n/LanguageContext'
 
 interface Quote {
   symbol: string
@@ -26,11 +27,15 @@ type Visual = 'platform' | 'globe' | 'coins'
 interface Slide {
   id: string
   pill: string
+  pillKey?: string
   lines: [string, string, string]
+  lineKeys?: [string, string, string]
   tagline: string
+  taglineKey?: string
   description: string
-  primary: { label: string; to: string }
-  secondary: { label: string; to: string }
+  descKey?: string
+  primary: { label: string; to: string; labelKey?: string }
+  secondary: { label: string; to: string; labelKey?: string }
   visual: Visual
 }
 
@@ -38,12 +43,16 @@ const SLIDES: Slide[] = [
   {
     id: 'trade',
     pill: 'Next-generation multi-asset broker',
+    pillKey: 'hero.pill',
     lines: ['Trade', 'Beyond', 'Limits'],
+    lineKeys: ['hero.line1', 'hero.line2', 'hero.line3'],
     tagline: 'Precision · Performance · Partnership',
+    taglineKey: 'hero.tagline',
     description:
       'Access global financial markets through a broker built for traders, partners, and long-term growth.',
-    primary: { label: 'Open Live Account', to: '/register' },
-    secondary: { label: 'Try Free Demo', to: '/demo' },
+    descKey: 'hero.desc',
+    primary: { label: 'Open Live Account', to: '/register', labelKey: 'hero.ctaPrimary' },
+    secondary: { label: 'Try Free Demo', to: '/demo', labelKey: 'hero.ctaSecondary' },
     visual: 'platform',
   },
   {
@@ -71,15 +80,16 @@ const SLIDES: Slide[] = [
 ]
 
 const TRUST = [
-  { icon: ShieldCheck, label: 'Segregated funds' },
-  { icon: Zap, label: 'No dealing desk' },
-  { icon: Gauge, label: '2-minute setup' },
+  { icon: ShieldCheck, label: 'Segregated funds', key: 'hero.trust1' },
+  { icon: Zap, label: 'No dealing desk', key: 'hero.trust2' },
+  { icon: Gauge, label: '2-minute setup', key: 'hero.trust3' },
 ]
 
 const AUTO_MS = 6000
 
 export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps) {
   const reduce = useReducedMotion()
+  const t = useT()
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
   const slide = SLIDES[index]
@@ -127,16 +137,16 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
               className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/[0.08] px-3 py-1 text-xs font-medium text-white"
             >
               <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-brand-500" />
-              {slide.pill}
+              {slide.pillKey ? t(slide.pillKey) : slide.pill}
             </motion.span>
 
             <motion.h1
               variants={fadeUp}
               className="mt-5 font-display text-5xl font-bold leading-[1.02] tracking-tight text-white sm:text-6xl lg:text-7xl xl:text-8xl"
             >
-              {slide.lines[0]}
+              {slide.lineKeys ? t(slide.lineKeys[0]) : slide.lines[0]}
               <br />
-              {slide.lines[1]}
+              {slide.lineKeys ? t(slide.lineKeys[1]) : slide.lines[1]}
               <br />
               <span className="relative inline-block">
                 <span
@@ -146,17 +156,17 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
                       : 'text-white'
                   }
                 >
-                  {slide.lines[2]}
+                  {slide.lineKeys ? t(slide.lineKeys[2]) : slide.lines[2]}
                 </span>
                 <span className="hero-underline absolute -bottom-1 left-0 h-[3px] w-full rounded-full bg-gradient-to-r from-brand-500 to-transparent" />
               </span>
             </motion.h1>
 
             <motion.p variants={fadeUp} className="mt-5 text-sm font-medium tracking-wide text-white/80">
-              {slide.tagline}
+              {slide.taglineKey ? t(slide.taglineKey) : slide.tagline}
             </motion.p>
             <motion.p variants={fadeUp} className="mt-3 max-w-md text-base leading-relaxed text-gray-300">
-              {slide.description}
+              {slide.descKey ? t(slide.descKey) : slide.description}
             </motion.p>
 
             <motion.div variants={fadeUp} className="mt-7 flex flex-wrap items-center gap-3">
@@ -165,12 +175,13 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
                   size="lg"
                   className="gap-2 shadow-[0_0_34px_-4px_rgba(225,29,46,0.55)] transition-shadow hover:shadow-[0_0_48px_-2px_rgba(225,29,46,0.7)]"
                 >
-                  {slide.primary.label} <ArrowRight className="h-4 w-4" />
+                  {slide.primary.labelKey ? t(slide.primary.labelKey) : slide.primary.label}{' '}
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <Link to={slide.secondary.to}>
                 <Button variant="outline" size="lg">
-                  {slide.secondary.label}
+                  {slide.secondary.labelKey ? t(slide.secondary.labelKey) : slide.secondary.label}
                 </Button>
               </Link>
             </motion.div>
@@ -179,9 +190,9 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
               variants={fadeUp}
               className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium text-gray-400"
             >
-              {TRUST.map((t) => (
-                <span key={t.label} className="inline-flex items-center gap-1.5">
-                  <t.icon className="h-3.5 w-3.5 text-brand-500" aria-hidden /> {t.label}
+              {TRUST.map((item) => (
+                <span key={item.key} className="inline-flex items-center gap-1.5">
+                  <item.icon className="h-3.5 w-3.5 text-brand-500" aria-hidden /> {t(item.key)}
                 </span>
               ))}
             </motion.p>

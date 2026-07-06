@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Monitor, Smartphone, Globe, LineChart, Bell, Layers, ArrowRight } from 'lucide-react'
+import { Monitor, Globe, LineChart, Bell, Layers, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui'
 import { Reveal } from '@/components/Reveal'
@@ -9,8 +9,7 @@ import { cardStagger, cardReveal } from '@/lib/motion'
 
 const ACCESS = [
   { icon: Globe, title: 'Web Trader', body: 'Trade instantly in your browser — nothing to install.' },
-  { icon: Smartphone, title: 'Mobile', body: 'Full trading on iOS and Android, wherever you are.' },
-  { icon: Monitor, title: 'Desktop', body: 'A focused desktop experience for serious sessions.' },
+  { icon: Monitor, title: 'Desktop', body: 'The MetaTrader 5 desktop terminal for serious sessions.' },
 ]
 
 const FEATURES = [
@@ -25,8 +24,8 @@ export function PlatformShowcase() {
       <div className="container-x relative z-10">
         <SectionHeading
           eyebrow="Platforms"
-          title="Trade your way — on every device"
-          description="One account, synced across web, mobile, and desktop. Pick up exactly where you left off."
+          title="Trade on web or desktop"
+          description="One account across our web trader and the MetaTrader 5 desktop terminal. Pick up exactly where you left off."
         />
 
         <div className="mt-12 grid items-center gap-12 lg:grid-cols-2">
@@ -52,7 +51,7 @@ export function PlatformShowcase() {
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, amount: 0.2 }}
-              className="grid gap-4 sm:grid-cols-3"
+              className="grid gap-4 sm:grid-cols-2"
             >
               {ACCESS.map((a) => (
                 <motion.div

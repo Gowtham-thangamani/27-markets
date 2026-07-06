@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import type { ComponentType } from 'react'
 import { Logo } from '@/components/Logo'
+import { useT } from '@/i18n/LanguageContext'
 
 function TikTokIcon({ className }: { className?: string }) {
   return (
@@ -29,50 +30,51 @@ const socials: { label: string; href: string; Icon: ComponentType<LucideProps> |
 ]
 
 const trust = [
-  { icon: ShieldCheck, label: 'Segregated client funds' },
-  { icon: Lock, label: 'Bank-grade security' },
-  { icon: DollarSign, label: 'USD accounts' },
-  { icon: Headphones, label: '24/5 support' },
+  { icon: ShieldCheck, key: 'footer.segregated' },
+  { icon: Lock, key: 'footer.security' },
+  { icon: DollarSign, key: 'footer.usd' },
+  { icon: Headphones, key: 'footer.support' },
 ]
 
 const columns = [
   {
-    title: 'Trading',
+    titleKey: 'footer.trading',
     links: [
-      { label: 'Accounts', to: '/accounts' },
-      { label: 'Markets', to: '/markets' },
-      { label: 'Platforms', to: '/platforms' },
-      { label: 'Demo Account', to: '/demo' },
+      { labelKey: 'footer.accounts', to: '/accounts' },
+      { labelKey: 'nav.markets', to: '/markets' },
+      { labelKey: 'nav.platforms', to: '/platforms' },
+      { labelKey: 'nav.demo', to: '/demo' },
     ],
   },
   {
-    title: 'Company',
+    titleKey: 'footer.company',
     links: [
-      { label: 'About Us', to: '/about' },
-      { label: 'Partnership', to: '/partnership' },
-      { label: 'Blog', to: '/blog' },
-      { label: 'Contact', to: '/contact' },
-      { label: 'Client Portal', to: '/portal/dashboard' },
+      { labelKey: 'nav.about', to: '/about' },
+      { labelKey: 'footer.partnership', to: '/partnership' },
+      { labelKey: 'footer.blog', to: '/blog' },
+      { labelKey: 'nav.contact', to: '/contact' },
+      { labelKey: 'footer.clientPortal', to: '/portal/dashboard' },
     ],
   },
   {
-    title: 'Legal',
+    titleKey: 'footer.legal',
     links: [
-      { label: 'Client Agreement', to: '/downloads' },
-      { label: 'Risk Disclosure', to: '/downloads' },
-      { label: 'Privacy Policy', to: '/about' },
-      { label: 'AML Policy', to: '/about' },
+      { labelKey: 'footer.clientAgreement', to: '/downloads' },
+      { labelKey: 'footer.riskDisclosure', to: '/downloads' },
+      { labelKey: 'footer.privacy', to: '/about' },
+      { labelKey: 'footer.aml', to: '/about' },
     ],
   },
 ]
 
 const legalLinks = [
-  { label: 'Privacy Policy', to: '/about' },
-  { label: 'Client Agreement', to: '/downloads' },
-  { label: 'Risk Disclosure', to: '/downloads' },
+  { labelKey: 'footer.privacy', to: '/about' },
+  { labelKey: 'footer.clientAgreement', to: '/downloads' },
+  { labelKey: 'footer.riskDisclosure', to: '/downloads' },
 ]
 
 export function Footer() {
+  const t = useT()
   return (
     <footer className="relative mt-24 overflow-hidden border-t border-white/[0.06] bg-ink-900">
       {/* Top brand accent */}
@@ -90,12 +92,12 @@ export function Footer() {
       <div className="container-x relative py-16">
         {/* Trust strip */}
         <div className="mb-12 grid grid-cols-2 gap-5 border-b border-white/[0.06] pb-10 sm:grid-cols-4">
-          {trust.map((t) => (
-            <div key={t.label} className="flex items-center gap-3">
+          {trust.map((item) => (
+            <div key={item.key} className="flex items-center gap-3">
               <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/15">
-                <t.icon className="h-4 w-4" />
+                <item.icon className="h-4 w-4" />
               </span>
-              <span className="text-sm font-medium text-white">{t.label}</span>
+              <span className="text-sm font-medium text-white">{t(item.key)}</span>
             </div>
           ))}
         </div>
@@ -103,10 +105,7 @@ export function Footer() {
         <div className="grid gap-10 lg:grid-cols-[1.5fr_repeat(3,1fr)]">
           <div className="max-w-sm">
             <Logo size={30} />
-            <p className="mt-4 text-sm leading-relaxed text-gray-300">
-              Trade global financial markets through a broker built for traders, partners, and
-              long-term growth.
-            </p>
+            <p className="mt-4 text-sm leading-relaxed text-gray-300">{t('footer.tagline')}</p>
             <a
               href="mailto:support@27markets.io"
               className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-white transition-colors hover:text-brand-400"
@@ -130,18 +129,18 @@ export function Footer() {
           </div>
 
           {columns.map((col) => (
-            <div key={col.title}>
+            <div key={col.titleKey}>
               <h4 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                {col.title}
+                {t(col.titleKey)}
               </h4>
               <ul className="space-y-2.5">
                 {col.links.map((link) => (
-                  <li key={link.label}>
+                  <li key={link.labelKey}>
                     <Link
                       to={link.to}
                       className="inline-block text-sm text-gray-300 transition-all duration-200 hover:translate-x-0.5 hover:text-brand-400"
                     >
-                      {link.label}
+                      {t(link.labelKey)}
                     </Link>
                   </li>
                 ))}
@@ -153,15 +152,15 @@ export function Footer() {
         <div className="hairline my-10" />
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <p className="text-xs text-gray-400">© 2026 27 Markets. All rights reserved.</p>
+          <p className="text-xs text-gray-400">{t('footer.rights')}</p>
           <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs">
             {legalLinks.map((l) => (
               <Link
-                key={l.label}
+                key={l.labelKey}
                 to={l.to}
                 className="text-gray-400 transition-colors hover:text-brand-400"
               >
-                {l.label}
+                {t(l.labelKey)}
               </Link>
             ))}
           </div>
@@ -169,16 +168,10 @@ export function Footer() {
 
         <div className="mt-6 space-y-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-xs leading-relaxed text-gray-400">
           <p>
-            <span className="font-semibold text-gray-300">Risk warning:</span> Trading leveraged
-            products such as CFDs carries a high risk of losing money rapidly due to leverage and may
-            not be suitable for all investors. You should consider whether you understand how these
-            products work and whether you can afford to take the high risk of losing your money.
+            <span className="font-semibold text-gray-300">{t('footer.riskTitle')}</span> {t('footer.riskBody')}
           </p>
           <p>
-            <span className="font-semibold text-gray-300">Regulatory status:</span> 27 Markets is
-            finalising its regulatory authorization. This platform currently operates as a
-            demonstration product and is not yet a live, licensed brokerage. Nothing here constitutes
-            investment advice.
+            <span className="font-semibold text-gray-300">{t('footer.regTitle')}</span> {t('footer.regBody')}
           </p>
         </div>
       </div>

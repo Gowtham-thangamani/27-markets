@@ -19,7 +19,6 @@ import { MarketCard } from '@/components/marketing/MarketCard'
 import { CTABand } from '@/components/marketing/CTABand'
 import { TrustRegulationBand } from '@/components/marketing/TrustRegulationBand'
 import { PlatformShowcase } from '@/components/marketing/PlatformShowcase'
-import { MobileAppSection } from '@/components/marketing/MobileAppSection'
 import { AccountTypesSnapshot } from '@/components/marketing/AccountTypesSnapshot'
 import { OnboardingSteps } from '@/components/marketing/OnboardingSteps'
 import { Testimonials } from '@/components/marketing/Testimonials'
@@ -191,11 +190,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* PLATFORM & MOBILE SHOWCASE */}
+      {/* PLATFORM SHOWCASE */}
       <PlatformShowcase />
-
-      {/* MOBILE APP */}
-      <MobileAppSection />
 
       {/* PARTNER */}
       <PartnerSection />
