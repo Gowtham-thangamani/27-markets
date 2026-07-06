@@ -24,13 +24,15 @@
     /* Foreground (drives text-white / border-white/* / bg-white/*) */
     --fg: 255 255 255;
 
-    /* Neutral text scale */
-    --gray-100: 243 244 246;
-    --gray-200: 229 231 235;
-    --gray-300: 209 213 219;
-    --gray-400: 156 163 175;
-    --gray-500: 107 114 128;
-    --gray-600: 75 85 99;
+    /* Neutral text scale — lifted at the dim end so secondary/muted text stays
+       legible on the near-black ground (gray-500/600 previously fell near or
+       below the WCAG-AA contrast floor). Hierarchy is preserved. */
+    --gray-100: 244 245 247;
+    --gray-200: 230 232 237;
+    --gray-300: 211 216 224;
+    --gray-400: 179 186 198; /* primary secondary text — crisp */
+    --gray-500: 151 159 172; /* muted labels — clearly readable (~6.8:1) */
+    --gray-600: 123 132 146; /* faintest text — legible (~4.9:1 AA) */
   }
 
   /* ─── LIGHT theme ─── */
