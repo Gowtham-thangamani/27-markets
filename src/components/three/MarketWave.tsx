@@ -6,7 +6,7 @@ import { cn } from '@/lib/cn'
  * Glowing red market waveform line. SVG-based for crisp rendering and
  * low cost; the line animates by drawing itself, then a pulse travels across.
  */
-export function MarketWave({ className }: { className?: string }) {
+export function MarketWave({ className, stretch }: { className?: string; stretch?: boolean }) {
   const reduced = useReducedMotion()
   const d =
     'M0 160 C 80 160 110 90 170 95 C 230 100 250 40 320 70 C 380 95 410 30 470 60 C 540 95 560 150 620 140 C 690 128 720 60 800 80'
@@ -14,6 +14,7 @@ export function MarketWave({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 800 220"
+      preserveAspectRatio={stretch ? 'none' : 'xMidYMid meet'}
       className={cn('h-full w-full overflow-visible', className)}
       fill="none"
       aria-hidden

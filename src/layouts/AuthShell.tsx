@@ -21,9 +21,9 @@ export function AuthShell({ children, aside }: AuthShellProps) {
         <div className="absolute inset-0 bg-gradient-to-br from-brand-900/30 via-transparent to-transparent" />
         <div className="pointer-events-none absolute -left-20 top-1/3 h-80 w-80 bg-radial-red opacity-70 blur-2xl" />
 
-        {/* Animated market wave */}
-        <div className="pointer-events-none absolute inset-x-0 top-1/2 h-48 opacity-80">
-          <MarketWave />
+        {/* Animated market wave — fills the full panel */}
+        <div className="pointer-events-none absolute inset-0 opacity-80">
+          <MarketWave stretch className="h-full w-full" />
         </div>
 
         <div className="relative flex h-full flex-col justify-between p-12">
