@@ -19,6 +19,8 @@ import { MarketCard } from '@/components/marketing/MarketCard'
 import { CTABand } from '@/components/marketing/CTABand'
 import { TrustRegulationBand } from '@/components/marketing/TrustRegulationBand'
 import { PlatformShowcase } from '@/components/marketing/PlatformShowcase'
+import { MobileAppSection } from '@/components/marketing/MobileAppSection'
+import { AccountTypesSnapshot } from '@/components/marketing/AccountTypesSnapshot'
 import { OnboardingSteps } from '@/components/marketing/OnboardingSteps'
 import { Testimonials } from '@/components/marketing/Testimonials'
 import { FaqSection } from '@/components/marketing/FaqSection'
@@ -192,6 +194,9 @@ export default function HomePage() {
       {/* PLATFORM & MOBILE SHOWCASE */}
       <PlatformShowcase />
 
+      {/* MOBILE APP */}
+      <MobileAppSection />
+
       {/* PARTNER */}
       <PartnerSection />
 
@@ -241,6 +246,9 @@ export default function HomePage() {
 
       {/* FUNDING & PAYMENTS (light-theme design only) */}
       {onLight && <PaymentsCluster />}
+
+      {/* ACCOUNT TYPES SNAPSHOT */}
+      <AccountTypesSnapshot />
 
       {/* GETTING STARTED — 4 STEPS */}
       <OnboardingSteps />
