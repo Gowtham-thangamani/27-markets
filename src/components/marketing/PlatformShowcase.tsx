@@ -6,26 +6,28 @@ import { Reveal } from '@/components/Reveal'
 import { SectionHeading } from '@/components/SectionHeading'
 import { asset } from '@/lib/asset'
 import { cardStagger, cardReveal } from '@/lib/motion'
+import { useT } from '@/i18n/LanguageContext'
 
 const ACCESS = [
-  { icon: Globe, title: 'Web Trader', body: 'Trade instantly in your browser — nothing to install.' },
-  { icon: Monitor, title: 'Desktop', body: 'The MetaTrader 5 desktop terminal for serious sessions.' },
+  { icon: Globe, tKey: 'platform.webT', bKey: 'platform.webB' },
+  { icon: Monitor, tKey: 'platform.deskT', bKey: 'platform.deskB' },
 ]
 
 const FEATURES = [
-  { icon: LineChart, label: 'Advanced charting & indicators' },
-  { icon: Layers, label: 'Multiple order types & risk controls' },
-  { icon: Bell, label: 'Real-time price alerts & watchlists' },
+  { icon: LineChart, key: 'platform.feat1' },
+  { icon: Layers, key: 'platform.feat2' },
+  { icon: Bell, key: 'platform.feat3' },
 ]
 
 export function PlatformShowcase() {
+  const t = useT()
   return (
     <section className="relative overflow-hidden py-20 sm:py-24">
       <div className="container-x relative z-10">
         <SectionHeading
-          eyebrow="Platforms"
-          title="Trade on web or desktop"
-          description="One account across our web trader and the MetaTrader 5 desktop terminal. Pick up exactly where you left off."
+          eyebrow={t('platform.eyebrow')}
+          title={t('platform.title')}
+          description={t('platform.desc')}
         />
 
         <div className="mt-12 grid items-center gap-12 lg:grid-cols-2">
@@ -55,26 +57,26 @@ export function PlatformShowcase() {
             >
               {ACCESS.map((a) => (
                 <motion.div
-                  key={a.title}
+                  key={a.tKey}
                   variants={cardReveal}
                   className="glass-panel card-lift flex flex-col gap-2 p-4"
                 >
                   <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500/10 text-brand-400">
                     <a.icon className="h-[18px] w-[18px]" />
                   </span>
-                  <h3 className="text-sm font-semibold text-white">{a.title}</h3>
-                  <p className="text-xs leading-relaxed text-gray-400">{a.body}</p>
+                  <h3 className="text-sm font-semibold text-white">{t(a.tKey)}</h3>
+                  <p className="text-xs leading-relaxed text-gray-400">{t(a.bKey)}</p>
                 </motion.div>
               ))}
             </motion.div>
 
             <ul className="mt-8 space-y-3">
               {FEATURES.map((f) => (
-                <li key={f.label} className="flex items-center gap-3 text-sm text-gray-200">
+                <li key={f.key} className="flex items-center gap-3 text-sm text-gray-200">
                   <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-400">
                     <f.icon className="h-4 w-4" />
                   </span>
-                  {f.label}
+                  {t(f.key)}
                 </li>
               ))}
             </ul>
@@ -82,12 +84,12 @@ export function PlatformShowcase() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/demo">
                 <Button size="lg" className="gap-2">
-                  Launch Web Trader <ArrowRight className="h-4 w-4" />
+                  {t('platform.launch')} <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <Link to="/platforms">
                 <Button variant="outline" size="lg">
-                  See all platforms
+                  {t('platform.all')}
                 </Button>
               </Link>
             </div>

@@ -3,8 +3,10 @@ import { Button } from '@/components/ui'
 import { Reveal } from '@/components/Reveal'
 import { MarketWave } from '@/components/three/MarketWave'
 import { SignalFlow } from '@/components/marketing/SignalFlow'
+import { useT } from '@/i18n/LanguageContext'
 
 export function CTABand() {
+  const t = useT()
   return (
     <section className="container-x py-20">
       <Reveal>
@@ -16,24 +18,21 @@ export function CTABand() {
           <SignalFlow className="opacity-40" />
           <div className="relative">
             <h2 className="mx-auto max-w-2xl font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
-              Ready to trade beyond limits?
+              {t('cta.title')}
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-gray-300">
-              Open a live account in minutes, or sharpen your strategy with a free demo. No hidden
-              fees, no dealing desk.
-            </p>
+            <p className="mx-auto mt-4 max-w-xl text-gray-300">{t('cta.desc')}</p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link to="/register">
                 <Button
                   size="lg"
                   className="shadow-[0_0_34px_-4px_rgba(225,29,46,0.55)] transition-shadow hover:shadow-[0_0_48px_-2px_rgba(225,29,46,0.7)]"
                 >
-                  Open Live Account
+                  {t('cta.primary')}
                 </Button>
               </Link>
               <Link to="/demo">
                 <Button variant="outline" size="lg">
-                  Try Free Demo
+                  {t('cta.secondary')}
                 </Button>
               </Link>
             </div>

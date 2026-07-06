@@ -26,6 +26,7 @@ import { FaqSection } from '@/components/marketing/FaqSection'
 import { fadeUp, staggerContainer, cardStagger } from '@/lib/motion'
 import { asset } from '@/lib/asset'
 import { useThemeSafe } from '@/context/ThemeContext'
+import { useT } from '@/i18n/LanguageContext'
 import { useLiveQuotes } from '@/lib/useLiveQuotes'
 import { whyFeatures, marketCategories } from '@/mock/content'
 
@@ -42,6 +43,7 @@ const HERO_CHIPS = ['BINANCE:BTCUSDT', 'OANDA:XAU_USD', 'OANDA:EUR_USD']
 
 export default function HomePage() {
   const onLight = useThemeSafe() === 'light'
+  const t = useT()
   const { list: heroQuotes } = useLiveQuotes(HERO_CHIPS)
   return (
     <>
@@ -120,13 +122,9 @@ export default function HomePage() {
         <div className="container-x relative z-10 grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,3fr)] lg:items-start">
           <SectionHeading
             align="left"
-            eyebrow="Why 27 Markets"
-            title={
-              <>
-                Built for traders. Powered by technology.
-              </>
-            }
-            description="We combine advanced technology, deep liquidity, and transparent conditions to deliver a superior trading experience."
+            eyebrow={t('why.eyebrow')}
+            title={t('why.title')}
+            description={t('why.desc')}
           />
           <motion.div
             variants={cardStagger}
@@ -161,29 +159,25 @@ export default function HomePage() {
             </Parallax>
           </Reveal>
           <Reveal>
-            <p className="section-eyebrow mb-3">Built for growth</p>
+            <p className="section-eyebrow mb-3">{t('growth.eyebrow')}</p>
             <h2 className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
-              Keep more of every move
+              {t('growth.title')}
             </h2>
-            <p className="mt-4 max-w-lg leading-relaxed text-gray-300">
-              Tight spreads, fast execution, and transparent pricing mean more of every winning
-              trade stays in your account. Scale your strategy with leverage up to 1:500 across
-              100+ global markets.
-            </p>
+            <p className="mt-4 max-w-lg leading-relaxed text-gray-300">{t('growth.desc')}</p>
             <ul className="mt-6 space-y-3 text-sm text-gray-200">
               <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-brand-500" /> Spreads from 0.0 pips
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-500" /> {t('growth.b1')}
               </li>
               <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-brand-500" /> Sub-30ms execution, no dealing desk
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-500" /> {t('growth.b2')}
               </li>
               <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-brand-500" /> Transparent pricing — no hidden fees
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-500" /> {t('growth.b3')}
               </li>
             </ul>
             <Link to="/accounts" className="mt-7 inline-block">
               <Button className="gap-2">
-                Explore accounts <ArrowRight className="h-4 w-4" />
+                {t('growth.cta')} <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </Reveal>
@@ -215,9 +209,9 @@ export default function HomePage() {
         />
         <div className="container-x relative z-10">
         <SectionHeading
-          eyebrow="Global Markets"
-          title="Trade 100+ global markets with confidence"
-          description="Diversify your portfolio with 100+ instruments across multiple asset classes."
+          eyebrow={t('mkt.eyebrow')}
+          title={t('mkt.title')}
+          description={t('mkt.desc')}
         />
         <motion.div
           variants={staggerContainer}
@@ -233,7 +227,7 @@ export default function HomePage() {
         <Reveal className="mt-10 text-center">
           <Link to="/markets">
             <Button variant="outline" size="lg" className="gap-2">
-              View All Instruments <ArrowRight className="h-4 w-4" />
+              {t('mkt.viewAll')} <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
         </Reveal>

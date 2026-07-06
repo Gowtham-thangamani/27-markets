@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { ShieldCheck, Lock, Landmark, ScrollText, Eye } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { cardStagger, cardReveal } from '@/lib/motion'
+import { useT } from '@/i18n/LanguageContext'
 
 /**
  * Trust / regulation / security band — placed directly under the hero.
@@ -9,29 +10,14 @@ import { cardStagger, cardReveal } from '@/lib/motion'
  * signal intent and safeguards without claiming a licence we don't yet hold.
  */
 const PILLARS = [
-  {
-    icon: ShieldCheck,
-    title: 'Segregated client funds',
-    body: 'Client money is kept in accounts separate from company operating capital.',
-  },
-  {
-    icon: Lock,
-    title: 'Bank-grade security',
-    body: 'Encrypted sessions and optional two-factor authentication on every account.',
-  },
-  {
-    icon: Landmark,
-    title: 'Authorization in progress',
-    body: 'We are finalising our regulatory authorization and operate transparently in the meantime.',
-  },
-  {
-    icon: Eye,
-    title: 'Transparent pricing',
-    body: 'The spread you see is the spread you trade — no hidden mark-ups or re-quotes.',
-  },
+  { icon: ShieldCheck, tKey: 'trustBand.p1t', bKey: 'trustBand.p1b' },
+  { icon: Lock, tKey: 'trustBand.p2t', bKey: 'trustBand.p2b' },
+  { icon: Landmark, tKey: 'trustBand.p3t', bKey: 'trustBand.p3b' },
+  { icon: Eye, tKey: 'trustBand.p4t', bKey: 'trustBand.p4b' },
 ]
 
 export function TrustRegulationBand() {
+  const t = useT()
   return (
     <section className="border-y border-white/[0.06] bg-ink-850/40">
       <div className="container-x py-12 sm:py-14">
@@ -44,7 +30,7 @@ export function TrustRegulationBand() {
         >
           {PILLARS.map((p) => (
             <motion.div
-              key={p.title}
+              key={p.tKey}
               variants={cardReveal}
               className="glass-panel card-lift flex flex-col gap-3 p-5"
             >
@@ -52,8 +38,8 @@ export function TrustRegulationBand() {
                 <p.icon className="h-5 w-5" />
               </span>
               <div>
-                <h3 className="text-sm font-semibold text-white">{p.title}</h3>
-                <p className="mt-1 text-xs leading-relaxed text-gray-400">{p.body}</p>
+                <h3 className="text-sm font-semibold text-white">{t(p.tKey)}</h3>
+                <p className="mt-1 text-xs leading-relaxed text-gray-400">{t(p.bKey)}</p>
               </div>
             </motion.div>
           ))}
@@ -62,17 +48,13 @@ export function TrustRegulationBand() {
         <div className="mt-8 flex flex-col gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="flex items-start gap-3 text-xs leading-relaxed text-gray-400">
             <ScrollText className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" />
-            <span>
-              <span className="font-semibold text-gray-300">Risk warning:</span> Trading leveraged
-              products such as CFDs carries a high risk of loss and may not be suitable for all
-              investors. Ensure you understand the risks before trading.
-            </span>
+            <span>{t('trustBand.risk')}</span>
           </p>
           <Link
             to="/legal/risk-disclosure"
             className="shrink-0 whitespace-nowrap text-xs font-semibold text-brand-400 transition-colors hover:text-brand-300"
           >
-            Read Trust &amp; Safety →
+            {t('trustBand.link')}
           </Link>
         </div>
       </div>
