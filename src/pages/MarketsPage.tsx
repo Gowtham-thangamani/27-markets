@@ -11,12 +11,14 @@ import { DfmBoard } from '@/components/marketing/DfmBoard'
 import { CTABand } from '@/components/marketing/CTABand'
 import { staggerContainer } from '@/lib/motion'
 import { marketCategories } from '@/mock/content'
+import { useT } from '@/i18n/LanguageContext'
 import type { InstrumentCategory } from '@/lib/types'
 
 export default function MarketsPage() {
   const [params] = useSearchParams()
   const category = params.get('category') as InstrumentCategory | null
   const explorerRef = useRef<HTMLElement>(null)
+  const t = useT()
 
   // When a category is chosen (via a market card or a direct link), bring the
   // filtered instruments list into view so the click visibly "goes somewhere".
@@ -28,8 +30,8 @@ export default function MarketsPage() {
     <>
       <PageHeader
         breadcrumb={['Home', 'Markets']}
-        title="Trade global markets with confidence"
-        description="Diversify your portfolio with 100+ instruments across multiple asset classes — all on institutional-grade infrastructure."
+        title={t('mktp.title')}
+        description={t('mktp.desc')}
       />
 
       <section className="container-x py-14">
@@ -50,9 +52,9 @@ export default function MarketsPage() {
       <section className="container-x py-10">
         <SectionHeading
           align="left"
-          eyebrow="Real-time"
-          title="Live market overview"
-          description="Streaming prices for major crypto, forex, metals, and equities. DFM real-time pending a licensed feed."
+          eyebrow={t('mktp.rtEyebrow')}
+          title={t('mktp.rtTitle')}
+          description={t('mktp.rtDesc')}
         />
         <div className="mt-8 grid gap-8 lg:grid-cols-[1.6fr_1fr]">
           <LiveMarketOverview />
@@ -63,9 +65,9 @@ export default function MarketsPage() {
       <section ref={explorerRef} className="container-x py-10">
         <SectionHeading
           align="left"
-          eyebrow="Live Instruments"
-          title="Explore the markets"
-          description="Search and filter across forex, metals, indices, commodities, stocks, and crypto."
+          eyebrow={t('mktp.liEyebrow')}
+          title={t('mktp.liTitle')}
+          description={t('mktp.liDesc')}
         />
         <Reveal className="mt-8">
           <InstrumentsExplorer initialCategory={category ?? undefined} />

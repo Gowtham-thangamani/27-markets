@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { fadeUp } from '@/lib/motion'
 import { SignalFlow } from '@/components/marketing/SignalFlow'
+import { useT } from '@/i18n/LanguageContext'
 
 interface PageHeaderProps {
   breadcrumb: string[]
@@ -20,6 +21,7 @@ const crumbHref: Record<string, string> = {
 }
 
 export function PageHeader({ breadcrumb, title, description }: PageHeaderProps) {
+  const t = useT()
   return (
     <section className="relative overflow-hidden border-b border-white/[0.06]">
       <div className="grid-bg pointer-events-none absolute inset-0 opacity-30" />
@@ -35,13 +37,17 @@ export function PageHeader({ breadcrumb, title, description }: PageHeaderProps) 
         >
           {breadcrumb.map((crumb, i) => {
             const last = i === breadcrumb.length - 1
+            // Fall back to the raw crumb when there is no key (e.g. dynamic legal titles).
+            const key = `crumb.${crumb}`
+            const translated = t(key)
+            const label = translated === key ? crumb : translated
             return (
               <span key={crumb} className="flex items-center gap-1.5">
                 {last ? (
-                  <span className="text-brand-400">{crumb}</span>
+                  <span className="text-brand-400">{label}</span>
                 ) : (
                   <Link to={crumbHref[crumb] ?? '/'} className="hover:text-gray-300">
-                    {crumb}
+                    {label}
                   </Link>
                 )}
                 {!last && <ChevronRight className="h-3 w-3" />}

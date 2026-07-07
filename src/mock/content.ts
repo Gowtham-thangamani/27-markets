@@ -228,6 +228,21 @@ export const accountTiers: AccountTier[] = [
   },
 ]
 
+/** Maps each English account-tier feature string to its i18n key (accts.f.*). */
+export const accountFeatureKey: Record<string, string> = {
+  'Commission free': 'accts.f.commissionFree',
+  'Access to all markets': 'accts.f.allMarkets',
+  '24/5 customer support': 'accts.f.support',
+  'Minimum deposit $50': 'accts.f.min',
+  'Low raw spreads': 'accts.f.lowRaw',
+  '$7 commission per lot': 'accts.f.commission7',
+  '24/5 priority support': 'accts.f.priority',
+  'Lowest raw spreads': 'accts.f.lowestRaw',
+  'Custom commission': 'accts.f.customComm',
+  'Personal account manager': 'accts.f.manager',
+  'Priority withdrawals': 'accts.f.priorityW',
+}
+
 export const aboutValues = [
   {
     icon: Eye,

@@ -4,25 +4,10 @@ import { Check, ArrowRight } from 'lucide-react'
 import { SectionHeading } from '@/components/SectionHeading'
 import { Reveal } from '@/components/Reveal'
 import { Button } from '@/components/ui'
-import { accountTiers } from '@/mock/content'
+import { accountTiers, accountFeatureKey } from '@/mock/content'
 import { useT } from '@/i18n/LanguageContext'
 import { cardStagger, cardReveal } from '@/lib/motion'
 import { cn } from '@/lib/cn'
-
-/** Maps each English feature string to its translation key. */
-const FEATURE_KEY: Record<string, string> = {
-  'Commission free': 'accts.f.commissionFree',
-  'Access to all markets': 'accts.f.allMarkets',
-  '24/5 customer support': 'accts.f.support',
-  'Minimum deposit $50': 'accts.f.min',
-  'Low raw spreads': 'accts.f.lowRaw',
-  '$7 commission per lot': 'accts.f.commission7',
-  '24/5 priority support': 'accts.f.priority',
-  'Lowest raw spreads': 'accts.f.lowestRaw',
-  'Custom commission': 'accts.f.customComm',
-  'Personal account manager': 'accts.f.manager',
-  'Priority withdrawals': 'accts.f.priorityW',
-}
 
 export function AccountTypesSnapshot() {
   const t = useT()
@@ -72,7 +57,7 @@ export function AccountTypesSnapshot() {
               <ul className="mt-5 flex-1 space-y-2.5">
                 {tier.features.map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm text-gray-200">
-                    <Check className="h-4 w-4 shrink-0 text-brand-400" /> {FEATURE_KEY[f] ? t(FEATURE_KEY[f]) : f}
+                    <Check className="h-4 w-4 shrink-0 text-brand-400" /> {accountFeatureKey[f] ? t(accountFeatureKey[f]) : f}
                   </li>
                 ))}
               </ul>
