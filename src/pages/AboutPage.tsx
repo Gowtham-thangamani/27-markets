@@ -8,30 +8,25 @@ import { PageHeader } from '@/components/marketing/PageHeader'
 import { fadeUp, staggerContainer } from '@/lib/motion'
 import { asset } from '@/lib/asset'
 import { aboutValues } from '@/mock/content'
+import { useT } from '@/i18n/LanguageContext'
 
 export default function AboutPage() {
+  const t = useT()
   return (
     <>
-      <PageHeader breadcrumb={['Home', 'About Us']} title="About 27 Markets" />
+      <PageHeader breadcrumb={['Home', 'About Us']} title={t('abt.title')} />
 
       {/* Intro + dramatic visual */}
       <section className="container-x grid items-center gap-12 py-12 lg:grid-cols-2">
         <Reveal>
-          <p className="section-eyebrow mb-3">Our Story</p>
+          <p className="section-eyebrow mb-3">{t('abt.storyEyebrow')}</p>
           <h2 className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
-            A next-generation broker built on trust
+            {t('abt.storyTitle')}
           </h2>
-          <p className="mt-4 leading-relaxed text-white">
-            27 Markets is a next-generation broker built on trust, transparency, and technology.
-            Our mission is to empower traders and partners with the best trading conditions,
-            innovative solutions, and unmatched support.
-          </p>
-          <p className="mt-4 leading-relaxed text-white">
-            From institutional-grade liquidity to sub-30ms execution, every part of our
-            infrastructure is engineered to give you an edge across global markets.
-          </p>
+          <p className="mt-4 leading-relaxed text-white">{t('abt.p1')}</p>
+          <p className="mt-4 leading-relaxed text-white">{t('abt.p2')}</p>
           <Link to="/accounts" className="mt-7 inline-block">
-            <Button>Explore Accounts</Button>
+            <Button>{t('abt.explore')}</Button>
           </Link>
         </Reveal>
 
@@ -54,12 +49,12 @@ export default function AboutPage() {
           className="grid gap-5 md:grid-cols-3"
         >
           {aboutValues.map((v) => (
-            <motion.div key={v.title} variants={fadeUp} className="glass-panel card-lift p-7">
+            <motion.div key={v.titleKey} variants={fadeUp} className="glass-panel card-lift p-7">
               <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/20">
                 <v.icon className="h-6 w-6" />
               </div>
-              <h3 className="font-display text-xl font-semibold text-white">{v.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-white">{v.description}</p>
+              <h3 className="font-display text-xl font-semibold text-white">{t(v.titleKey)}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-white">{t(v.descKey)}</p>
             </motion.div>
           ))}
         </motion.div>
@@ -69,11 +64,11 @@ export default function AboutPage() {
       <section className="container-x py-12">
         <div className="flex flex-wrap justify-center gap-4">
           {[
-            { value: 100, suffix: '+', label: 'Trading instruments' },
-            { value: 0.0, decimals: 1, label: 'Pips from spreads' },
-            { value: 30, prefix: '<', suffix: 'ms', label: 'Execution speed' },
-            { value: 500, prefix: '1:', label: 'Max leverage' },
-            { value: 24, suffix: '/5', label: 'Customer support' },
+            { value: 100, suffix: '+', label: t('abt.k1') },
+            { value: 0.0, decimals: 1, label: t('abt.k2') },
+            { value: 30, prefix: '<', suffix: 'ms', label: t('abt.k3') },
+            { value: 500, prefix: '1:', label: t('abt.k4') },
+            { value: 24, suffix: '/5', label: t('abt.k5') },
           ].map((s) => (
             <StatCard
               key={s.label}
@@ -112,14 +107,11 @@ export default function AboutPage() {
           <div className="absolute inset-0 flex items-center">
             <div className="container-x">
               <Reveal>
-                <p className="section-eyebrow mb-3">Trusted Worldwide</p>
+                <p className="section-eyebrow mb-3">{t('abt.trustEyebrow')}</p>
                 <h2 className="max-w-xl font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
-                  Engineered for performance and trust
+                  {t('abt.trustTitle')}
                 </h2>
-                <p className="mt-4 max-w-md leading-relaxed text-white">
-                  Segregated funds, transparent pricing, and a relentless focus on execution
-                  quality.
-                </p>
+                <p className="mt-4 max-w-md leading-relaxed text-white">{t('abt.trustDesc')}</p>
               </Reveal>
             </div>
           </div>

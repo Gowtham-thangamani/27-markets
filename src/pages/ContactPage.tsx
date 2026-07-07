@@ -8,15 +8,17 @@ import { useToast } from '@/context/ToastContext'
 import { asset } from '@/lib/asset'
 import { zodResolver } from '@/lib/zodResolver'
 import { contactSchema, type ContactValues } from '@/lib/validation'
+import { useT } from '@/i18n/LanguageContext'
 
 const channels = [
-  { icon: Mail, title: 'Email Us', value: 'support@27markets.io', note: 'We reply within hours' },
-  { icon: MessageSquare, title: 'Live Chat', value: 'Available 24/5', note: 'Instant assistance' },
-  { icon: Info, title: 'General Inquiries', value: 'info@27markets.io', note: 'Partnerships & press' },
+  { icon: Mail, tKey: 'ctp.c1t', value: 'support@27markets.io', noteKey: 'ctp.c1note' },
+  { icon: MessageSquare, tKey: 'ctp.c2t', valueKey: 'ctp.c2v', noteKey: 'ctp.c2note' },
+  { icon: Info, tKey: 'ctp.c3t', value: 'info@27markets.io', noteKey: 'ctp.c3note' },
 ]
 
 export default function ContactPage() {
   const toast = useToast()
+  const t = useT()
   const {
     register,
     handleSubmit,
@@ -26,7 +28,10 @@ export default function ContactPage() {
 
   const onSubmit = async (values: ContactValues) => {
     await new Promise((r) => setTimeout(r, 800))
-    toast.success('Message sent', `Thanks ${values.fullName.split(' ')[0]}, our team will be in touch.`)
+    toast.success(
+      t('ctp.toastTitle'),
+      t('ctp.toastBody').replace('{name}', values.fullName.split(' ')[0]),
+    )
     reset()
   }
 
@@ -34,8 +39,8 @@ export default function ContactPage() {
     <>
       <PageHeader
         breadcrumb={['Home', 'Contact Us']}
-        title="We're here to help"
-        description="Have a question or need assistance? Our team is ready to help you, around the clock."
+        title={t('ctp.title')}
+        description={t('ctp.desc')}
       />
 
       <section className="container-x grid gap-10 py-14 lg:grid-cols-[1fr_1.2fr]">
@@ -49,15 +54,15 @@ export default function ContactPage() {
             />
           </Reveal>
           {channels.map((c) => (
-            <Reveal key={c.title}>
+            <Reveal key={c.tKey}>
               <div className="glass-panel card-lift flex items-start gap-4 p-6">
                 <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/20">
                   <c.icon className="h-6 w-6" />
                 </span>
                 <div>
-                  <h3 className="font-display text-lg font-semibold text-white">{c.title}</h3>
-                  <p className="mt-0.5 font-medium text-brand-300">{c.value}</p>
-                  <p className="mt-1 text-sm text-gray-500">{c.note}</p>
+                  <h3 className="font-display text-lg font-semibold text-white">{t(c.tKey)}</h3>
+                  <p className="mt-0.5 font-medium text-brand-300">{c.valueKey ? t(c.valueKey) : c.value}</p>
+                  <p className="mt-1 text-sm text-gray-500">{t(c.noteKey)}</p>
                 </div>
               </div>
             </Reveal>
@@ -72,39 +77,37 @@ export default function ContactPage() {
             noValidate
           >
             <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 bg-radial-red opacity-60 blur-2xl" />
-            <h2 className="relative font-display text-xl font-semibold text-white">Send us a message</h2>
-            <p className="relative mt-1 text-sm text-gray-400">
-              Fill out the form and we'll get back to you shortly.
-            </p>
+            <h2 className="relative font-display text-xl font-semibold text-white">{t('ctp.formTitle')}</h2>
+            <p className="relative mt-1 text-sm text-gray-400">{t('ctp.formDesc')}</p>
 
             <div className="relative mt-6 space-y-4">
               <Input
-                label="Full Name"
-                placeholder="Jordan Avery"
+                label={t('ctp.fullName')}
+                placeholder={t('ctp.phFullName')}
                 error={errors.fullName?.message}
                 {...register('fullName')}
               />
               <Input
-                label="Email Address"
+                label={t('ctp.email')}
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t('ctp.phEmail')}
                 error={errors.email?.message}
                 {...register('email')}
               />
               <Input
-                label="Subject"
-                placeholder="How can we help?"
+                label={t('ctp.subject')}
+                placeholder={t('ctp.phSubject')}
                 error={errors.subject?.message}
                 {...register('subject')}
               />
               <Textarea
-                label="Your Message"
-                placeholder="Tell us a little more…"
+                label={t('ctp.message')}
+                placeholder={t('ctp.phMessage')}
                 error={errors.message?.message}
                 {...register('message')}
               />
               <Button type="submit" fullWidth loading={isSubmitting} className="gap-2">
-                <Send className="h-4 w-4" /> Send Message
+                <Send className="h-4 w-4" /> {t('ctp.send')}
               </Button>
             </div>
           </form>
@@ -122,11 +125,9 @@ export default function ContactPage() {
           }}
         />
         <div className="container-x relative flex h-full flex-col items-center justify-center gap-3 text-center">
-          <p className="text-sm text-gray-400">
-            Serving traders in 120+ countries worldwide
-          </p>
+          <p className="text-sm text-gray-400">{t('ctp.serving')}</p>
           <Link to="/register">
-            <Button size="sm">Open your account</Button>
+            <Button size="sm">{t('ctp.openAcct')}</Button>
           </Link>
         </div>
       </section>

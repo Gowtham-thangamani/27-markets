@@ -244,22 +244,7 @@ export const accountFeatureKey: Record<string, string> = {
 }
 
 export const aboutValues = [
-  {
-    icon: Eye,
-    title: 'Our Vision',
-    description:
-      'To be a global leader in online trading, recognized for our integrity, innovation, and partnership-driven growth.',
-  },
-  {
-    icon: Building2,
-    title: 'Our Mission',
-    description:
-      'To deliver exceptional trading experiences by combining technology, liquidity, and a relentlessly customer-centric service.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Our Values',
-    description:
-      'We believe in integrity, transparency, innovation, performance, and building lasting partnerships with everyone we serve.',
-  },
+  { icon: Eye, titleKey: 'abt.v1t', descKey: 'abt.v1d' },
+  { icon: Building2, titleKey: 'abt.v2t', descKey: 'abt.v2d' },
+  { icon: ShieldCheck, titleKey: 'abt.v3t', descKey: 'abt.v3d' },
 ]
