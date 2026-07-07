@@ -15,7 +15,7 @@ const CONDITIONS: { labelKey: string; values: Record<string, string> }[] = [
   { labelKey: 'tcp.r.spread', values: { Standard: '0.8 pips', 'Raw Spread': '0.0 pips', VIP: '0.0 pips' } },
   { labelKey: 'tcp.r.comm', values: { Standard: 'None', 'Raw Spread': '$7', VIP: 'From $3' } },
   { labelKey: 'tcp.r.min', values: { Standard: '$50', 'Raw Spread': '$50', VIP: '$50' } },
-  { labelKey: 'tcp.r.lev', values: { Standard: 'Up to 1:500', 'Raw Spread': 'Up to 1:500', VIP: 'Up to 1:500' } },
+  { labelKey: 'tcp.r.lev', values: { Standard: 'Up to 1:10', 'Raw Spread': 'Up to 1:50', VIP: 'Up to 1:100' } },
   { labelKey: 'tcp.r.ccy', values: { Standard: 'USD', 'Raw Spread': 'USD', VIP: 'USD' } },
   { labelKey: 'tcp.r.support', values: { Standard: '24/5', 'Raw Spread': '24/5 priority', VIP: '24/5 priority' } },
   { labelKey: 'tcp.r.manager', values: { Standard: '—', 'Raw Spread': '—', VIP: 'Included' } },

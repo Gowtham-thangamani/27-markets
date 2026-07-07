@@ -7,7 +7,7 @@ import { formatCurrency } from '@/lib/format'
 import { ApiError } from '@/lib/api'
 import { financeApi, type AdminAccount } from '@/lib/financeApi'
 
-const LEVERAGES = ['1:100', '1:200', '1:400', '1:500']
+const LEVERAGES = ['1:10', '1:50', '1:100']
 const statusTone: Record<string, 'success' | 'warning' | 'danger' | 'neutral'> = {
   ACTIVE: 'success',
   PENDING: 'warning',

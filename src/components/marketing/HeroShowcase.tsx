@@ -34,7 +34,7 @@ const CALLOUTS: Callout[] = [
     tag: 'Leverage',
     icon: Scale,
     title: 'Best Leverage',
-    desc: 'Flexible leverage up to 1:500 with minimal margin requirements from 0.1%.',
+    desc: 'Flexible leverage up to 1:100 with minimal margin requirements from 0.1%.',
     side: 'right',
   },
   {

@@ -7,7 +7,7 @@ vi.mock('@/lib/financeApi', () => ({
     listAccounts: vi.fn().mockResolvedValue([
       {
         id: 'a1', number: '10012345', type: 'STANDARD', mode: 'LIVE', currency: 'USD',
-        leverage: '1:400', status: 'ACTIVE', createdAt: '2026-06-23T10:00:00.000Z', balance: '1000.00',
+        leverage: '1:100', status: 'ACTIVE', createdAt: '2026-06-23T10:00:00.000Z', balance: '1000.00',
         owner: { id: 'c1', name: 'Ada Lovelace', email: 'ada@x.com' },
       },
     ]),

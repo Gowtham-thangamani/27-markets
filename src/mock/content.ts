@@ -193,7 +193,7 @@ export const accountTiers: AccountTier[] = [
     name: 'Standard',
     audience: 'Perfect for all traders',
     spread: '0.8',
-    leverage: '1:500',
+    leverage: '1:10',
     features: [
       'Commission free',
       'Access to all markets',
@@ -205,7 +205,7 @@ export const accountTiers: AccountTier[] = [
     name: 'Raw Spread',
     audience: 'For experienced traders',
     spread: '0.0',
-    leverage: '1:500',
+    leverage: '1:50',
     popular: true,
     features: [
       'Low raw spreads',
@@ -218,7 +218,7 @@ export const accountTiers: AccountTier[] = [
     name: 'VIP',
     audience: 'For high-volume traders',
     spread: '0.0',
-    leverage: '1:500',
+    leverage: '1:100',
     features: [
       'Lowest raw spreads',
       'Custom commission',

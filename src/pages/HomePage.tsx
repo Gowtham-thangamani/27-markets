@@ -32,7 +32,7 @@ import { whyFeatures, marketCategories } from '@/mock/content'
 
 const heroStats = [
   { icon: Layers, image: '/stat-pips.png', value: '0.0', labelKey: 'stats.pips' },
-  { icon: Rocket, image: '/stat-leverage.png', value: '1:500', labelKey: 'stats.leverage' },
+  { icon: Rocket, image: '/stat-leverage.png', value: '1:100', labelKey: 'stats.leverage' },
   { icon: Gauge, image: '/stat-execution.png', value: '<30ms', labelKey: 'stats.exec' },
   { icon: ShieldCheck, image: '/stat-liquidity.png', value: 'Tier-1', labelKey: 'stats.liq' },
   { icon: Headphones, image: '/stat-support.png', value: '24/5', labelKey: 'stats.support' },

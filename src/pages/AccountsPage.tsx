@@ -13,7 +13,7 @@ const comparison = [
   { labelKey: 'acp.r.min', values: ['$50', '$200', '$5,000'] },
   { labelKey: 'acp.r.spread', values: ['0.8 pips', '0.0 pips', '0.0 pips'] },
   { labelKey: 'acp.r.comm', values: ['None', '$7 / lot', 'Custom'] },
-  { labelKey: 'acp.r.lev', values: ['1:500', '1:500', '1:500'] },
+  { labelKey: 'acp.r.lev', values: ['1:10', '1:50', '1:100'] },
   { labelKey: 'acp.r.markets', values: ['Yes', 'Yes', 'Yes'] },
   { labelKey: 'acp.r.manager', values: ['—', '—', 'Dedicated'] },
   { labelKey: 'acp.r.support', values: ['24/5', '24/5 Priority', '24/5 Priority'] },

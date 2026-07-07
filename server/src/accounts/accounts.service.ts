@@ -18,9 +18,9 @@ import { generateAccountNumber, generateTxReference } from '../common/reference'
 
 const DEMO_STARTING_BALANCE = '50000';
 const DEFAULT_LEVERAGE: Record<AccountType, string> = {
-  STANDARD: '1:400',
-  RAW_SPREAD: '1:500',
-  VIP: '1:500',
+  STANDARD: '1:10',
+  RAW_SPREAD: '1:50',
+  VIP: '1:100',
 };
 
 export interface AccountView {
