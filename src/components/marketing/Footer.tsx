@@ -1,33 +1,15 @@
 import { Link } from 'react-router-dom'
-import {
-  Facebook,
-  Instagram,
-  Linkedin,
-  Mail,
-  MapPin,
-  ShieldCheck,
-  Lock,
-  DollarSign,
-  Headphones,
-  type LucideProps,
-} from 'lucide-react'
+import { Mail, MapPin, ShieldCheck, Lock, DollarSign, Headphones } from 'lucide-react'
 import type { ComponentType } from 'react'
+import { FaFacebookF, FaInstagram, FaLinkedinIn, FaTiktok } from 'react-icons/fa6'
 import { Logo } from '@/components/Logo'
 import { useT } from '@/i18n/LanguageContext'
 
-function TikTokIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
-      <path d="M16.5 3c.3 2.1 1.6 3.7 3.5 4v2.6c-1.3 0-2.5-.4-3.5-1v6.1c0 3.2-2.3 5.3-5.2 5.3C8.6 20 6.5 17.9 6.5 15.2c0-2.7 2.1-4.8 4.8-4.8.3 0 .6 0 .9.1v2.7c-.3-.1-.6-.2-.9-.2-1.2 0-2.1.9-2.1 2.1 0 1.2.9 2.1 2.1 2.1 1.2 0 2.2-.9 2.2-2.4V3h2.9z" />
-    </svg>
-  )
-}
-
-const socials: { label: string; href: string; Icon: ComponentType<LucideProps> | ComponentType<{ className?: string }> }[] = [
-  { label: 'Facebook', href: 'https://www.facebook.com/share/1ChNbKJnvj/?mibextid=wwXIfr', Icon: Facebook },
-  { label: 'Instagram', href: 'https://www.instagram.com/27markets?igsh=MWRwZTNlaTB1eXN1MA==', Icon: Instagram },
-  { label: 'LinkedIn', href: 'https://www.linkedin.com/company/27-markets/', Icon: Linkedin },
-  { label: 'TikTok', href: 'https://www.tiktok.com/@27.markets?_r=1&_t=ZS-97V6CNWAtYe', Icon: TikTokIcon },
+const socials: { label: string; href: string; Icon: ComponentType<{ className?: string }> }[] = [
+  { label: 'Facebook', href: 'https://www.facebook.com/share/1ChNbKJnvj/?mibextid=wwXIfr', Icon: FaFacebookF },
+  { label: 'Instagram', href: 'https://www.instagram.com/27markets?igsh=MWRwZTNlaTB1eXN1MA==', Icon: FaInstagram },
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/company/27-markets/', Icon: FaLinkedinIn },
+  { label: 'TikTok', href: 'https://www.tiktok.com/@27.markets?_r=1&_t=ZS-97V6CNWAtYe', Icon: FaTiktok },
 ]
 
 const trust = [
