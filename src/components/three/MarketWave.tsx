@@ -14,7 +14,9 @@ export function MarketWave({ className, stretch }: { className?: string; stretch
   return (
     <svg
       viewBox="0 0 800 220"
-      preserveAspectRatio={stretch ? 'none' : 'xMidYMid meet'}
+      // `slice` fills the container by scaling up proportionally (no distortion);
+      // `meet` letterboxes it. Never `none` — that stretches the line unevenly.
+      preserveAspectRatio={stretch ? 'xMidYMid slice' : 'xMidYMid meet'}
       className={cn('h-full w-full overflow-visible', className)}
       fill="none"
       aria-hidden
