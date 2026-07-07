@@ -12,10 +12,11 @@ import { accountTypeToApi } from '@/lib/apiMappers'
 import { countries } from '@/lib/countries'
 import { cn } from '@/lib/cn'
 import { useSeo } from '@/lib/useSeo'
+import { useT } from '@/i18n/LanguageContext'
 
 type Errors = Record<string, string>
 
-const steps = ['Your details', 'Account setup', 'Security']
+const STEP_KEYS = ['auth.reg.step1', 'auth.reg.step2', 'auth.reg.step3']
 
 const accountTypes: Array<'Standard' | 'Raw Spread' | 'VIP'> = ['Standard', 'Raw Spread', 'VIP']
 
@@ -24,6 +25,7 @@ export default function RegisterPage() {
   const navigate = useNavigate()
   const { register: registerUser } = useAuth()
   const toast = useToast()
+  const t = useT()
   const [params] = useSearchParams()
   const ref = params.get('ref') ?? undefined
 
@@ -78,7 +80,7 @@ export default function RegisterPage() {
   }
 
   const onNext = () => {
-    if (validateStep()) setStep((s) => Math.min(s + 1, steps.length - 1))
+    if (validateStep()) setStep((s) => Math.min(s + 1, STEP_KEYS.length - 1))
   }
 
   const onSubmit = async () => {
@@ -108,16 +110,16 @@ export default function RegisterPage() {
       } catch {
         /* non-fatal: they can open one from the portal */
       }
-      toast.success('Account created', 'Welcome to 27 Markets. Complete KYC to start trading.')
+      toast.success(t('auth.reg.created'), t('auth.reg.createdBody'))
       navigate('/portal/dashboard', { replace: true })
     } catch (err) {
       const e = err as ApiError
       setSubmitting(false)
       if (e.status === 409) {
         setStep(0)
-        setErrors({ email: 'An account with this email already exists' })
+        setErrors({ email: t('auth.reg.emailExists') })
       }
-      toast.error('Registration failed', e.message || 'Please review your details and try again.')
+      toast.error(t('auth.reg.failed'), e.message || t('auth.reg.failedBody'))
     }
   }
 
@@ -126,25 +128,28 @@ export default function RegisterPage() {
       aside={
         <>
           <h2 className="font-display text-4xl font-bold leading-tight text-white">
-            Open your account <span className="text-gradient-red">in minutes.</span>
+            {t('auth.reg.asideT1')} <span className="text-gradient-red">{t('auth.reg.asideTg')}</span>
           </h2>
-          <p className="mt-4 max-w-sm text-gray-400">
-            Three simple steps to start trading 100+ markets with up to 1:500 leverage.
-          </p>
+          <p className="mt-4 max-w-sm text-gray-400">{t('auth.reg.asideDesc')}</p>
         </>
       }
     >
-      <h1 className="font-display text-3xl font-bold text-white">Create your account</h1>
+      <h1 className="font-display text-3xl font-bold text-white">{t('auth.reg.title')}</h1>
       {ref && (
         <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/[0.08] px-3 py-1 text-xs text-brand-300">
-          Referred by a partner
+          {t('auth.reg.referred')}
         </p>
       )}
-      <p className="mt-2 text-sm text-gray-400">Step {step + 1} of {steps.length} — {steps[step]}</p>
+      <p className="mt-2 text-sm text-gray-400">
+        {t('auth.reg.step')
+          .replace('{n}', String(step + 1))
+          .replace('{total}', String(STEP_KEYS.length))
+          .replace('{label}', t(STEP_KEYS[step]))}
+      </p>
 
       {/* Stepper */}
       <div className="mt-6 flex items-center gap-2">
-        {steps.map((label, i) => (
+        {STEP_KEYS.map((label, i) => (
           <div key={label} className="flex flex-1 items-center gap-2">
             <span
               className={cn(
@@ -158,7 +163,7 @@ export default function RegisterPage() {
             >
               {i < step ? <Check className="h-3.5 w-3.5" /> : i + 1}
             </span>
-            {i < steps.length - 1 && (
+            {i < STEP_KEYS.length - 1 && (
               <span className={cn('h-px flex-1', i < step ? 'bg-brand-500' : 'bg-ink-400')} />
             )}
           </div>
@@ -178,59 +183,59 @@ export default function RegisterPage() {
             {step === 0 && (
               <>
                 <div className="grid grid-cols-2 gap-3">
-                  <Input label="First name" value={form.firstName} error={errors.firstName} onChange={(e) => set('firstName', e.target.value)} />
-                  <Input label="Last name" value={form.lastName} error={errors.lastName} onChange={(e) => set('lastName', e.target.value)} />
+                  <Input label={t('auth.reg.firstName')} value={form.firstName} error={errors.firstName} onChange={(e) => set('firstName', e.target.value)} />
+                  <Input label={t('auth.reg.lastName')} value={form.lastName} error={errors.lastName} onChange={(e) => set('lastName', e.target.value)} />
                 </div>
-                <Input label="Email" type="email" value={form.email} error={errors.email} onChange={(e) => set('email', e.target.value)} />
-                <Input label="Phone" value={form.phone} placeholder="+971 50 000 0000" error={errors.phone} onChange={(e) => set('phone', e.target.value)} />
-                <Input label="Date of birth" type="date" value={form.dateOfBirth} error={errors.dateOfBirth} onChange={(e) => set('dateOfBirth', e.target.value)} />
+                <Input label={t('auth.email')} type="email" value={form.email} error={errors.email} onChange={(e) => set('email', e.target.value)} />
+                <Input label={t('auth.reg.phone')} value={form.phone} placeholder="+971 50 000 0000" error={errors.phone} onChange={(e) => set('phone', e.target.value)} />
+                <Input label={t('auth.reg.dob')} type="date" value={form.dateOfBirth} error={errors.dateOfBirth} onChange={(e) => set('dateOfBirth', e.target.value)} />
               </>
             )}
 
             {step === 1 && (
               <>
                 <Select
-                  label="Country of residence"
-                  placeholder="Select your country"
+                  label={t('auth.reg.country')}
+                  placeholder={t('auth.reg.countryPh')}
                   value={form.country}
                   error={errors.country}
                   options={countries.map((c) => ({ value: c, label: c }))}
                   onChange={(e) => set('country', e.target.value)}
                 />
-                <Input label="Address" value={form.address} placeholder="Street address" error={errors.address} onChange={(e) => set('address', e.target.value)} />
+                <Input label={t('auth.reg.address')} value={form.address} placeholder={t('auth.reg.addressPh')} error={errors.address} onChange={(e) => set('address', e.target.value)} />
                 <div className="grid grid-cols-2 gap-3">
-                  <Input label="City" value={form.city} error={errors.city} onChange={(e) => set('city', e.target.value)} />
-                  <Input label="Postal code" value={form.postalCode} error={errors.postalCode} onChange={(e) => set('postalCode', e.target.value)} />
+                  <Input label={t('auth.reg.city')} value={form.city} error={errors.city} onChange={(e) => set('city', e.target.value)} />
+                  <Input label={t('auth.reg.postal')} value={form.postalCode} error={errors.postalCode} onChange={(e) => set('postalCode', e.target.value)} />
                 </div>
                 <div>
-                  <p className="mb-1.5 text-sm font-medium text-gray-300">Account type</p>
-                  <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Account type">
-                    {accountTypes.map((t) => (
+                  <p className="mb-1.5 text-sm font-medium text-gray-300">{t('auth.reg.accountType')}</p>
+                  <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t('auth.reg.accountType')}>
+                    {accountTypes.map((type) => (
                       <button
-                        key={t}
+                        key={type}
                         type="button"
                         role="radio"
-                        aria-checked={form.accountType === t}
-                        onClick={() => set('accountType', t)}
+                        aria-checked={form.accountType === type}
+                        onClick={() => set('accountType', type)}
                         className={cn(
                           'rounded-xl border px-2 py-3 text-center text-sm font-medium transition-colors',
-                          form.accountType === t
+                          form.accountType === type
                             ? 'border-brand-500/60 bg-brand-500/10 text-white'
                             : 'border-white/10 text-gray-400 hover:border-white/20'
                         )}
                       >
-                        {t}
+                        {type}
                       </button>
                     ))}
                   </div>
                 </div>
                 <Select
-                  label="Base currency"
+                  label={t('auth.reg.baseCurrency')}
                   value={form.currency}
                   options={[
-                    { value: 'USD', label: 'USD — US Dollar' },
-                    { value: 'EUR', label: 'EUR — Euro' },
-                    { value: 'GBP', label: 'GBP — British Pound' },
+                    { value: 'USD', label: t('auth.reg.ccyUsd') },
+                    { value: 'EUR', label: t('auth.reg.ccyEur') },
+                    { value: 'GBP', label: t('auth.reg.ccyGbp') },
                   ]}
                   onChange={(e) => set('currency', e.target.value)}
                 />
@@ -239,8 +244,8 @@ export default function RegisterPage() {
 
             {step === 2 && (
               <>
-                <Input label="Password" type="password" value={form.password} error={errors.password} onChange={(e) => set('password', e.target.value)} />
-                <Input label="Confirm password" type="password" value={form.confirm} error={errors.confirm} onChange={(e) => set('confirm', e.target.value)} />
+                <Input label={t('auth.password')} type="password" value={form.password} error={errors.password} onChange={(e) => set('password', e.target.value)} />
+                <Input label={t('auth.confirmPassword')} type="password" value={form.confirm} error={errors.confirm} onChange={(e) => set('confirm', e.target.value)} />
                 <label className="flex items-start gap-3 text-sm text-gray-400">
                   <input
                     type="checkbox"
@@ -249,21 +254,21 @@ export default function RegisterPage() {
                     className="mt-0.5 h-4 w-4 rounded border-white/20 bg-ink-800 accent-brand-500"
                   />
                   <span>
-                    I agree to the{' '}
+                    {t('auth.reg.agree')}{' '}
                     <Link
                       to="/legal/client-agreement"
                       target="_blank"
                       className="font-medium text-brand-400 underline underline-offset-2 hover:text-brand-300"
                     >
-                      Client Agreement
+                      {t('lgl.client-agreement.title')}
                     </Link>{' '}
-                    and{' '}
+                    {t('auth.reg.and')}{' '}
                     <Link
                       to="/legal/risk-disclosure"
                       target="_blank"
                       className="font-medium text-brand-400 underline underline-offset-2 hover:text-brand-300"
                     >
-                      Risk Disclosure
+                      {t('lgl.risk-disclosure.title')}
                     </Link>
                     .
                   </span>
@@ -278,24 +283,24 @@ export default function RegisterPage() {
       <div className="mt-6 flex gap-3">
         {step > 0 && (
           <Button variant="outline" onClick={() => setStep((s) => s - 1)} className="gap-1">
-            <ChevronLeft className="h-4 w-4" /> Back
+            <ChevronLeft className="h-4 w-4" /> {t('auth.reg.back')}
           </Button>
         )}
-        {step < steps.length - 1 ? (
+        {step < STEP_KEYS.length - 1 ? (
           <Button onClick={onNext} fullWidth className="gap-1">
-            Continue <ChevronRight className="h-4 w-4" />
+            {t('auth.reg.continue')} <ChevronRight className="h-4 w-4" />
           </Button>
         ) : (
           <Button onClick={onSubmit} fullWidth loading={submitting}>
-            Create account
+            {t('auth.reg.create')}
           </Button>
         )}
       </div>
 
       <p className="mt-6 text-center text-sm text-gray-400">
-        Already have an account?{' '}
+        {t('auth.reg.already')}{' '}
         <Link to="/login" className="font-semibold text-brand-400 hover:text-brand-300">
-          Login
+          {t('auth.loginWord')}
         </Link>
       </p>
     </AuthShell>

@@ -7,11 +7,13 @@ import { zodResolver } from '@/lib/zodResolver'
 import { demoSchema, type DemoValues } from '@/lib/validation'
 import { leadsApi } from '@/lib/leadsApi'
 import { useSeo } from '@/lib/useSeo'
+import { useT } from '@/i18n/LanguageContext'
 
 export default function DemoPage() {
   useSeo({ title: 'Free Demo Account — 27 Markets', description: 'Practice trading risk-free with a funded demo account.' })
   const toast = useToast()
   const navigate = useNavigate()
+  const t = useT()
   const {
     register,
     handleSubmit,
@@ -30,10 +32,10 @@ export default function DemoPage() {
         source: 'DEMO',
         message: `Demo request — platform: ${values.platform}, virtual balance: $${Number(values.balance).toLocaleString()}`,
       })
-      toast.success('Demo requested', 'Our team will email your demo login and virtual funds shortly.')
+      toast.success(t('auth.demo.requested'), t('auth.demo.requestedBody'))
       navigate('/login')
     } catch (err) {
-      toast.error('Could not submit request', (err as Error).message)
+      toast.error(t('auth.demo.failed'), (err as Error).message)
     }
   }
 
@@ -42,34 +44,30 @@ export default function DemoPage() {
       aside={
         <>
           <h2 className="font-display text-4xl font-bold leading-tight text-white">
-            Practice risk-free with a <span className="text-gradient-red">free demo.</span>
+            {t('auth.demo.asideT1')} <span className="text-gradient-red">{t('auth.demo.asideTg')}</span>
           </h2>
-          <p className="mt-4 max-w-sm text-gray-400">
-            Trade live market conditions with virtual funds — no deposit, no risk.
-          </p>
+          <p className="mt-4 max-w-sm text-gray-400">{t('auth.demo.asideDesc')}</p>
         </>
       }
     >
-      <h1 className="font-display text-3xl font-bold text-white">Try a free demo</h1>
-      <p className="mt-2 text-sm text-gray-400">
-        Get a demo account preloaded with virtual funds in seconds.
-      </p>
+      <h1 className="font-display text-3xl font-bold text-white">{t('auth.demo.title')}</h1>
+      <p className="mt-2 text-sm text-gray-400">{t('auth.demo.sub')}</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4" noValidate>
-        <Input label="Full name" placeholder="Jordan Avery" error={errors.name?.message} {...register('name')} />
-        <Input label="Email" type="email" placeholder="you@example.com" error={errors.email?.message} {...register('email')} />
+        <Input label={t('auth.demo.fullName')} placeholder="Jordan Avery" error={errors.name?.message} {...register('name')} />
+        <Input label={t('auth.email')} type="email" placeholder="you@example.com" error={errors.email?.message} {...register('email')} />
         <Select
-          label="Preferred platform"
+          label={t('auth.demo.platform')}
           options={[
-            { value: 'WebTrader', label: 'WebTrader (browser)' },
-            { value: 'Desktop', label: 'Desktop terminal' },
-            { value: 'Mobile', label: 'Mobile app' },
+            { value: 'WebTrader', label: t('auth.demo.platWeb') },
+            { value: 'Desktop', label: t('auth.demo.platDesktop') },
+            { value: 'Mobile', label: t('auth.demo.platMobile') },
           ]}
           error={errors.platform?.message}
           {...register('platform')}
         />
         <Select
-          label="Virtual balance"
+          label={t('auth.demo.balance')}
           options={[
             { value: '10000', label: '$10,000' },
             { value: '50000', label: '$50,000' },
@@ -79,14 +77,14 @@ export default function DemoPage() {
           {...register('balance')}
         />
         <Button type="submit" fullWidth size="lg" loading={isSubmitting}>
-          Create Demo Account
+          {t('auth.demo.btn')}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-gray-400">
-        Ready for the real thing?{' '}
+        {t('auth.demo.ready')}{' '}
         <Link to="/register" className="font-semibold text-brand-400 hover:text-brand-300">
-          Open Live Account
+          {t('auth.demo.openLive')}
         </Link>
       </p>
     </AuthShell>

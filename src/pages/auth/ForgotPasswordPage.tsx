@@ -4,8 +4,10 @@ import { Mail, CheckCircle2 } from 'lucide-react'
 import { AuthShell } from '@/layouts/AuthShell'
 import { Button, Input } from '@/components/ui'
 import { api } from '@/lib/api'
+import { useT } from '@/i18n/LanguageContext'
 
 export default function ForgotPasswordPage() {
+  const t = useT()
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -28,21 +30,21 @@ export default function ForgotPasswordPage() {
       {sent ? (
         <div className="text-center">
           <CheckCircle2 className="mx-auto h-12 w-12 text-success" />
-          <h1 className="mt-4 font-display text-2xl font-bold text-white">Check your email</h1>
+          <h1 className="mt-4 font-display text-2xl font-bold text-white">{t('auth.forgot.checkEmail')}</h1>
           <p className="mt-2 text-sm text-gray-400">
-            If an account exists for <span className="text-white">{email}</span>, we've sent a password‑reset link. It expires in 1 hour.
+            {t('auth.forgot.checkBody1')} <span className="text-white">{email}</span>{t('auth.forgot.checkBody2')}
           </p>
           <Link to="/login" className="mt-6 inline-block">
-            <Button variant="outline">Back to login</Button>
+            <Button variant="outline">{t('auth.backToLogin')}</Button>
           </Link>
         </div>
       ) : (
         <>
-          <h1 className="font-display text-3xl font-bold text-white">Forgot password</h1>
-          <p className="mt-2 text-sm text-gray-400">Enter your email and we'll send you a reset link.</p>
+          <h1 className="font-display text-3xl font-bold text-white">{t('auth.forgot.title')}</h1>
+          <p className="mt-2 text-sm text-gray-400">{t('auth.forgot.sub')}</p>
           <form onSubmit={submit} className="mt-8 space-y-4" noValidate>
             <Input
-              label="Email"
+              label={t('auth.email')}
               type="email"
               placeholder="you@example.com"
               icon={<Mail className="h-4 w-4" />}
@@ -50,13 +52,13 @@ export default function ForgotPasswordPage() {
               onChange={(e) => setEmail(e.target.value)}
             />
             <Button type="submit" fullWidth loading={busy}>
-              Send reset link
+              {t('auth.forgot.send')}
             </Button>
           </form>
           <p className="mt-6 text-center text-sm text-gray-400">
-            Remembered it?{' '}
+            {t('auth.forgot.remembered')}{' '}
             <Link to="/login" className="font-semibold text-brand-400 hover:text-brand-300">
-              Login
+              {t('auth.loginWord')}
             </Link>
           </p>
         </>

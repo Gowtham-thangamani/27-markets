@@ -11,11 +11,13 @@ import { loginSchema, type LoginValues } from '@/lib/validation'
 import { isStaffRole, landingPathForRole } from '@/lib/roles'
 import { ApiError } from '@/lib/api'
 import { useSeo } from '@/lib/useSeo'
+import { useT } from '@/i18n/LanguageContext'
 
 export default function LoginPage() {
   useSeo({ title: 'Log In — 27 Markets' })
   const { login } = useAuth()
   const toast = useToast()
+  const t = useT()
   const navigate = useNavigate()
   const location = useLocation()
   const explicitFrom = (location.state as { from?: string })?.from
@@ -31,33 +33,33 @@ export default function LoginPage() {
 
   const onSubmit = async (values: LoginValues) => {
     if (needTotp && !/^\d{6}$/.test(totp)) {
-      toast.warning('Enter your code', 'Type the 6-digit code from your authenticator app.')
+      toast.warning(t('auth.login.enterCode'), t('auth.login.enterCodeBody'))
       return
     }
     try {
       const user = await login(values.email, values.password, needTotp ? totp : undefined)
       const dest = explicitFrom ?? landingPathForRole(user.role)
-      toast.success('Welcome back', isStaffRole(user.role) ? 'Signed in to the CRM.' : 'You are now signed in to your portal.')
+      toast.success(t('auth.login.welcomeToast'), isStaffRole(user.role) ? t('auth.login.crm') : t('auth.login.portal'))
       navigate(dest, { replace: true })
     } catch (err) {
       const e = err as ApiError
       if (e.code === 'TwoFactorRequired') {
         setNeedTotp(true)
-        toast.info('Two-factor required', 'Enter the 6-digit code from your authenticator app.')
+        toast.info(t('auth.login.twoFa'), t('auth.login.twoFaBody'))
       } else {
-        toast.error('Login failed', e.message || 'Invalid credentials. Please try again.')
+        toast.error(t('auth.login.failed'), e.message || t('auth.login.failedBody'))
       }
     }
   }
 
   return (
     <AuthShell>
-      <h1 className="font-display text-3xl font-bold text-white">Welcome back</h1>
-      <p className="mt-2 text-sm text-gray-400">Log in to access your account.</p>
+      <h1 className="font-display text-3xl font-bold text-white">{t('auth.login.welcome')}</h1>
+      <p className="mt-2 text-sm text-gray-400">{t('auth.login.sub')}</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4" noValidate>
         <Input
-          label="Email"
+          label={t('auth.email')}
           type="email"
           placeholder="you@example.com"
           icon={<Mail className="h-4 w-4" />}
@@ -65,7 +67,7 @@ export default function LoginPage() {
           {...register('email')}
         />
         <Input
-          label="Password"
+          label={t('auth.password')}
           type="password"
           placeholder="••••••••"
           icon={<Lock className="h-4 w-4" />}
@@ -74,30 +76,30 @@ export default function LoginPage() {
         />
         {needTotp && (
           <Input
-            label="Authentication code"
+            label={t('auth.login.authCode')}
             inputMode="numeric"
             placeholder="123456"
             autoFocus
             icon={<KeyRound className="h-4 w-4" />}
             value={totp}
             onChange={(e) => setTotp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-            hint="6-digit code from your authenticator app"
+            hint={t('auth.login.authHint')}
           />
         )}
         <div className="flex justify-end">
           <Link to="/forgot-password" className="text-sm font-medium text-brand-400 hover:text-brand-300">
-            Forgot Password?
+            {t('auth.login.forgot')}
           </Link>
         </div>
         <Button type="submit" fullWidth size="lg" loading={isSubmitting}>
-          {needTotp ? 'Verify & sign in' : 'Login'}
+          {needTotp ? t('auth.login.verifyBtn') : t('auth.login.btn')}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-gray-400">
-        Don't have an account?{' '}
+        {t('auth.login.noAccount')}{' '}
         <Link to="/register" className="font-semibold text-brand-400 hover:text-brand-300">
-          Register
+          {t('auth.registerWord')}
         </Link>
       </p>
 
