@@ -6,10 +6,11 @@ import { Skeleton, ErrorState } from '@/components/ui'
 import { blogApi, type BlogPost } from '@/lib/blogApi'
 import { ApiError } from '@/lib/api'
 import { useSeo } from '@/lib/useSeo'
+import { useLang, useT } from '@/i18n/LanguageContext'
 
-function formatDate(iso: string | null): string {
+function formatDate(iso: string | null, locale: string): string {
   if (!iso) return ''
-  return new Date(iso).toLocaleDateString(undefined, {
+  return new Date(iso).toLocaleDateString(locale, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -27,6 +28,9 @@ const PROSE =
 
 export default function BlogDetailPage() {
   const { slug } = useParams<{ slug: string }>()
+  const { lang } = useLang()
+  const t = useT()
+  const locale = lang === 'ar' ? 'ar' : 'en-US'
   const [post, setPost] = useState<BlogPost | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -36,9 +40,9 @@ export default function BlogDetailPage() {
     try {
       setPost(await blogApi.bySlug(slug))
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Post not found')
+      setError(e instanceof ApiError ? e.message : t('blg.notFound'))
     }
-  }, [slug])
+  }, [slug, t])
 
   useEffect(() => {
     void load()
@@ -58,7 +62,7 @@ export default function BlogDetailPage() {
         to="/blog"
         className="inline-flex items-center gap-1.5 text-sm text-gray-400 transition-colors hover:text-brand-400"
       >
-        <ArrowLeft className="h-4 w-4" /> All posts
+        <ArrowLeft className="h-4 w-4" /> {t('blg.allPosts')}
       </Link>
 
       {error ? (
@@ -74,13 +78,13 @@ export default function BlogDetailPage() {
         </div>
       ) : (
         <>
-          <p className="mt-8 text-sm text-brand-400">{formatDate(post.publishedAt)}</p>
+          <p className="mt-8 text-sm text-brand-400">{formatDate(post.publishedAt, locale)}</p>
           <h1 className="mt-2 font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
             {post.title}
           </h1>
           {post.author && (
             <p className="mt-3 text-sm text-gray-500">
-              By {post.author.firstName} {post.author.lastName}
+              {t('blg.by')} {post.author.firstName} {post.author.lastName}
             </p>
           )}
           {post.featuredImage && (

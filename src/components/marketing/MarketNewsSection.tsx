@@ -4,10 +4,12 @@ import { ArrowUpRight } from 'lucide-react'
 import { loadMarketNews, type NewsItem } from '@/lib/marketNews'
 import { relativeTime } from '@/lib/format'
 import { staggerContainer, fadeUp } from '@/lib/motion'
+import { useT } from '@/i18n/LanguageContext'
 
 /** One external news card. Handles broken/missing images gracefully. */
 function NewsCard({ item }: { item: NewsItem }) {
   const [imgOk, setImgOk] = useState(Boolean(item.image))
+  const t = useT()
 
   return (
     <motion.a
@@ -44,7 +46,7 @@ function NewsCard({ item }: { item: NewsItem }) {
 
       <div className="p-5">
         <p className="text-xs text-gray-500">
-          {item.datetime ? relativeTime(new Date(item.datetime * 1000)) : 'Market news'}
+          {item.datetime ? relativeTime(new Date(item.datetime * 1000)) : t('news.fallback')}
         </p>
         <h3 className="mt-1.5 line-clamp-2 font-display text-base font-semibold leading-snug text-white transition-colors duration-300 group-hover:text-brand-300">
           {item.headline}
@@ -58,14 +60,15 @@ function NewsCard({ item }: { item: NewsItem }) {
 }
 
 const CAT_ORDER = ['forex', 'crypto', 'general'] as const
-const CAT_LABEL: Record<string, string> = {
-  all: 'All',
-  forex: 'Forex',
-  crypto: 'Crypto',
-  general: 'General',
+const CAT_KEY: Record<string, string> = {
+  all: 'news.all',
+  forex: 'news.forex',
+  crypto: 'news.crypto',
+  general: 'news.general',
 }
 
 export function MarketNewsSection() {
+  const t = useT()
   const [items, setItems] = useState<NewsItem[]>([])
   const [active, setActive] = useState<string>('all')
 
@@ -91,28 +94,28 @@ export function MarketNewsSection() {
       <div className="container-x py-14">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="section-eyebrow mb-2">Live</p>
-            <h2 className="font-display text-2xl font-bold text-white sm:text-3xl">Market News</h2>
+            <p className="section-eyebrow mb-2">{t('news.eyebrow')}</p>
+            <h2 className="font-display text-2xl font-bold text-white sm:text-3xl">{t('news.title')}</h2>
           </div>
           {tabs.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {tabs.map((t) => (
+              {tabs.map((tab) => (
                 <button
-                  key={t}
+                  key={tab}
                   type="button"
-                  onClick={() => setActive(t)}
+                  onClick={() => setActive(tab)}
                   className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                    active === t
+                    active === tab
                       ? 'bg-brand-500 text-onaccent'
                       : 'border border-ink-300/60 text-gray-400 hover:text-white'
                   }`}
                 >
-                  {CAT_LABEL[t] ?? t}
+                  {CAT_KEY[tab] ? t(CAT_KEY[tab]) : tab}
                 </button>
               ))}
             </div>
           ) : (
-            <p className="hidden text-xs text-gray-500 sm:block">Headlines via Finnhub</p>
+            <p className="hidden text-xs text-gray-500 sm:block">{t('news.source')}</p>
           )}
         </div>
         <motion.div

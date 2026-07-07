@@ -8,10 +8,11 @@ import { ApiError } from '@/lib/api'
 import { useSeo } from '@/lib/useSeo'
 import { staggerContainer, fadeUp } from '@/lib/motion'
 import { MarketNewsSection } from '@/components/marketing/MarketNewsSection'
+import { useLang, useT } from '@/i18n/LanguageContext'
 
-function formatDate(iso: string | null): string {
+function formatDate(iso: string | null, locale: string): string {
   if (!iso) return ''
-  return new Date(iso).toLocaleDateString(undefined, {
+  return new Date(iso).toLocaleDateString(locale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -24,6 +25,9 @@ export default function BlogListPage() {
     description: 'Trading insights, market analysis, and platform updates from 27 Markets.',
   })
 
+  const { lang } = useLang()
+  const t = useT()
+  const locale = lang === 'ar' ? 'ar' : 'en-US'
   const [items, setItems] = useState<BlogCard[] | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -33,9 +37,9 @@ export default function BlogListPage() {
       const res = await blogApi.list(1, 12)
       setItems(res.items)
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Failed to load posts')
+      setError(e instanceof ApiError ? e.message : t('blg.loadFail'))
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     void load()
@@ -45,8 +49,8 @@ export default function BlogListPage() {
     <>
       <PageHeader
         breadcrumb={['Home', 'Insights']}
-        title="Insights & market news"
-        description="Trading insights, market analysis, and platform updates from the 27 Markets desk."
+        title={t('blg.title')}
+        description={t('blg.desc')}
       />
 
       <section className="container-x py-14">
@@ -60,7 +64,7 @@ export default function BlogListPage() {
           </div>
         ) : items.length === 0 ? (
           <div className="rounded-2xl border border-white/[0.06] bg-ink-800/40 p-10 text-center text-gray-400">
-            No posts published yet — check back soon.
+            {t('blg.empty')}
           </div>
         ) : (
           <motion.div
@@ -78,12 +82,12 @@ export default function BlogListPage() {
                     <div className="h-44 w-full bg-gradient-to-br from-brand-500/15 to-transparent" />
                   )}
                   <div className="p-5">
-                    <p className="text-xs text-gray-500">{formatDate(p.publishedAt)}</p>
+                    <p className="text-xs text-gray-500">{formatDate(p.publishedAt, locale)}</p>
                     <h3 className="mt-2 font-display text-lg font-semibold text-white">{p.title}</h3>
                     {p.excerpt && (
                       <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-gray-400">{p.excerpt}</p>
                     )}
-                    <span className="mt-3 inline-block text-sm font-medium text-brand-400">Read more →</span>
+                    <span className="mt-3 inline-block text-sm font-medium text-brand-400">{t('blg.readMore')}</span>
                   </div>
                 </Link>
               </motion.article>
