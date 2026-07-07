@@ -69,7 +69,7 @@ async function main() {
         userId: client.id,
         type: AccountType.RAW_SPREAD,
         mode: AccountMode.LIVE,
-        leverage: '1:500',
+        leverage: '1:50',
       },
     })
     const clientLedger = await prisma.ledgerAccount.create({
@@ -146,7 +146,7 @@ async function main() {
 
       const number = `30${100000 + i}`
       const account = await prisma.tradingAccount.create({
-        data: { number, userId: user.id, type: AccountType.STANDARD, mode: AccountMode.LIVE, leverage: '1:500', createdAt: created },
+        data: { number, userId: user.id, type: AccountType.STANDARD, mode: AccountMode.LIVE, leverage: '1:10', createdAt: created },
       })
       const clientLedger = await prisma.ledgerAccount.create({
         data: { code: `CLIENT:${account.id}`, name: `Client balance ${number}`, type: LedgerAccountType.LIABILITY, userId: user.id, tradingAccountId: account.id },
