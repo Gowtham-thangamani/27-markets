@@ -20,8 +20,8 @@ export default function LegalPage() {
         <div className="glass-panel mx-auto max-w-3xl p-8 text-sm leading-relaxed text-gray-300">
           <p>
             {t('lgl.body').replace('{title}', title)}{' '}
-            <a className="font-medium text-brand-400 underline" href="mailto:support@27markets.io">
-              support@27markets.io
+            <a className="font-medium text-brand-400 underline" href="mailto:info@27markets.com">
+              info@27markets.com
             </a>
             .
           </p>

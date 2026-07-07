@@ -4,6 +4,7 @@ import {
   Instagram,
   Linkedin,
   Mail,
+  MapPin,
   ShieldCheck,
   Lock,
   DollarSign,
@@ -61,6 +62,7 @@ const columns = [
     links: [
       { labelKey: 'footer.clientAgreement', to: '/downloads' },
       { labelKey: 'footer.riskDisclosure', to: '/downloads' },
+      { labelKey: 'footer.disclaimer', to: '/disclaimer' },
       { labelKey: 'footer.privacy', to: '/about' },
       { labelKey: 'footer.aml', to: '/about' },
     ],
@@ -71,6 +73,7 @@ const legalLinks = [
   { labelKey: 'footer.privacy', to: '/about' },
   { labelKey: 'footer.clientAgreement', to: '/downloads' },
   { labelKey: 'footer.riskDisclosure', to: '/downloads' },
+  { labelKey: 'footer.disclaimer', to: '/disclaimer' },
 ]
 
 export function Footer() {
@@ -107,11 +110,18 @@ export function Footer() {
             <Logo size={30} />
             <p className="mt-4 text-sm leading-relaxed text-gray-300">{t('footer.tagline')}</p>
             <a
-              href="mailto:support@27markets.io"
+              href="mailto:info@27markets.com"
               className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-white transition-colors hover:text-brand-400"
             >
-              <Mail className="h-4 w-4 text-brand-400" /> support@27markets.io
+              <Mail className="h-4 w-4 text-brand-400" /> info@27markets.com
             </a>
+            <p className="mt-3 flex items-start gap-2 text-sm leading-relaxed text-gray-400">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" />
+              <span>
+                27 Markets Ltd · Ground Floor, The Sotheby Building, Rodney Village, Rodney Bay,
+                Gros-Islet, Saint Lucia
+              </span>
+            </p>
             <div className="mt-6 flex gap-2.5">
               {socials.map(({ label, href, Icon }) => (
                 <a

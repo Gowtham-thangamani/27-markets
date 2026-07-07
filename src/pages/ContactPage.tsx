@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
-import { Mail, MessageSquare, Info, Send } from 'lucide-react'
+import { Mail, MessageSquare, MapPin, Send } from 'lucide-react'
 import { Button, Input, Textarea } from '@/components/ui'
 import { Reveal } from '@/components/Reveal'
 import { PageHeader } from '@/components/marketing/PageHeader'
@@ -11,9 +11,14 @@ import { contactSchema, type ContactValues } from '@/lib/validation'
 import { useT } from '@/i18n/LanguageContext'
 
 const channels = [
-  { icon: Mail, tKey: 'ctp.c1t', value: 'support@27markets.io', noteKey: 'ctp.c1note' },
+  { icon: Mail, tKey: 'ctp.c1t', value: 'info@27markets.com', noteKey: 'ctp.c1note' },
   { icon: MessageSquare, tKey: 'ctp.c2t', valueKey: 'ctp.c2v', noteKey: 'ctp.c2note' },
-  { icon: Info, tKey: 'ctp.c3t', value: 'info@27markets.io', noteKey: 'ctp.c3note' },
+  {
+    icon: MapPin,
+    tKey: 'ctp.c3t',
+    value: 'Ground Floor, The Sotheby Building, Rodney Village, Rodney Bay, Gros-Islet, Saint Lucia',
+    noteKey: 'ctp.c3note',
+  },
 ]
 
 export default function ContactPage() {
