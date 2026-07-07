@@ -65,13 +65,7 @@ export function Footer() {
       {/* Top brand accent */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/60 to-transparent" />
       {/* Subtle network/map texture */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.5]"
-        style={{
-          backgroundImage:
-            'radial-gradient(circle at 20% 20%, rgba(225,29,46,0.06), transparent 40%), radial-gradient(circle at 80% 60%, rgba(225,29,46,0.05), transparent 45%)',
-        }}
-      />
+      <div className="footer-texture pointer-events-none absolute inset-0 opacity-[0.5]" />
       <div className="grid-bg pointer-events-none absolute inset-0 opacity-30" />
 
       <div className="container-x relative py-16">

@@ -213,6 +213,13 @@ html[dir='rtl'] .font-display {
     background-image: radial-gradient(circle at 30% 40%, rgba(225, 29, 46, 0.1), transparent 60%);
   }
 
+  /* Subtle red network/map texture behind the footer */
+  .footer-texture {
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(225, 29, 46, 0.06), transparent 40%),
+      radial-gradient(circle at 80% 60%, rgba(225, 29, 46, 0.05), transparent 45%);
+  }
+
   /* Visually-hidden, but available to screen readers; becomes visible on focus */
   .skip-link {
     @apply sr-only;
