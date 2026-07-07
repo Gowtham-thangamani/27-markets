@@ -138,6 +138,55 @@ export class AdminFinanceService {
     return list.map((e) => ({ ...e, destination: byId.get(e.id) ?? null }));
   }
 
+  /**
+   * Every withdrawal with its payout destination, optionally filtered by status
+   * (PENDING = awaiting review, POSTED = paid, REVERSED = rejected). Powers the
+   * dedicated Withdrawal Requests admin page.
+   *
+   * NOTE: rejecting a withdrawal posts a compensating entry of the SAME
+   * WITHDRAWAL kind with the client leg flipped to CREDIT. We only keep entries
+   * whose client-facing leg is a DEBIT (real withdrawals), so those reversal
+   * artifacts never show up as phantom "paid" rows.
+   */
+  async allWithdrawals(status?: JournalStatus) {
+    const entries = await this.prisma.journalEntry.findMany({
+      where: { kind: JournalKind.WITHDRAWAL, ...(status ? { status } : {}) },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+      include: {
+        postings: {
+          include: { ledgerAccount: { include: { user: true, tradingAccount: true } } },
+        },
+      },
+    });
+
+    const rows = entries.flatMap((e) => {
+      const leg = e.postings.find(
+        (p) => p.ledgerAccount.userId && p.direction === PostingDirection.DEBIT,
+      );
+      if (!leg) return []; // reversal compensation entry — not a real withdrawal
+      const u = leg.ledgerAccount.user;
+      return [
+        {
+          id: e.id,
+          reference: e.reference,
+          status: e.status,
+          amount: formatMoney(leg.amount),
+          memo: e.memo,
+          createdAt: e.createdAt,
+          accountNumber: leg.ledgerAccount.tradingAccount?.number ?? null,
+          client: u ? { id: u.id, name: `${u.firstName} ${u.lastName}`, email: u.email } : null,
+        },
+      ];
+    });
+
+    const details = await this.prisma.withdrawalDetail.findMany({
+      where: { journalEntryId: { in: rows.map((e) => e.id) } },
+    });
+    const byId = new Map(details.map((d) => [d.journalEntryId, d]));
+    return rows.map((e) => ({ ...e, destination: byId.get(e.id) ?? null }));
+  }
+
   /** Recent completed deposits. */
   deposits() {
     return this.listByKindStatus(JournalKind.DEPOSIT, JournalStatus.POSTED);

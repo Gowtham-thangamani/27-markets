@@ -1,5 +1,5 @@
-import { Body, Controller, Get, HttpCode, Param, Post, UseGuards } from '@nestjs/common';
-import { UserRole } from '@prisma/client';
+import { Body, Controller, Get, HttpCode, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { JournalStatus, UserRole } from '@prisma/client';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser, Roles } from '../common/decorators';
 import { AdminFinanceService } from './admin-finance.service';
@@ -15,6 +15,16 @@ export class AdminFinanceController {
   @Get('withdrawals')
   withdrawals() {
     return this.finance.pendingWithdrawals();
+  }
+
+  /** Full withdrawal history, optionally filtered by ?status=PENDING|POSTED|REVERSED. */
+  @Get('withdrawals/all')
+  allWithdrawals(@Query('status') status?: string) {
+    const valid =
+      status && (Object.values(JournalStatus) as string[]).includes(status)
+        ? (status as JournalStatus)
+        : undefined;
+    return this.finance.allWithdrawals(valid);
   }
 
   @Get('deposits')

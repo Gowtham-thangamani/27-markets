@@ -48,6 +48,9 @@ export interface DepositRequestRow {
 /** Typed CRM finance + accounts admin API (reuses the shared `api` client). */
 export const financeApi = {
   pendingWithdrawals: () => api.get<FinanceTxn[]>('/admin/finance/withdrawals'),
+  /** All withdrawals, optionally filtered by status (PENDING | POSTED | REVERSED). */
+  allWithdrawals: (status?: 'PENDING' | 'POSTED' | 'REVERSED') =>
+    api.get<FinanceTxn[]>(`/admin/finance/withdrawals/all${status ? `?status=${status}` : ''}`),
   deposits: () => api.get<FinanceTxn[]>('/admin/finance/deposits'),
   depositRequests: () => api.get<DepositRequestRow[]>('/admin/finance/deposit-requests'),
   approveDepositRequest: (id: string) =>

@@ -45,6 +45,50 @@ describe('AdminFinanceService.approveWithdrawal', () => {
   });
 });
 
+describe('AdminFinanceService.allWithdrawals', () => {
+  const userLeg = (direction: string, amount = 100) => ({
+    amount,
+    direction,
+    ledgerAccount: { userId: 'u1', user: { id: 'u1', firstName: 'Ada', lastName: 'Lovelace', email: 'ada@x.com' }, tradingAccount: { number: '10012345' } },
+  });
+  const systemLeg = (direction: string, amount = 100) => ({
+    amount,
+    direction,
+    ledgerAccount: { userId: null, user: null, tradingAccount: null },
+  });
+
+  it('lists real withdrawals and drops reversal compensation entries', async () => {
+    const findMany = jest.fn().mockResolvedValue([
+      { id: 'w-paid', reference: 'TX-1', status: JournalStatus.POSTED, memo: 'Withdrawal via bank', createdAt: new Date('2026-06-20'), postings: [userLeg('DEBIT'), systemLeg('CREDIT')] },
+      { id: 'w-rejected', reference: 'TX-2', status: JournalStatus.REVERSED, memo: 'Withdrawal via bank', createdAt: new Date('2026-06-21'), postings: [userLeg('DEBIT'), systemLeg('CREDIT')] },
+      // Reversal compensation entry — same WITHDRAWAL kind, client leg flipped to CREDIT. Must be excluded.
+      { id: 'w-reversal', reference: 'TX-3', status: JournalStatus.POSTED, memo: 'Withdrawal rejected', createdAt: new Date('2026-06-21'), postings: [userLeg('CREDIT'), systemLeg('DEBIT')] },
+    ]);
+    const prisma = {
+      journalEntry: { findMany },
+      withdrawalDetail: { findMany: jest.fn().mockResolvedValue([{ journalEntryId: 'w-paid', method: 'bank', accountName: 'Ada L' }]) },
+    } as any;
+    const service = new AdminFinanceService(prisma, {} as any, {} as any, payments() as any, cfg());
+
+    const rows = await service.allWithdrawals();
+
+    expect(rows.map((r) => r.id)).toEqual(['w-paid', 'w-rejected']);
+    expect(rows[0]).toMatchObject({ status: JournalStatus.POSTED, accountNumber: '10012345', client: { name: 'Ada Lovelace' } });
+    expect(rows[0].destination).toMatchObject({ method: 'bank' });
+    expect(rows[1].destination).toBeNull();
+  });
+
+  it('passes a status filter through to the query', async () => {
+    const findMany = jest.fn().mockResolvedValue([]);
+    const prisma = { journalEntry: { findMany }, withdrawalDetail: { findMany: jest.fn().mockResolvedValue([]) } } as any;
+    const service = new AdminFinanceService(prisma, {} as any, {} as any, payments() as any, cfg());
+
+    await service.allWithdrawals(JournalStatus.PENDING);
+
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ status: JournalStatus.PENDING }) }));
+  });
+});
+
 describe('AdminFinanceService.rejectWithdrawal', () => {
   it('reverses the held entry and audits the reason', async () => {
     const reverse = jest.fn().mockResolvedValue({});

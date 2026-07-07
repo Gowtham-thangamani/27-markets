@@ -17,6 +17,7 @@ import AdminLeadsPage from './pages/admin/AdminLeadsPage'
 import AdminSupportPage from './pages/admin/AdminSupportPage'
 import AdminKycPage from './pages/admin/AdminKycPage'
 import AdminFinancePage from './pages/admin/AdminFinancePage'
+import AdminWithdrawalsPage from './pages/admin/AdminWithdrawalsPage'
 import AdminAccountsPage from './pages/admin/AdminAccountsPage'
 import AdminPartnersPage from './pages/admin/AdminPartnersPage'
 import AdminPartnerApplicationsPage from './pages/admin/AdminPartnerApplicationsPage'
@@ -57,6 +58,7 @@ import ProfilePage from './pages/portal/ProfilePage'
 import SupportPage from './pages/portal/SupportPage'
 import NotFoundPage from './pages/NotFoundPage'
 import PartnerApplyPage from './pages/PartnerApplyPage'
+import DisclaimerPage from './pages/DisclaimerPage'
 
 export default function App() {
   return (
@@ -79,6 +81,7 @@ export default function App() {
         <Route path="/blog" element={<BlogListPage />} />
         <Route path="/blog/:slug" element={<BlogDetailPage />} />
         <Route path="/partner/apply" element={<PartnerApplyPage />} />
+        <Route path="/disclaimer" element={<DisclaimerPage />} />
         <Route path="/legal/:doc" element={<LegalPage />} />
       </Route>
 
@@ -126,6 +129,7 @@ export default function App() {
         <Route path="support" element={<AdminSupportPage />} />
         <Route path="kyc" element={<AdminKycPage />} />
         <Route path="finance" element={<AdminFinancePage />} />
+        <Route path="withdrawal-requests" element={<AdminWithdrawalsPage />} />
         <Route path="accounts" element={<AdminAccountsPage />} />
         <Route path="partners" element={<AdminPartnersPage />} />
         <Route path="partner-applications" element={<AdminPartnerApplicationsPage />} />

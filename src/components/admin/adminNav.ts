@@ -84,7 +84,7 @@ export const adminNav: AdminNavEntry[] = [
     label: 'Requests', icon: ClipboardList, children: [
       { label: 'Account Requests', to: '/admin/account-requests', placeholder: true },
       { label: 'Data Change Requests', to: '/admin/data-change-requests', placeholder: true },
-      { label: 'Withdrawal Requests', to: '/admin/withdrawal-requests', placeholder: true },
+      { label: 'Withdrawal Requests', to: '/admin/withdrawal-requests' },
     ],
   },
   {
