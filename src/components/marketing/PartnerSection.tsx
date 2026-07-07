@@ -9,32 +9,33 @@ import { partnerBenefits } from '@/mock/content'
 import { cardReveal, cardStagger } from '@/lib/motion'
 import { asset } from '@/lib/asset'
 import { useThemeSafe } from '@/context/ThemeContext'
+import { useT } from '@/i18n/LanguageContext'
 
 export function PartnerSection() {
   const onLight = useThemeSafe() === 'light'
+  const t = useT()
   return (
     <section className="section-alt relative overflow-hidden py-8 sm:py-12">
       <div className="container-x relative z-10">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div>
             <Reveal>
-              <p className="section-eyebrow mb-3">Partner With 27 Markets</p>
+              <p className="section-eyebrow mb-3">{t('partner.eyebrow')}</p>
               <h2 className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
-                Grow Together. <br />
-                <span className="text-white">Succeed Together.</span>
+                {t('partner.title1')} <br />
+                <span className="text-white">{t('partner.title2')}</span>
               </h2>
               <p className="mt-4 max-w-md text-base leading-relaxed text-white">
-                Our IB program is built for long-term success. Enjoy competitive rebates, powerful
-                tools, and dedicated support to grow your business across global markets.
+                {t('partner.desc')}
               </p>
             </Reveal>
 
             <Reveal delay={0.1} className="mt-7 flex flex-wrap gap-3">
               <Link to="/partnership">
-                <Button>Become a Partner</Button>
+                <Button>{t('partner.cta1')}</Button>
               </Link>
               <Link to="/partnership">
-                <Button variant="outline">Learn More</Button>
+                <Button variant="outline">{t('partner.cta2')}</Button>
               </Link>
             </Reveal>
           </div>
@@ -73,14 +74,14 @@ export function PartnerSection() {
                     style={{ animationDuration: '7s' }}
                   >
                     <Globe2 className="h-4 w-4 text-brand-400" />
-                    <span className="font-semibold text-white">120+ Countries</span>
+                    <span className="font-semibold text-white">{t('partner.chip1')}</span>
                   </div>
                   <div
                     className="glass-panel animate-float absolute bottom-[18%] right-[2%] flex items-center gap-2 rounded-xl px-3 py-2 text-xs shadow-[0_10px_30px_-8px_rgba(0,0,0,0.4)] ring-1 ring-brand-500/15"
                     style={{ animationDuration: '9s', animationDelay: '0.8s' }}
                   >
                     <Coins className="h-4 w-4 text-brand-400" />
-                    <span className="font-semibold text-white">Instant Rebates</span>
+                    <span className="font-semibold text-white">{t('partner.chip2')}</span>
                   </div>
                 </div>
               </>
@@ -107,7 +108,9 @@ export function PartnerSection() {
               <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/20 transition-all duration-300 group-hover:scale-110 group-hover:bg-brand-500 group-hover:text-onaccent group-hover:shadow-[0_0_24px_rgba(225,29,46,0.5)]">
                 <b.icon className="h-5 w-5" />
               </span>
-              <p className="font-display text-sm font-semibold leading-snug text-white">{b.title}</p>
+              <p className="font-display text-sm font-semibold leading-snug text-white">
+                {t(`partner.b.${b.title}`)}
+              </p>
             </motion.div>
           ))}
         </motion.div>

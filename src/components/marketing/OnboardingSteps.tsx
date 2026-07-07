@@ -4,23 +4,25 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui'
 import { SectionHeading } from '@/components/SectionHeading'
 import { Reveal } from '@/components/Reveal'
+import { useT } from '@/i18n/LanguageContext'
 import { cardStagger, cardReveal } from '@/lib/motion'
 
 const STEPS = [
-  { icon: UserPlus, title: 'Register', body: 'Create your account with just an email.', time: '~2 min' },
-  { icon: BadgeCheck, title: 'Verify', body: 'Confirm your identity with a quick KYC check.', time: 'Same day' },
-  { icon: Wallet, title: 'Fund', body: 'Deposit from $50 using your preferred method.', time: 'Instant*' },
-  { icon: TrendingUp, title: 'Trade', body: 'Access 100+ markets on web, mobile, or desktop.', time: 'Go live' },
+  { icon: UserPlus, tKey: 'steps.s1t', bKey: 'steps.s1b', timeKey: 'steps.s1time' },
+  { icon: BadgeCheck, tKey: 'steps.s2t', bKey: 'steps.s2b', timeKey: 'steps.s2time' },
+  { icon: Wallet, tKey: 'steps.s3t', bKey: 'steps.s3b', timeKey: 'steps.s3time' },
+  { icon: TrendingUp, tKey: 'steps.s4t', bKey: 'steps.s4b', timeKey: 'steps.s4time' },
 ]
 
 export function OnboardingSteps() {
+  const t = useT()
   return (
     <section className="section-alt relative overflow-hidden py-20 sm:py-24">
       <div className="container-x relative z-10">
         <SectionHeading
-          eyebrow="Getting started"
-          title="Start trading in four simple steps"
-          description="No paperwork maze, no waiting around. Open a live account in minutes — or try a free demo first."
+          eyebrow={t('steps.eyebrow')}
+          title={t('steps.title')}
+          description={t('steps.desc')}
         />
 
         <motion.div
@@ -32,7 +34,7 @@ export function OnboardingSteps() {
         >
           {STEPS.map((s, i) => (
             <motion.div
-              key={s.title}
+              key={s.tKey}
               variants={cardReveal}
               className="glass-panel card-lift relative flex flex-col gap-3 p-6"
             >
@@ -42,10 +44,10 @@ export function OnboardingSteps() {
               <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/15">
                 <s.icon className="h-5 w-5" />
               </span>
-              <h3 className="text-base font-semibold text-white">{s.title}</h3>
-              <p className="text-sm leading-relaxed text-gray-400">{s.body}</p>
+              <h3 className="text-base font-semibold text-white">{t(s.tKey)}</h3>
+              <p className="text-sm leading-relaxed text-gray-400">{t(s.bKey)}</p>
               <span className="mt-auto inline-flex w-max items-center rounded-full bg-brand-500/10 px-2.5 py-1 text-[11px] font-medium text-brand-300">
-                {s.time}
+                {t(s.timeKey)}
               </span>
             </motion.div>
           ))}
@@ -54,19 +56,17 @@ export function OnboardingSteps() {
         <Reveal className="mt-10 flex flex-wrap justify-center gap-3">
           <Link to="/register">
             <Button size="lg" className="gap-2">
-              Open account in minutes <ArrowRight className="h-4 w-4" />
+              {t('steps.cta1')} <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
           <Link to="/demo">
             <Button variant="outline" size="lg">
-              Try free demo
+              {t('steps.cta2')}
             </Button>
           </Link>
         </Reveal>
 
-        <p className="mt-4 text-center text-xs text-gray-500">
-          *Deposit timing depends on the funding method. Withdrawals have no minimum.
-        </p>
+        <p className="mt-4 text-center text-xs text-gray-500">{t('steps.foot')}</p>
       </div>
     </section>
   )

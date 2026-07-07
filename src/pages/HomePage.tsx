@@ -31,11 +31,11 @@ import { useLiveQuotes } from '@/lib/useLiveQuotes'
 import { whyFeatures, marketCategories } from '@/mock/content'
 
 const heroStats = [
-  { icon: Layers, image: '/stat-pips.png', value: '0.0', label: 'Pips from spreads' },
-  { icon: Rocket, image: '/stat-leverage.png', value: '1:500', label: 'Up to leverage' },
-  { icon: Gauge, image: '/stat-execution.png', value: '<30ms', label: 'Ultra-fast execution' },
-  { icon: ShieldCheck, image: '/stat-liquidity.png', value: 'Tier-1', label: 'Liquidity providers' },
-  { icon: Headphones, image: '/stat-support.png', value: '24/5', label: 'Customer support' },
+  { icon: Layers, image: '/stat-pips.png', value: '0.0', labelKey: 'stats.pips' },
+  { icon: Rocket, image: '/stat-leverage.png', value: '1:500', labelKey: 'stats.leverage' },
+  { icon: Gauge, image: '/stat-execution.png', value: '<30ms', labelKey: 'stats.exec' },
+  { icon: ShieldCheck, image: '/stat-liquidity.png', value: 'Tier-1', labelKey: 'stats.liq' },
+  { icon: Headphones, image: '/stat-support.png', value: '24/5', labelKey: 'stats.support' },
 ]
 
 // Live quotes powering the dark-theme hero slider's floating price chips.
@@ -87,7 +87,7 @@ export default function HomePage() {
           >
             {heroStats.map((s) => (
               <motion.div
-                key={s.label}
+                key={s.labelKey}
                 variants={fadeUp}
                 className="group flex items-center gap-3 p-5 transition-colors hover:bg-brand-500/[0.05]"
               >
@@ -96,15 +96,12 @@ export default function HomePage() {
                 </span>
                 <div>
                   <div className="font-display text-xl font-bold tabular-nums text-white">{s.value}</div>
-                  <div className="text-xs text-gray-400">{s.label}</div>
+                  <div className="text-xs text-gray-400">{t(s.labelKey)}</div>
                 </div>
               </motion.div>
             ))}
           </motion.div>
-          <p className="mt-3 px-1 text-center text-[11px] text-gray-500">
-            Figures shown are indicative of target trading conditions and may vary by account type
-            and market.
-          </p>
+          <p className="mt-3 px-1 text-center text-[11px] text-gray-500">{t('stats.foot')}</p>
         </div>
 
         {/* Scroll cue */}
