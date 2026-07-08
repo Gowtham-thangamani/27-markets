@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form'
-import { Mail, Phone, User, Globe, Bell, Lock, ShieldCheck } from 'lucide-react'
+import { Mail, Phone, User, Globe, Bell, Lock, ShieldCheck, FileEdit } from 'lucide-react'
 import { Button, Input } from '@/components/ui'
+import { api, ApiError } from '@/lib/api'
 import { PageTitle } from '@/components/portal/PageTitle'
 import { SecuritySettings } from '@/components/portal/SecuritySettings'
 import { useAuth } from '@/context/AuthContext'
@@ -17,6 +18,22 @@ export default function ProfilePage() {
   const { user, updateProfile } = useAuth()
   const toast = useToast()
   const [prefs, setPrefs] = useState({ marketing: true, security: true, product: false })
+  const [cr, setCr] = useState<{ field: 'phone' | 'address' | 'city' | 'postalCode'; value: string }>({ field: 'phone', value: '' })
+  const [crBusy, setCrBusy] = useState(false)
+
+  const submitChangeRequest = async () => {
+    if (!cr.value.trim()) return
+    setCrBusy(true)
+    try {
+      await api.post('/users/me/change-requests', { field: cr.field, requestedValue: cr.value.trim() })
+      setCr((c) => ({ ...c, value: '' }))
+      toast.success('Request submitted', 'An admin will review your change shortly.')
+    } catch (err) {
+      toast.error('Request failed', err instanceof ApiError ? err.message : (err as Error).message)
+    } finally {
+      setCrBusy(false)
+    }
+  }
 
   const {
     register,
@@ -110,6 +127,32 @@ export default function ProfilePage() {
                   </button>
                 </label>
               ))}
+            </div>
+          </div>
+
+          {/* Request a change that needs approval */}
+          <div className="glass-panel p-6">
+            <div className="flex items-center gap-2">
+              <FileEdit className="h-5 w-5 text-brand-400" />
+              <h3 className="font-display text-base font-semibold text-white">Request a change</h3>
+            </div>
+            <p className="mt-1 text-xs text-gray-500">Some changes need admin approval before they take effect.</p>
+            <div className="mt-4 space-y-3">
+              <select
+                aria-label="Field to change"
+                value={cr.field}
+                onChange={(e) => setCr((c) => ({ ...c, field: e.target.value as typeof c.field }))}
+                className="w-full rounded-lg border border-white/10 bg-ink-800 px-3 py-2.5 text-sm text-white focus:border-brand-500/50 focus:outline-none"
+              >
+                <option value="phone">Phone</option>
+                <option value="address">Address</option>
+                <option value="city">City</option>
+                <option value="postalCode">Postal code</option>
+              </select>
+              <Input placeholder="New value" value={cr.value} onChange={(e) => setCr((c) => ({ ...c, value: e.target.value }))} />
+              <Button type="button" fullWidth loading={crBusy} disabled={!cr.value.trim()} onClick={submitChangeRequest}>
+                Submit request
+              </Button>
             </div>
           </div>
         </div>

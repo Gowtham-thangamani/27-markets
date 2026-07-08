@@ -187,6 +187,22 @@ model TradingAccount {
   @@index([userId])
 }
 
+// Client-submitted profile change requests requiring admin approval.
+model DataChangeRequest {
+  id             String    @id @default(cuid())
+  userId         String
+  field          String // phone | address | city | postalCode
+  currentValue   String?
+  requestedValue String
+  status         String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewedById   String?
+  reviewedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([status])
+  @@index([userId])
+}
+
 // Introducing-broker (IB) campaigns with tracking codes, managed from the admin CRM.
 model IbCampaign {
   id          String   @id @default(cuid())

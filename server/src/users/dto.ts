@@ -1,4 +1,14 @@
-import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+
+export class CreateDataChangeRequestDto {
+  @IsIn(['phone', 'address', 'city', 'postalCode'])
+  field!: 'phone' | 'address' | 'city' | 'postalCode';
+
+  @IsString()
+  @MinLength(1)
+  @MaxLength(200)
+  requestedValue!: string;
+}
 
 export class UpdateProfileDto {
   @IsOptional()

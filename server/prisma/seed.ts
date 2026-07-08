@@ -219,6 +219,16 @@ async function main() {
   const agent = await upsertUser('agent@27markets.io', 'Agent123!', 'Riley', 'Mensah', UserRole.AGENT)
   const client = await upsertUser('client@27markets.io', 'Client123!', 'Jordan', 'Avery', UserRole.CLIENT)
 
+  // Sample pending data-change requests for the demo client.
+  if ((await prisma.dataChangeRequest.count({ where: { userId: client.id } })) === 0) {
+    await prisma.dataChangeRequest.createMany({
+      data: [
+        { userId: client.id, field: 'phone', currentValue: '+971 50 000 0000', requestedValue: '+971 55 123 4567' },
+        { userId: client.id, field: 'address', currentValue: null, requestedValue: '12 Marina Walk, Dubai' },
+      ],
+    })
+  }
+
   // ── Funded trading account for the demo client (via double-entry ledger) ──
   const accountNumber = '20010001'
   let account = await prisma.tradingAccount.findUnique({ where: { number: accountNumber } })

@@ -195,6 +195,17 @@ export type AccountTypePatch = Partial<
   Pick<AccountTypeConfig, 'displayName' | 'spreadFrom' | 'commission' | 'leverage' | 'minDeposit' | 'popular' | 'sortOrder'>
 >
 
+export interface DataChangeRequestRow {
+  id: string
+  field: string
+  currentValue: string | null
+  requestedValue: string
+  status: string
+  createdAt: string
+  reviewedAt: string | null
+  client: { id: string; name: string; email: string } | null
+}
+
 export interface IbCampaign {
   id: string
   name: string
@@ -459,6 +470,12 @@ export const adminApi = {
   listAccountTypes: () => api.get<AccountTypeConfig[]>('/admin/account-types'),
   updateAccountType: (type: string, patch: AccountTypePatch) =>
     api.patch<AccountTypeConfig>(`/admin/account-types/${type}`, patch),
+
+  // Data change requests (client-submitted, admin approves)
+  listDataChangeRequests: (status?: 'PENDING' | 'APPROVED' | 'REJECTED') =>
+    api.get<DataChangeRequestRow[]>(`/admin/data-change-requests${status ? `?status=${status}` : ''}`),
+  approveDataChangeRequest: (id: string) => api.post<{ ok: boolean; status: string }>(`/admin/data-change-requests/${id}/approve`),
+  rejectDataChangeRequest: (id: string, reason?: string) => api.post<{ ok: boolean; status: string }>(`/admin/data-change-requests/${id}/reject`, { reason }),
 
   // IB campaigns (config — Admin edits)
   listIbCampaigns: () => api.get<IbCampaign[]>('/admin/ib-campaigns'),

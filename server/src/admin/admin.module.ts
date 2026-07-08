@@ -35,6 +35,8 @@ import { AdminStaffFormAssignmentsController } from './admin-staff-form-assignme
 import { AdminStaffFormAssignmentsService } from './admin-staff-form-assignments.service';
 import { AdminIbCampaignsController } from './admin-ib-campaigns.controller';
 import { AdminIbCampaignsService } from './admin-ib-campaigns.service';
+import { AdminDataChangeRequestsController } from './admin-data-change-requests.controller';
+import { AdminDataChangeRequestsService } from './admin-data-change-requests.service';
 import { AdminReportsController } from './admin-reports.controller';
 import { AdminReportsService } from './admin-reports.service';
 import { AdminStaffController } from './admin-staff.controller';
@@ -62,6 +64,7 @@ import { AdminPartnersService } from './admin-partners.service';
     AdminCampaignsController,
     AdminStaffFormAssignmentsController,
     AdminIbCampaignsController,
+    AdminDataChangeRequestsController,
     AdminReportsController,
     AdminStaffController,
     AdminPartnersController,
@@ -85,6 +88,7 @@ import { AdminPartnersService } from './admin-partners.service';
     AdminCampaignsService,
     AdminStaffFormAssignmentsService,
     AdminIbCampaignsService,
+    AdminDataChangeRequestsService,
     AdminReportsService,
     AdminStaffService,
     AdminPartnersService,

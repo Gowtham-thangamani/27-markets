@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UpdateProfileDto } from './dto';
+import { CreateDataChangeRequestDto, UpdateProfileDto } from './dto';
 import { CurrentUser } from '../common/decorators';
 
 @Controller('users')
@@ -15,5 +15,15 @@ export class UsersController {
   @Patch('me')
   update(@CurrentUser('id') userId: string, @Body() dto: UpdateProfileDto) {
     return this.users.update(userId, dto);
+  }
+
+  @Get('me/change-requests')
+  changeRequests(@CurrentUser('id') userId: string) {
+    return this.users.listMyChangeRequests(userId);
+  }
+
+  @Post('me/change-requests')
+  submitChangeRequest(@CurrentUser('id') userId: string, @Body() dto: CreateDataChangeRequestDto) {
+    return this.users.createChangeRequest(userId, dto);
   }
 }
