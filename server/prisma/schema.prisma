@@ -187,6 +187,20 @@ model TradingAccount {
   @@index([userId])
 }
 
+// Notification/marketing campaigns, managed from the admin CRM.
+model Campaign {
+  id        String    @id @default(cuid())
+  name      String
+  channel   String    @default("EMAIL") // EMAIL | SMS | PUSH
+  audience  String    @default("All clients")
+  subject   String?
+  message   String
+  status    String    @default("DRAFT") // DRAFT | SCHEDULED | SENT
+  scheduledAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
 // Reusable text templates, managed from the admin CRM.
 // `kind` scopes the list: PDF (PDF Templates) or COMMENT (Comment Templates).
 model TextTemplate {

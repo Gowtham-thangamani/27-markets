@@ -172,6 +172,31 @@ export type AccountTypePatch = Partial<
   Pick<AccountTypeConfig, 'displayName' | 'spreadFrom' | 'commission' | 'leverage' | 'minDeposit' | 'popular' | 'sortOrder'>
 >
 
+export type CampaignChannel = 'EMAIL' | 'SMS' | 'PUSH'
+export type CampaignStatus = 'DRAFT' | 'SCHEDULED' | 'SENT'
+
+export interface Campaign {
+  id: string
+  name: string
+  channel: CampaignChannel
+  audience: string
+  subject: string | null
+  message: string
+  status: CampaignStatus
+  scheduledAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type CampaignInput = {
+  name: string
+  channel?: CampaignChannel
+  audience?: string
+  subject?: string
+  message: string
+  status?: CampaignStatus
+}
+
 export type TextTemplateKind = 'PDF' | 'COMMENT'
 
 export interface TextTemplate {
@@ -382,6 +407,12 @@ export const adminApi = {
   listAccountTypes: () => api.get<AccountTypeConfig[]>('/admin/account-types'),
   updateAccountType: (type: string, patch: AccountTypePatch) =>
     api.patch<AccountTypeConfig>(`/admin/account-types/${type}`, patch),
+
+  // Campaigns (config — Admin edits)
+  listCampaigns: () => api.get<Campaign[]>('/admin/campaigns'),
+  createCampaign: (body: CampaignInput) => api.post<Campaign>('/admin/campaigns', body),
+  updateCampaign: (id: string, patch: Partial<CampaignInput>) => api.patch<Campaign>(`/admin/campaigns/${id}`, patch),
+  deleteCampaign: (id: string) => api.del<{ ok: boolean }>(`/admin/campaigns/${id}`),
 
   // Text templates (PDF / Comment — config, Admin edits)
   listTextTemplates: (kind: TextTemplateKind) => api.get<TextTemplate[]>(`/admin/text-templates?kind=${kind}`),

@@ -196,6 +196,16 @@ async function main() {
     if (!exists) await prisma.textTemplate.create({ data: t })
   }
 
+  // Sample campaigns (idempotent by name).
+  const campaigns = [
+    { name: 'Welcome series', channel: 'EMAIL', audience: 'New clients', subject: 'Welcome to 27 Markets', message: 'Thanks for joining — here is how to get started.', status: 'SENT' },
+    { name: 'Q3 promotion', channel: 'EMAIL', audience: 'All clients', subject: 'Trade with tighter spreads', message: 'For a limited time, enjoy reduced spreads on major pairs.', status: 'DRAFT' },
+  ]
+  for (const c of campaigns) {
+    const exists = await prisma.campaign.findFirst({ where: { name: c.name } })
+    if (!exists) await prisma.campaign.create({ data: c })
+  }
+
   const admin = await upsertUser('admin@27markets.io', 'Admin123!', 'Avery', 'Stone', UserRole.ADMIN)
   const agent = await upsertUser('agent@27markets.io', 'Agent123!', 'Riley', 'Mensah', UserRole.AGENT)
   const client = await upsertUser('client@27markets.io', 'Client123!', 'Jordan', 'Avery', UserRole.CLIENT)
