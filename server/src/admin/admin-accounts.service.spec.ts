@@ -39,4 +39,24 @@ describe('AdminAccountsService', () => {
     const service = new AdminAccountsService(prisma, {} as any, {} as any);
     await expect(service.setStatus('admin1', 'missing', AccountStatus.ACTIVE)).rejects.toThrow('Account not found');
   });
+
+  it('listDormant returns only accounts with no recent activity', async () => {
+    const owner = { id: 'u1', firstName: 'Ada', lastName: 'Lovelace', email: 'ada@x.com' };
+    const findMany = jest.fn().mockResolvedValue([
+      // Last activity long ago → dormant.
+      { id: 'a1', number: '100', type: 'STANDARD', mode: 'LIVE', status: 'ACTIVE', currency: 'USD', createdAt: new Date('2025-01-01'), ledgerAccount: { id: 'la1' }, user: owner },
+      // Created just now, no activity → active, excluded.
+      { id: 'a2', number: '200', type: 'VIP', mode: 'LIVE', status: 'ACTIVE', currency: 'USD', createdAt: new Date(), ledgerAccount: { id: 'la2' }, user: owner },
+    ]);
+    const groupBy = jest.fn().mockResolvedValue([{ ledgerAccountId: 'la1', _max: { createdAt: new Date('2025-02-01') } }]);
+    const prisma = { tradingAccount: { findMany }, posting: { groupBy } } as any;
+    const ledger = { balanceOf: jest.fn().mockResolvedValue(0) } as any;
+    const service = new AdminAccountsService(prisma, ledger, {} as any);
+
+    const rows = await service.listDormant();
+
+    expect(rows.map((r) => r.id)).toEqual(['a1']);
+    expect(rows[0]).toMatchObject({ number: '100', owner: { name: 'Ada Lovelace' } });
+    expect(rows[0].daysInactive).toBeGreaterThan(90);
+  });
 });

@@ -17,6 +17,11 @@ export class AdminAccountsController {
     return this.accounts.listAll();
   }
 
+  @Get('dormant')
+  dormant() {
+    return this.accounts.listDormant();
+  }
+
   @Patch(':id/status')
   setStatus(@CurrentUser('id') adminId: string, @Param('id') id: string, @Body() dto: SetAccountStatusDto) {
     return this.accounts.setStatus(adminId, id, dto.status);

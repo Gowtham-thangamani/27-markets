@@ -40,6 +40,54 @@ export class AdminAccountsService {
     );
   }
 
+  /**
+   * Client trading accounts with no ledger activity (deposits/trades/withdrawals)
+   * in the last `days` days — falling back to the account's creation date when it
+   * has never had any activity. Derived from existing posting data (no new model).
+   */
+  async listDormant(days = 90) {
+    const cutoff = new Date(Date.now() - days * 86_400_000);
+
+    const accounts = await this.prisma.tradingAccount.findMany({
+      take: 1000,
+      include: {
+        ledgerAccount: true,
+        user: { select: { id: true, firstName: true, lastName: true, email: true } },
+      },
+    });
+
+    const ledgerIds = accounts.map((a) => a.ledgerAccount?.id).filter((id): id is string => !!id);
+    const lastByLedger = await this.prisma.posting.groupBy({
+      by: ['ledgerAccountId'],
+      where: { ledgerAccountId: { in: ledgerIds } },
+      _max: { createdAt: true },
+    });
+    const lastMap = new Map(lastByLedger.map((g) => [g.ledgerAccountId, g._max.createdAt ?? null]));
+
+    const dormant = [];
+    for (const a of accounts) {
+      const lastActivityAt = a.ledgerAccount ? lastMap.get(a.ledgerAccount.id) ?? null : null;
+      const reference = lastActivityAt ?? a.createdAt;
+      if (reference >= cutoff) continue; // still active within the window
+
+      const balance = a.ledgerAccount ? await this.ledger.balanceOf(a.ledgerAccount.id) : toMoney(0);
+      dormant.push({
+        id: a.id,
+        number: a.number,
+        type: a.type,
+        mode: a.mode,
+        status: a.status,
+        currency: a.currency,
+        createdAt: a.createdAt,
+        lastActivityAt,
+        daysInactive: Math.floor((Date.now() - reference.getTime()) / 86_400_000),
+        balance: formatMoney(balance),
+        owner: { id: a.user.id, name: `${a.user.firstName} ${a.user.lastName}`, email: a.user.email },
+      });
+    }
+    return dormant;
+  }
+
   private async assertExists(id: string) {
     const a = await this.prisma.tradingAccount.findUnique({ where: { id } });
     if (!a) throw new NotFoundException('Account not found');

@@ -49,7 +49,7 @@ export const adminNav: AdminNavEntry[] = [
       { label: 'Extended Fields', to: '/admin/extended-fields', placeholder: true },
       { label: 'Users KYC Forms', to: '/admin/users-kyc-forms', placeholder: true },
       { label: 'Document Tracker', to: '/admin/document-tracker', placeholder: true },
-      { label: 'Dormant Accounts', to: '/admin/dormant-accounts', placeholder: true },
+      { label: 'Dormant Accounts', to: '/admin/dormant-accounts' },
       { label: 'Staff Forms Assignments', to: '/admin/staff-forms-assignments', placeholder: true },
       { label: 'Consents', to: '/admin/consents', placeholder: true },
     ],
