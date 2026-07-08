@@ -30,6 +30,42 @@ describe('AdminCrmService — clients', () => {
     expect(findMany.mock.calls[0][0].where.OR).toBeUndefined();
   });
 
+  it('listClients applies a status filter when provided', async () => {
+    const findMany = jest.fn().mockResolvedValue([]);
+    const prisma = { user: { findMany } } as any;
+    const service = new AdminCrmService(prisma, {} as any, {} as any);
+
+    await service.listClients(undefined, 'SUSPENDED' as any);
+
+    expect(findMany.mock.calls[0][0].where.status).toBe('SUSPENDED');
+  });
+
+  it('setClientStatus blocks a client and writes an audit record', async () => {
+    const update = jest.fn().mockResolvedValue({ id: 'c1', status: 'SUSPENDED' });
+    const record = jest.fn().mockResolvedValue(undefined);
+    const prisma = {
+      user: { findUnique: jest.fn().mockResolvedValue({ id: 'c1', role: 'CLIENT' }), update },
+    } as any;
+    const service = new AdminCrmService(prisma, {} as any, { record } as any);
+
+    const res = await service.setClientStatus('admin1', 'c1', 'SUSPENDED' as any);
+
+    expect(update).toHaveBeenCalledWith({ where: { id: 'c1' }, data: { status: 'SUSPENDED' } });
+    expect(record).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'admin1', action: 'crm.client.status', entityId: 'c1', metadata: { status: 'SUSPENDED' } }),
+    );
+    expect(res).toEqual({ id: 'c1', status: 'SUSPENDED' });
+  });
+
+  it('setClientStatus refuses a non-client user', async () => {
+    const prisma = {
+      user: { findUnique: jest.fn().mockResolvedValue({ id: 'x', role: 'ADMIN' }) },
+    } as any;
+    const service = new AdminCrmService(prisma, {} as any, {} as any);
+
+    await expect(service.setClientStatus('admin1', 'x', 'SUSPENDED' as any)).rejects.toThrow('Client not found');
+  });
+
   it('getClient throws NotFound for a non-client user', async () => {
     const prisma = {
       user: { findUnique: jest.fn().mockResolvedValue({ id: 'x', role: 'ADMIN' }) },

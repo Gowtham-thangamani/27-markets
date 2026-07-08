@@ -38,7 +38,7 @@ export const adminNav: AdminNavEntry[] = [
       { label: 'Staff & Permissions', to: '/admin/staff' },
       { label: 'Clients', to: '/admin/clients' },
       { label: 'Leads', to: '/admin/leads' },
-      { label: 'Blocked Users', to: '/admin/blocked-users', placeholder: true },
+      { label: 'Blocked Users', to: '/admin/blocked-users' },
     ],
   },
   {

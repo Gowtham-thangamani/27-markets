@@ -1,5 +1,11 @@
-import { IsBoolean, IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsBoolean, IsEnum, IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { LeadStatus, TicketPriority, TicketStatus } from '@prisma/client';
+
+/** Block (SUSPENDED) or unblock (ACTIVE) a client. Account closure is separate. */
+export class SetClientStatusDto {
+  @IsIn(['ACTIVE', 'SUSPENDED'])
+  status!: 'ACTIVE' | 'SUSPENDED';
+}
 
 export class UpdateLeadDto {
   @IsOptional()

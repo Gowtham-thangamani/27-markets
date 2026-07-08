@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { LeadStatus, Prisma, TicketStatus, UserRole } from '@prisma/client';
+import { LeadStatus, Prisma, TicketStatus, UserRole, UserStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LedgerService } from '../ledger/ledger.service';
 import { AuditService } from '../audit/audit.service';
@@ -16,8 +16,9 @@ export class AdminCrmService {
 
   // ───────────── Clients ─────────────
 
-  listClients(search?: string) {
+  listClients(search?: string, status?: UserStatus) {
     const where: Prisma.UserWhereInput = { role: UserRole.CLIENT };
+    if (status) where.status = status;
     if (search?.trim()) {
       where.OR = [
         { email: { contains: search, mode: 'insensitive' } },
@@ -90,6 +91,25 @@ export class AdminCrmService {
     });
     await this.audit.record({ userId: authorId, action: 'crm.client.note', entity: 'User', entityId: clientId });
     return this.getClient(clientId);
+  }
+
+  /** Block (SUSPENDED) or unblock (ACTIVE) a client account. Admin-only. */
+  async setClientStatus(adminId: string, clientId: string, status: UserStatus) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: clientId },
+      select: { id: true, role: true },
+    });
+    if (!user || user.role !== UserRole.CLIENT) throw new NotFoundException('Client not found');
+
+    const updated = await this.prisma.user.update({ where: { id: clientId }, data: { status } });
+    await this.audit.record({
+      userId: adminId,
+      action: 'crm.client.status',
+      entity: 'User',
+      entityId: clientId,
+      metadata: { status },
+    });
+    return { id: updated.id, status: updated.status };
   }
 
   // ───────────── Leads ─────────────

@@ -13,6 +13,7 @@ import PartnerClientsPage from './pages/partner/PartnerClientsPage'
 import PartnerReferralToolsPage from './pages/partner/PartnerReferralToolsPage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import AdminClientsPage from './pages/admin/AdminClientsPage'
+import AdminBlockedUsersPage from './pages/admin/AdminBlockedUsersPage'
 import AdminLeadsPage from './pages/admin/AdminLeadsPage'
 import AdminSupportPage from './pages/admin/AdminSupportPage'
 import AdminKycPage from './pages/admin/AdminKycPage'
@@ -125,6 +126,7 @@ export default function App() {
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="clients" element={<AdminClientsPage />} />
+        <Route path="blocked-users" element={<AdminBlockedUsersPage />} />
         <Route path="leads" element={<AdminLeadsPage />} />
         <Route path="support" element={<AdminSupportPage />} />
         <Route path="kyc" element={<AdminKycPage />} />

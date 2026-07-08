@@ -1,10 +1,10 @@
 import { Body, Controller, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { LeadStatus, TicketStatus } from '@prisma/client';
+import { LeadStatus, TicketStatus, UserRole, UserStatus } from '@prisma/client';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser, Roles } from '../common/decorators';
 import { STAFF_ROLES } from '../common/roles';
 import { AdminCrmService } from './admin-crm.service';
-import { NoteDto, ReplyTicketDto, UpdateLeadDto, UpdateTicketDto } from './crm-dto';
+import { NoteDto, ReplyTicketDto, SetClientStatusDto, UpdateLeadDto, UpdateTicketDto } from './crm-dto';
 
 @UseGuards(RolesGuard)
 @Roles(...STAFF_ROLES)
@@ -19,13 +19,24 @@ export class AdminCrmController {
 
   // Clients
   @Get('clients')
-  clients(@Query('search') search?: string) {
-    return this.crm.listClients(search);
+  clients(@Query('search') search?: string, @Query('status') status?: string) {
+    const valid =
+      status && (Object.values(UserStatus) as string[]).includes(status)
+        ? (status as UserStatus)
+        : undefined;
+    return this.crm.listClients(search, valid);
   }
 
   @Get('clients/:id')
   client(@Param('id') id: string) {
     return this.crm.getClient(id);
+  }
+
+  // Blocking/unblocking a client is Admin-only (method-level role overrides the class default).
+  @Roles(UserRole.ADMIN)
+  @Patch('clients/:id/status')
+  setClientStatus(@CurrentUser('id') adminId: string, @Param('id') id: string, @Body() dto: SetClientStatusDto) {
+    return this.crm.setClientStatus(adminId, id, dto.status as UserStatus);
   }
 
   @HttpCode(200)

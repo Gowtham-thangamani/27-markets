@@ -170,9 +170,17 @@ export const adminApi = {
   getStaff: () => api.get<StaffMember[]>('/admin/staff'),
 
   // Clients
-  listClients: (search?: string) =>
-    api.get<ClientListItem[]>(`/admin/clients${search ? `?search=${encodeURIComponent(search)}` : ''}`),
+  listClients: (search?: string, status?: 'ACTIVE' | 'SUSPENDED' | 'CLOSED') => {
+    const p = new URLSearchParams()
+    if (search) p.set('search', search)
+    if (status) p.set('status', status)
+    const qs = p.toString()
+    return api.get<ClientListItem[]>(`/admin/clients${qs ? `?${qs}` : ''}`)
+  },
   getClient: (id: string) => api.get<ClientDetail>(`/admin/clients/${id}`),
+  /** Block (SUSPENDED) or unblock (ACTIVE) a client. Admin-only. */
+  setClientStatus: (id: string, status: 'ACTIVE' | 'SUSPENDED') =>
+    api.patch<{ id: string; status: string }>(`/admin/clients/${id}/status`, { status }),
   addClientNote: (id: string, body: string, pinned?: boolean) =>
     api.post<ClientDetail>(`/admin/clients/${id}/notes`, { body, pinned }),
 
