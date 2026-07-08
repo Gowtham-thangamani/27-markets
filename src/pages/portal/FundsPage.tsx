@@ -22,7 +22,8 @@ import { usePortalData } from '@/context/PortalDataContext'
 import { useToast } from '@/context/ToastContext'
 import { api } from '@/lib/api'
 import { zodResolver } from '@/lib/zodResolver'
-import { transferSchema, MIN_DEPOSIT } from '@/lib/validation'
+import { transferSchema } from '@/lib/validation'
+import { useAppSettings } from '@/lib/useAppSettings'
 import { formatCurrency, formatDateTime } from '@/lib/format'
 import { fundingStatusLabel } from '@/lib/fundingStatus'
 import { z } from 'zod'
@@ -112,6 +113,7 @@ const reqStatusTone = (s: DepositRequestRow['status']) => (s === 'APPROVED' ? 's
 function DepositTab() {
   const { accounts, deposit } = usePortalData()
   const toast = useToast()
+  const { minDeposit } = useAppSettings()
   const liveAccounts = accounts.filter((a) => a.mode === 'Live')
 
   const [methods, setMethods] = useState<DepositMethod[]>([])
@@ -155,8 +157,8 @@ function DepositTab() {
       toast.warning('Check the form', 'Pick an account to deposit to.')
       return
     }
-    if (!(Number(amount) >= MIN_DEPOSIT)) {
-      toast.warning('Minimum deposit', `The minimum deposit is $${MIN_DEPOSIT} (USD).`)
+    if (!(Number(amount) >= minDeposit)) {
+      toast.warning('Minimum deposit', `The minimum deposit is $${minDeposit} (USD).`)
       return
     }
     setBusy(true)
@@ -190,7 +192,7 @@ function DepositTab() {
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="font-display text-lg font-semibold text-white">Deposit Methods</h2>
           <p className="text-xs text-gray-500">
-            USD accounts · <span className="text-gray-400">${MIN_DEPOSIT} minimum deposit</span> · no minimum withdrawal
+            USD accounts · <span className="text-gray-400">${minDeposit} minimum deposit</span> · no minimum withdrawal
           </p>
         </div>
         <div className="mt-4 space-y-3">
@@ -264,11 +266,11 @@ function DepositTab() {
           <Input
             label="Amount (USD)"
             type="number"
-            min={MIN_DEPOSIT}
+            min={minDeposit}
             placeholder="1000"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            hint={`Minimum deposit $${MIN_DEPOSIT} · USD only`}
+            hint={`Minimum deposit $${minDeposit} · USD only`}
           />
 
           {instructions && (
@@ -312,6 +314,7 @@ interface SavedCardRow {
 
 function SavedCards() {
   const { accounts } = usePortalData()
+  const { minDeposit } = useAppSettings()
   const toast = useToast()
   const live = accounts.filter((a) => a.mode === 'Live')
   const [cards, setCards] = useState<SavedCardRow[]>([])
@@ -375,8 +378,8 @@ function SavedCards() {
       toast.warning('Check the form', 'Pick an account to deposit to.')
       return
     }
-    if (!(Number(amount) >= MIN_DEPOSIT)) {
-      toast.warning('Minimum deposit', `The minimum deposit is $${MIN_DEPOSIT} (USD).`)
+    if (!(Number(amount) >= minDeposit)) {
+      toast.warning('Minimum deposit', `The minimum deposit is $${minDeposit} (USD).`)
       return
     }
     setBusy(true)
@@ -444,7 +447,7 @@ function SavedCards() {
       <Modal open={!!depCard} onClose={() => setDepCard(null)} title={`Deposit · ${depCard?.brand ?? ''} ••${depCard?.last4 ?? ''}`} description="Charge your saved card.">
         <div className="space-y-3">
           <Select label="Deposit to account" value={accountId} options={live.map((a) => ({ value: a.id, label: `${a.number} — ${a.type}` }))} onChange={(e) => setAccountId(e.target.value)} />
-          <Input label="Amount (USD)" type="number" min={MIN_DEPOSIT} placeholder="500" value={amount} onChange={(e) => setAmount(e.target.value)} hint={`Minimum $${MIN_DEPOSIT}`} />
+          <Input label="Amount (USD)" type="number" min={minDeposit} placeholder="500" value={amount} onChange={(e) => setAmount(e.target.value)} hint={`Minimum $${minDeposit}`} />
           <Button fullWidth loading={busy} onClick={doDeposit}>Deposit</Button>
         </div>
       </Modal>

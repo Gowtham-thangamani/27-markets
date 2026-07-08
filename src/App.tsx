@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { SplashScreen } from './components/SplashScreen'
+import { MaintenanceBanner } from './components/MaintenanceBanner'
 import { MarketingLayout } from './layouts/MarketingLayout'
 import LegalPage from './pages/LegalPage'
 import { PortalLayout } from './layouts/PortalLayout'
@@ -89,6 +90,7 @@ export default function App() {
   return (
     <>
       <SplashScreen />
+      <MaintenanceBanner />
       <Routes>
       {/* Public marketing site */}
       <Route element={<MarketingLayout />}>

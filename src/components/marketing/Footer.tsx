@@ -3,6 +3,7 @@ import { Mail, MapPin, ShieldCheck, Lock, DollarSign, Headphones } from 'lucide-
 import type { ComponentType } from 'react'
 import { FaFacebookF, FaInstagram, FaLinkedinIn, FaTiktok } from 'react-icons/fa6'
 import { Logo } from '@/components/Logo'
+import { useAppSettings } from '@/lib/useAppSettings'
 import { useT } from '@/i18n/LanguageContext'
 
 const socials: { label: string; href: string; Icon: ComponentType<{ className?: string }> }[] = [
@@ -60,6 +61,7 @@ const legalLinks = [
 
 export function Footer() {
   const t = useT()
+  const { supportEmail } = useAppSettings()
   return (
     <footer className="relative mt-24 overflow-hidden border-t border-white/[0.06] bg-ink-900">
       {/* Top brand accent */}
@@ -86,10 +88,10 @@ export function Footer() {
             <Logo size={30} />
             <p className="mt-4 text-sm leading-relaxed text-gray-300">{t('footer.tagline')}</p>
             <a
-              href="mailto:info@27markets.com"
+              href={`mailto:${supportEmail}`}
               className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-white transition-colors hover:text-brand-400"
             >
-              <Mail className="h-4 w-4 text-brand-400" /> info@27markets.com
+              <Mail className="h-4 w-4 text-brand-400" /> {supportEmail}
             </a>
             <p className="mt-3 flex items-start gap-2 text-sm leading-relaxed text-gray-400">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" />
