@@ -41,6 +41,8 @@ export interface DepositRequestRow {
   method: string
   asset: string | null
   amount: string
+  status?: string
+  reviewedAt?: string | null
   createdAt: string
   client: { id: string; name: string; email: string } | null
 }
@@ -53,6 +55,9 @@ export const financeApi = {
     api.get<FinanceTxn[]>(`/admin/finance/withdrawals/all${status ? `?status=${status}` : ''}`),
   deposits: () => api.get<FinanceTxn[]>('/admin/finance/deposits'),
   depositRequests: () => api.get<DepositRequestRow[]>('/admin/finance/deposit-requests'),
+  /** All deposit requests, optionally filtered by status (PENDING | APPROVED | REJECTED). */
+  allDepositRequests: (status?: 'PENDING' | 'APPROVED' | 'REJECTED') =>
+    api.get<DepositRequestRow[]>(`/admin/finance/deposit-requests/all${status ? `?status=${status}` : ''}`),
   approveDepositRequest: (id: string) =>
     api.post<{ ok: boolean; status: string; reference: string }>(`/admin/finance/deposit-requests/${id}/approve`),
   rejectDepositRequest: (id: string, reason?: string) =>

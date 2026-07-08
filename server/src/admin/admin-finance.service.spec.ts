@@ -89,6 +89,35 @@ describe('AdminFinanceService.allWithdrawals', () => {
   });
 });
 
+describe('AdminFinanceService.allDepositRequests', () => {
+  it('maps requests with client + status and applies a status filter', async () => {
+    const findMany = jest.fn().mockResolvedValue([
+      {
+        id: 'd1', reference: 'DR-1', method: 'bank', asset: null, amount: '200.00',
+        status: 'APPROVED', createdAt: new Date('2026-06-20'), reviewedAt: new Date('2026-06-21'),
+        user: { id: 'u1', firstName: 'Ada', lastName: 'Lovelace', email: 'ada@x.com' },
+      },
+    ]);
+    const prisma = { depositRequest: { findMany } } as any;
+    const service = new AdminFinanceService(prisma, {} as any, {} as any, payments() as any, cfg());
+
+    const rows = await service.allDepositRequests('APPROVED' as any);
+
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { status: 'APPROVED' } }));
+    expect(rows[0]).toMatchObject({ id: 'd1', status: 'APPROVED', method: 'bank', client: { name: 'Ada Lovelace' } });
+  });
+
+  it('omits the where filter when no status is given', async () => {
+    const findMany = jest.fn().mockResolvedValue([]);
+    const prisma = { depositRequest: { findMany } } as any;
+    const service = new AdminFinanceService(prisma, {} as any, {} as any, payments() as any, cfg());
+
+    await service.allDepositRequests();
+
+    expect(findMany.mock.calls[0][0].where).toBeUndefined();
+  });
+});
+
 describe('AdminFinanceService.rejectWithdrawal', () => {
   it('reverses the held entry and audits the reason', async () => {
     const reverse = jest.fn().mockResolvedValue({});

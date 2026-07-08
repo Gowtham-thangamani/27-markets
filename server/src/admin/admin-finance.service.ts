@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JournalKind, JournalStatus, PostingDirection } from '@prisma/client';
+import { DepositRequestStatus, JournalKind, JournalStatus, PostingDirection } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LedgerService } from '../ledger/ledger.service';
 import { AuditService } from '../audit/audit.service';
@@ -38,6 +38,27 @@ export class AdminFinanceService {
       asset: r.asset,
       amount: formatMoney(toMoney(r.amount.toString())),
       createdAt: r.createdAt,
+      client: r.user ? { id: r.user.id, name: `${r.user.firstName} ${r.user.lastName}`, email: r.user.email } : null,
+    }));
+  }
+
+  /** All deposit requests with their client, optionally filtered by status. */
+  async allDepositRequests(status?: DepositRequestStatus) {
+    const reqs = await this.prisma.depositRequest.findMany({
+      where: status ? { status } : undefined,
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+      include: { user: true },
+    });
+    return reqs.map((r) => ({
+      id: r.id,
+      reference: r.reference,
+      method: r.method,
+      asset: r.asset,
+      amount: formatMoney(toMoney(r.amount.toString())),
+      status: r.status,
+      createdAt: r.createdAt,
+      reviewedAt: r.reviewedAt,
       client: r.user ? { id: r.user.id, name: `${r.user.firstName} ${r.user.lastName}`, email: r.user.email } : null,
     }));
   }

@@ -19,6 +19,7 @@ import AdminSupportPage from './pages/admin/AdminSupportPage'
 import AdminKycPage from './pages/admin/AdminKycPage'
 import AdminFinancePage from './pages/admin/AdminFinancePage'
 import AdminWithdrawalsPage from './pages/admin/AdminWithdrawalsPage'
+import AdminDepositRequestsPage from './pages/admin/AdminDepositRequestsPage'
 import AdminAccountsPage from './pages/admin/AdminAccountsPage'
 import AdminAccountTypesPage from './pages/admin/AdminAccountTypesPage'
 import AdminPartnersPage from './pages/admin/AdminPartnersPage'
@@ -133,6 +134,7 @@ export default function App() {
         <Route path="kyc" element={<AdminKycPage />} />
         <Route path="finance" element={<AdminFinancePage />} />
         <Route path="withdrawal-requests" element={<AdminWithdrawalsPage />} />
+        <Route path="deposit-requests" element={<AdminDepositRequestsPage />} />
         <Route path="accounts" element={<AdminAccountsPage />} />
         <Route path="account-types" element={<AdminAccountTypesPage />} />
         <Route path="partners" element={<AdminPartnersPage />} />
