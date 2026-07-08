@@ -15,7 +15,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { UserRole } from '@prisma/client';
 import type { Response } from 'express';
 import { KycService, type UploadedFile as KycFile } from './kyc.service';
-import { KYC_STEPS, type KycStep, ReviewKycDto } from './dto';
+import { KYC_STEPS, type KycStep, ReviewKycDto, SaveKycAnswersDto } from './dto';
 import { CurrentUser, Roles } from '../common/decorators';
 import { RolesGuard } from '../auth/guards/roles.guard';
 
@@ -29,6 +29,23 @@ export class KycController {
   @Get()
   status(@CurrentUser('id') userId: string) {
     return this.kyc.status(userId);
+  }
+
+  /** Configured KYC questions + extended fields the client should complete. */
+  @Get('fields')
+  fields() {
+    return this.kyc.listFields();
+  }
+
+  @Get('answers')
+  answers(@CurrentUser('id') userId: string) {
+    return this.kyc.getAnswers(userId);
+  }
+
+  @HttpCode(200)
+  @Post('answers')
+  saveAnswers(@CurrentUser('id') userId: string, @Body() dto: SaveKycAnswersDto) {
+    return this.kyc.saveAnswers(userId, dto.answers);
   }
 
   /** Client uploads a document for a step (multipart). Marks the step PENDING. */

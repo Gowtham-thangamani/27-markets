@@ -37,6 +37,36 @@ export class KycService {
     );
   }
 
+  /** Enabled KYC questions + extended fields the client should complete. */
+  listFields() {
+    return this.prisma.kycFieldDefinition.findMany({
+      where: { enabled: true, kind: { in: ['QUESTION', 'EXTENDED'] } },
+      orderBy: [{ kind: 'asc' }, { sortOrder: 'asc' }],
+      select: { id: true, kind: true, label: true, fieldType: true, required: true },
+    });
+  }
+
+  /** The client's saved answers, keyed by field id. */
+  async getAnswers(userId: string): Promise<Record<string, string>> {
+    const rows = await this.prisma.kycAnswer.findMany({ where: { userId }, select: { fieldId: true, value: true } });
+    return Object.fromEntries(rows.map((r) => [r.fieldId, r.value]));
+  }
+
+  /** Upsert the client's answers to the KYC fields. */
+  async saveAnswers(userId: string, answers: { fieldId: string; value: string }[]) {
+    await this.prisma.$transaction(
+      answers.map((a) =>
+        this.prisma.kycAnswer.upsert({
+          where: { userId_fieldId: { userId, fieldId: a.fieldId } },
+          update: { value: a.value },
+          create: { userId, fieldId: a.fieldId, value: a.value },
+        }),
+      ),
+    );
+    await this.audit.record({ userId, action: 'kyc.answers.save', entity: 'KycAnswer', entityId: userId, metadata: { count: answers.length } });
+    return this.getAnswers(userId);
+  }
+
   async status(userId: string) {
     const profile = await this.prisma.kycProfile.upsert({
       where: { userId },

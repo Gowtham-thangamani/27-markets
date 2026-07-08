@@ -3,6 +3,7 @@ import { ShieldCheck, ShieldAlert, Clock, CircleDashed, Info, Lock, Unlock } fro
 import { Badge, Button, FileUpload, ProgressBar } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
 import { statusTone } from '@/components/portal/statusTone'
+import { KycFieldsForm } from '@/components/portal/KycFieldsForm'
 import { usePortalData } from '@/context/PortalDataContext'
 import { useToast } from '@/context/ToastContext'
 import { fadeUp, staggerContainer } from '@/lib/motion'
@@ -166,6 +167,11 @@ export default function KycPage() {
           <span className="text-sm font-medium">Your account is fully verified.</span>
         </div>
       )}
+
+      {/* Admin-configured KYC questions + extended fields (renders only if any exist) */}
+      <div className="mt-6">
+        <KycFieldsForm />
+      </div>
     </>
   )
 }
