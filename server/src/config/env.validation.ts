@@ -23,9 +23,15 @@ export const envSchema = z
     TOTP_ISSUER: z.string().default('Apex Markets'),
 
     // ── Email (transactional) ──
-    // 'console' (default) logs emails for dev; 'smtp' uses a real provider (creds).
+    // 'console' (default) logs emails for dev; 'smtp' sends via real SMTP creds.
     EMAIL_PROVIDER: z.enum(['console', 'smtp']).default('console'),
-    EMAIL_FROM: z.string().default('no-reply@27markets.io'),
+    EMAIL_FROM: z.string().default('no-reply@27markets.com'),
+    // SMTP settings — required only when EMAIL_PROVIDER=smtp.
+    SMTP_HOST: z.string().optional(),
+    SMTP_PORT: z.coerce.number().int().positive().default(587),
+    SMTP_SECURE: z.coerce.boolean().default(false), // true for port 465
+    SMTP_USER: z.string().optional(),
+    SMTP_PASS: z.string().optional(),
 
     // ── Market data (Finnhub real-time) ──
     // Optional: when unset, live market endpoints serve cached/empty and the
