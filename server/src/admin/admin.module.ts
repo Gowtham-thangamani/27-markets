@@ -17,6 +17,8 @@ import { AdminSettingsController } from './admin-settings.controller';
 import { AdminSettingsService } from './admin-settings.service';
 import { AdminServersController } from './admin-servers.controller';
 import { AdminServersService } from './admin-servers.service';
+import { AdminPaymentMethodTypesController } from './admin-payment-method-types.controller';
+import { AdminPaymentMethodTypesService } from './admin-payment-method-types.service';
 import { AdminReportsController } from './admin-reports.controller';
 import { AdminReportsService } from './admin-reports.service';
 import { AdminStaffController } from './admin-staff.controller';
@@ -35,6 +37,7 @@ import { AdminPartnersService } from './admin-partners.service';
     AdminNotificationTemplatesController,
     AdminSettingsController,
     AdminServersController,
+    AdminPaymentMethodTypesController,
     AdminReportsController,
     AdminStaffController,
     AdminPartnersController,
@@ -49,6 +52,7 @@ import { AdminPartnersService } from './admin-partners.service';
     AdminNotificationTemplatesService,
     AdminSettingsService,
     AdminServersService,
+    AdminPaymentMethodTypesService,
     AdminReportsService,
     AdminStaffService,
     AdminPartnersService,

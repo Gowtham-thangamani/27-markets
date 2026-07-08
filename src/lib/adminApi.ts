@@ -172,6 +172,18 @@ export type AccountTypePatch = Partial<
   Pick<AccountTypeConfig, 'displayName' | 'spreadFrom' | 'commission' | 'leverage' | 'minDeposit' | 'popular' | 'sortOrder'>
 >
 
+export type PaymentMethodCategory = 'CARD' | 'EWALLET'
+
+export interface PaymentMethodType {
+  id: string
+  category: PaymentMethodCategory
+  name: string
+  enabled: boolean
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
 export interface TradingServer {
   id: string
   name: string
@@ -304,6 +316,15 @@ export const adminApi = {
   listAccountTypes: () => api.get<AccountTypeConfig[]>('/admin/account-types'),
   updateAccountType: (type: string, patch: AccountTypePatch) =>
     api.patch<AccountTypeConfig>(`/admin/account-types/${type}`, patch),
+
+  // Payment method types (Card / E-Wallet — config, Admin edits)
+  listPaymentMethodTypes: (category: 'CARD' | 'EWALLET') =>
+    api.get<PaymentMethodType[]>(`/admin/payment-method-types?category=${category}`),
+  createPaymentMethodType: (body: { category: 'CARD' | 'EWALLET'; name: string; enabled?: boolean; sortOrder?: number }) =>
+    api.post<PaymentMethodType>('/admin/payment-method-types', body),
+  updatePaymentMethodType: (id: string, patch: { name?: string; enabled?: boolean; sortOrder?: number }) =>
+    api.patch<PaymentMethodType>(`/admin/payment-method-types/${id}`, patch),
+  deletePaymentMethodType: (id: string) => api.del<{ ok: boolean }>(`/admin/payment-method-types/${id}`),
 
   // Trading servers (config — Admin edits)
   listServers: () => api.get<TradingServer[]>('/admin/servers'),

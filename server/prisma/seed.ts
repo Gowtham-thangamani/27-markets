@@ -125,6 +125,20 @@ async function main() {
     if (!exists) await prisma.tradingServer.create({ data: srv })
   }
 
+  // Card + e-wallet payment method types (idempotent by category+name).
+  const methodTypes = [
+    { category: 'CARD', name: 'Visa', sortOrder: 0 },
+    { category: 'CARD', name: 'Mastercard', sortOrder: 1 },
+    { category: 'CARD', name: 'American Express', sortOrder: 2 },
+    { category: 'EWALLET', name: 'Skrill', sortOrder: 0 },
+    { category: 'EWALLET', name: 'Neteller', sortOrder: 1 },
+    { category: 'EWALLET', name: 'PayPal', sortOrder: 2 },
+  ]
+  for (const m of methodTypes) {
+    const exists = await prisma.paymentMethodType.findFirst({ where: { category: m.category, name: m.name } })
+    if (!exists) await prisma.paymentMethodType.create({ data: m })
+  }
+
   const admin = await upsertUser('admin@27markets.io', 'Admin123!', 'Avery', 'Stone', UserRole.ADMIN)
   const agent = await upsertUser('agent@27markets.io', 'Agent123!', 'Riley', 'Mensah', UserRole.AGENT)
   const client = await upsertUser('client@27markets.io', 'Client123!', 'Jordan', 'Avery', UserRole.CLIENT)

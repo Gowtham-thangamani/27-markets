@@ -187,6 +187,20 @@ model TradingAccount {
   @@index([userId])
 }
 
+// Card / e-wallet payment method types, managed from the admin CRM.
+// `category` scopes the list: CARD (Credit Card Types) or EWALLET (E-Wallet Types).
+model PaymentMethodType {
+  id        String   @id @default(cuid())
+  category  String // CARD | EWALLET
+  name      String
+  enabled   Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+}
+
 // Trading servers clients connect to (MT5 etc.), managed from the admin CRM.
 model TradingServer {
   id          String   @id @default(cuid())
