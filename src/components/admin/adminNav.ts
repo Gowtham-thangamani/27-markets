@@ -59,7 +59,7 @@ export const adminNav: AdminNavEntry[] = [
       { label: 'Transactions', to: '/admin/finance' },
       { label: 'Deposit Requests', to: '/admin/deposit-requests' },
       { label: 'All Wallets', to: '/admin/wallets' },
-      { label: 'Payment Gateways', to: '/admin/payment-gateways', placeholder: true },
+      { label: 'Payment Gateways', to: '/admin/payment-gateways' },
       { label: 'Exchange Rates', to: '/admin/exchange-rates', placeholder: true },
       { label: 'Credit Card Types', to: '/admin/credit-card-types', placeholder: true },
       { label: 'E-Wallet Types', to: '/admin/ewallet-types', placeholder: true },

@@ -172,6 +172,31 @@ export type AccountTypePatch = Partial<
   Pick<AccountTypeConfig, 'displayName' | 'spreadFrom' | 'commission' | 'leverage' | 'minDeposit' | 'popular' | 'sortOrder'>
 >
 
+export type PaymentGatewayType = 'BANK' | 'CRYPTO' | 'CARD' | 'EWALLET'
+
+export interface PaymentGateway {
+  id: string
+  name: string
+  type: PaymentGatewayType
+  enabled: boolean
+  instructions: string | null
+  minAmount: number
+  maxAmount: number | null
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export type PaymentGatewayInput = {
+  name: string
+  type: PaymentGatewayType
+  enabled?: boolean
+  instructions?: string | null
+  minAmount?: number
+  maxAmount?: number | null
+  sortOrder?: number
+}
+
 export interface PartnerItem {
   id: string
   firstName: string
@@ -239,6 +264,13 @@ export const adminApi = {
   listAccountTypes: () => api.get<AccountTypeConfig[]>('/admin/account-types'),
   updateAccountType: (type: string, patch: AccountTypePatch) =>
     api.patch<AccountTypeConfig>(`/admin/account-types/${type}`, patch),
+
+  // Payment gateways (config — Admin edits)
+  listPaymentGateways: () => api.get<PaymentGateway[]>('/admin/payment-gateways'),
+  createPaymentGateway: (body: PaymentGatewayInput) => api.post<PaymentGateway>('/admin/payment-gateways', body),
+  updatePaymentGateway: (id: string, patch: Partial<PaymentGatewayInput>) =>
+    api.patch<PaymentGateway>(`/admin/payment-gateways/${id}`, patch),
+  deletePaymentGateway: (id: string) => api.del<{ ok: boolean }>(`/admin/payment-gateways/${id}`),
 
   // Partners (read-only stub)
   listPartners: () => api.get<PartnerItem[]>('/admin/partners'),

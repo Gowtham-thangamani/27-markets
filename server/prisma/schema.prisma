@@ -187,6 +187,27 @@ model TradingAccount {
   @@index([userId])
 }
 
+enum PaymentGatewayType {
+  BANK
+  CRYPTO
+  CARD
+  EWALLET
+}
+
+// Deposit/withdrawal methods offered to clients, managed from the admin CRM.
+model PaymentGateway {
+  id           String             @id @default(cuid())
+  name         String
+  type         PaymentGatewayType
+  enabled      Boolean            @default(true)
+  instructions String? // shown to the client (bank details, wallet address, etc.)
+  minAmount    Int                @default(0) // USD, whole dollars
+  maxAmount    Int? // USD, whole dollars; null = no cap
+  sortOrder    Int                @default(0)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
 // Editable trading conditions per account type (managed from the admin CRM).
 // One row per AccountType enum value.
 model AccountTypeConfig {

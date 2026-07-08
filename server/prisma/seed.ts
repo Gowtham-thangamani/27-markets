@@ -65,6 +65,17 @@ async function main() {
     await prisma.accountTypeConfig.upsert({ where: { type: cfg.type }, update: {}, create: cfg })
   }
 
+  // Default payment gateways (idempotent by name — only inserted when missing).
+  const gateways = [
+    { name: 'Bank Transfer', type: 'BANK' as const, instructions: 'Transfer to the account shown at checkout. Include your reference.', minAmount: 50, maxAmount: null, sortOrder: 0 },
+    { name: 'USDT (TRC20)', type: 'CRYPTO' as const, instructions: 'Send USDT to the wallet address shown at checkout.', minAmount: 50, maxAmount: null, sortOrder: 1 },
+    { name: 'Credit / Debit Card', type: 'CARD' as const, instructions: 'Pay securely by card. Processed by our PSP.', minAmount: 50, maxAmount: 10000, sortOrder: 2 },
+  ]
+  for (const g of gateways) {
+    const exists = await prisma.paymentGateway.findFirst({ where: { name: g.name } })
+    if (!exists) await prisma.paymentGateway.create({ data: g })
+  }
+
   const admin = await upsertUser('admin@27markets.io', 'Admin123!', 'Avery', 'Stone', UserRole.ADMIN)
   const agent = await upsertUser('agent@27markets.io', 'Agent123!', 'Riley', 'Mensah', UserRole.AGENT)
   const client = await upsertUser('client@27markets.io', 'Client123!', 'Jordan', 'Avery', UserRole.CLIENT)
