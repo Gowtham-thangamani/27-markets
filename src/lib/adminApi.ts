@@ -172,6 +172,16 @@ export type AccountTypePatch = Partial<
   Pick<AccountTypeConfig, 'displayName' | 'spreadFrom' | 'commission' | 'leverage' | 'minDeposit' | 'popular' | 'sortOrder'>
 >
 
+export interface AppSetting {
+  id: string
+  key: string
+  label: string
+  value: string
+  group: string
+  sortOrder: number
+  updatedAt: string
+}
+
 export interface NotificationTemplate {
   id: string
   key: string
@@ -273,6 +283,11 @@ export const adminApi = {
   listAccountTypes: () => api.get<AccountTypeConfig[]>('/admin/account-types'),
   updateAccountType: (type: string, patch: AccountTypePatch) =>
     api.patch<AccountTypeConfig>(`/admin/account-types/${type}`, patch),
+
+  // Platform settings (config — Admin edits)
+  listSettings: () => api.get<AppSetting[]>('/admin/settings'),
+  updateSettings: (updates: { key: string; value: string }[]) =>
+    api.patch<AppSetting[]>('/admin/settings', { updates }),
 
   // Notification templates (config — Admin edits)
   listNotificationTemplates: () => api.get<NotificationTemplate[]>('/admin/notification-templates'),

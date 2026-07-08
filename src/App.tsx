@@ -26,6 +26,7 @@ import AdminAccountsPage from './pages/admin/AdminAccountsPage'
 import AdminAccountTypesPage from './pages/admin/AdminAccountTypesPage'
 import AdminPaymentGatewaysPage from './pages/admin/AdminPaymentGatewaysPage'
 import AdminNotificationTemplatesPage from './pages/admin/AdminNotificationTemplatesPage'
+import AdminSettingsPage from './pages/admin/AdminSettingsPage'
 import AdminPartnersPage from './pages/admin/AdminPartnersPage'
 import AdminPartnerApplicationsPage from './pages/admin/AdminPartnerApplicationsPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
@@ -145,6 +146,7 @@ export default function App() {
         <Route path="account-types" element={<AdminAccountTypesPage />} />
         <Route path="payment-gateways" element={<AdminPaymentGatewaysPage />} />
         <Route path="notification-templates" element={<AdminNotificationTemplatesPage />} />
+        <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="partners" element={<AdminPartnersPage />} />
         <Route path="partner-applications" element={<AdminPartnerApplicationsPage />} />
         <Route path="reports" element={<AdminReportsPage />} />

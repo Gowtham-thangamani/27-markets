@@ -101,6 +101,20 @@ async function main() {
     await prisma.notificationTemplate.upsert({ where: { key: tpl.key }, update: {}, create: tpl })
   }
 
+  // Platform settings (idempotent by key — edits are preserved).
+  const settings = [
+    { key: 'company_name', label: 'Company name', value: '27 Markets Ltd', group: 'General', sortOrder: 0 },
+    { key: 'support_email', label: 'Support email', value: 'info@27markets.com', group: 'General', sortOrder: 1 },
+    { key: 'support_hours', label: 'Support hours', value: '24/5', group: 'General', sortOrder: 2 },
+    { key: 'min_deposit_usd', label: 'Minimum deposit (USD)', value: '50', group: 'Funding', sortOrder: 0 },
+    { key: 'default_currency', label: 'Default account currency', value: 'USD', group: 'Funding', sortOrder: 1 },
+    { key: 'maintenance_mode', label: 'Maintenance mode (true/false)', value: 'false', group: 'System', sortOrder: 0 },
+    { key: 'maintenance_message', label: 'Maintenance message', value: 'We are performing scheduled maintenance. Please check back soon.', group: 'System', sortOrder: 1 },
+  ]
+  for (const s of settings) {
+    await prisma.appSetting.upsert({ where: { key: s.key }, update: {}, create: s })
+  }
+
   const admin = await upsertUser('admin@27markets.io', 'Admin123!', 'Avery', 'Stone', UserRole.ADMIN)
   const agent = await upsertUser('agent@27markets.io', 'Agent123!', 'Riley', 'Mensah', UserRole.AGENT)
   const client = await upsertUser('client@27markets.io', 'Client123!', 'Jordan', 'Avery', UserRole.CLIENT)

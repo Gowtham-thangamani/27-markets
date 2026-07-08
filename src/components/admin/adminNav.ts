@@ -113,7 +113,7 @@ export const adminNav: AdminNavEntry[] = [
   },
   {
     label: 'Settings', icon: Settings, children: [
-      { label: 'General Settings', to: '/admin/settings', placeholder: true },
+      { label: 'General Settings', to: '/admin/settings' },
     ],
   },
   { label: 'Support', to: '/admin/support', icon: LifeBuoy },

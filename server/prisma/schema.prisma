@@ -187,6 +187,17 @@ model TradingAccount {
   @@index([userId])
 }
 
+// Platform-wide settings (key/value) editable from the admin CRM.
+model AppSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  label     String
+  value     String
+  group     String   @default("General")
+  sortOrder Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
+
 // Editable transactional email/notification templates, managed from the admin CRM.
 // `key` maps to a code path (e.g. verify_email); body/subject support {{placeholders}}.
 model NotificationTemplate {
