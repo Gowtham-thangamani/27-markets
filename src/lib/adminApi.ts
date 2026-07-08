@@ -172,6 +172,27 @@ export type AccountTypePatch = Partial<
   Pick<AccountTypeConfig, 'displayName' | 'spreadFrom' | 'commission' | 'leverage' | 'minDeposit' | 'popular' | 'sortOrder'>
 >
 
+export interface KycForm {
+  id: string
+  name: string
+  description: string | null
+  enabled: boolean
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Consent {
+  id: string
+  label: string
+  body: string
+  required: boolean
+  enabled: boolean
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
 export type KycFieldKind = 'QUESTION' | 'EXTENDED'
 export type KycFieldType = 'TEXT' | 'NUMBER' | 'DATE' | 'SELECT' | 'BOOLEAN'
 
@@ -348,6 +369,18 @@ export const adminApi = {
   listAccountTypes: () => api.get<AccountTypeConfig[]>('/admin/account-types'),
   updateAccountType: (type: string, patch: AccountTypePatch) =>
     api.patch<AccountTypeConfig>(`/admin/account-types/${type}`, patch),
+
+  // KYC forms (config — Admin edits)
+  listKycForms: () => api.get<KycForm[]>('/admin/kyc-forms'),
+  createKycForm: (body: { name: string; description?: string; enabled?: boolean }) => api.post<KycForm>('/admin/kyc-forms', body),
+  updateKycForm: (id: string, patch: { name?: string; description?: string; enabled?: boolean }) => api.patch<KycForm>(`/admin/kyc-forms/${id}`, patch),
+  deleteKycForm: (id: string) => api.del<{ ok: boolean }>(`/admin/kyc-forms/${id}`),
+
+  // Consents (config — Admin edits)
+  listConsents: () => api.get<Consent[]>('/admin/consents'),
+  createConsent: (body: { label: string; body: string; required?: boolean; enabled?: boolean }) => api.post<Consent>('/admin/consents', body),
+  updateConsent: (id: string, patch: { label?: string; body?: string; required?: boolean; enabled?: boolean }) => api.patch<Consent>(`/admin/consents/${id}`, patch),
+  deleteConsent: (id: string) => api.del<{ ok: boolean }>(`/admin/consents/${id}`),
 
   // KYC field definitions (Questions / Extended Fields — config, Admin edits)
   listKycFields: (kind: KycFieldKind) => api.get<KycFieldDefinition[]>(`/admin/kyc-fields?kind=${kind}`),

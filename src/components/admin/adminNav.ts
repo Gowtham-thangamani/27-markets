@@ -44,14 +44,14 @@ export const adminNav: AdminNavEntry[] = [
   {
     label: 'KYC & Compliance', icon: ShieldCheck, children: [
       { label: 'Pending Documents', to: '/admin/kyc' },
-      { label: 'KYC Forms', to: '/admin/kyc-forms', placeholder: true },
+      { label: 'KYC Forms', to: '/admin/kyc-forms' },
       { label: 'KYC Questions', to: '/admin/kyc-questions' },
       { label: 'Extended Fields', to: '/admin/extended-fields' },
       { label: 'Users KYC Forms', to: '/admin/users-kyc-forms', placeholder: true },
       { label: 'Document Tracker', to: '/admin/document-tracker', placeholder: true },
       { label: 'Dormant Accounts', to: '/admin/dormant-accounts' },
       { label: 'Staff Forms Assignments', to: '/admin/staff-forms-assignments', placeholder: true },
-      { label: 'Consents', to: '/admin/consents', placeholder: true },
+      { label: 'Consents', to: '/admin/consents' },
     ],
   },
   {

@@ -32,6 +32,8 @@ import AdminServersPage from './pages/admin/AdminServersPage'
 import AdminPaymentMethodTypesPage from './pages/admin/AdminPaymentMethodTypesPage'
 import AdminExchangeRatesPage from './pages/admin/AdminExchangeRatesPage'
 import AdminKycFieldsPage from './pages/admin/AdminKycFieldsPage'
+import AdminKycFormsPage from './pages/admin/AdminKycFormsPage'
+import AdminConsentsPage from './pages/admin/AdminConsentsPage'
 import AdminPartnersPage from './pages/admin/AdminPartnersPage'
 import AdminPartnerApplicationsPage from './pages/admin/AdminPartnerApplicationsPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
@@ -159,6 +161,8 @@ export default function App() {
         <Route path="exchange-rates" element={<AdminExchangeRatesPage />} />
         <Route path="kyc-questions" element={<AdminKycFieldsPage kind="QUESTION" title="KYC Questions" subtitle="Questions asked during KYC onboarding." />} />
         <Route path="extended-fields" element={<AdminKycFieldsPage kind="EXTENDED" title="Extended Fields" subtitle="Additional profile fields collected from clients." />} />
+        <Route path="kyc-forms" element={<AdminKycFormsPage />} />
+        <Route path="consents" element={<AdminConsentsPage />} />
         <Route path="partners" element={<AdminPartnersPage />} />
         <Route path="partner-applications" element={<AdminPartnerApplicationsPage />} />
         <Route path="reports" element={<AdminReportsPage />} />

@@ -163,6 +163,27 @@ async function main() {
     if (!exists) await prisma.kycFieldDefinition.create({ data: f })
   }
 
+  // KYC forms (idempotent by name).
+  const kycForms = [
+    { name: 'Individual Onboarding', description: 'Standard KYC for individual retail clients.', sortOrder: 0 },
+    { name: 'Corporate Onboarding', description: 'Enhanced due diligence for corporate accounts.', sortOrder: 1 },
+  ]
+  for (const f of kycForms) {
+    const exists = await prisma.kycForm.findFirst({ where: { name: f.name } })
+    if (!exists) await prisma.kycForm.create({ data: f })
+  }
+
+  // Consents (idempotent by label).
+  const consents = [
+    { label: 'Terms & Conditions', body: 'I have read and agree to the Client Agreement and Terms & Conditions.', required: true, sortOrder: 0 },
+    { label: 'Risk Disclosure', body: 'I acknowledge that I have read and understood the Risk Disclosure.', required: true, sortOrder: 1 },
+    { label: 'Marketing communications', body: 'I agree to receive marketing communications from 27 Markets.', required: false, sortOrder: 2 },
+  ]
+  for (const c of consents) {
+    const exists = await prisma.consent.findFirst({ where: { label: c.label } })
+    if (!exists) await prisma.consent.create({ data: c })
+  }
+
   const admin = await upsertUser('admin@27markets.io', 'Admin123!', 'Avery', 'Stone', UserRole.ADMIN)
   const agent = await upsertUser('agent@27markets.io', 'Agent123!', 'Riley', 'Mensah', UserRole.AGENT)
   const client = await upsertUser('client@27markets.io', 'Client123!', 'Jordan', 'Avery', UserRole.CLIENT)
