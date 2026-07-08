@@ -19,6 +19,8 @@ import { AdminServersController } from './admin-servers.controller';
 import { AdminServersService } from './admin-servers.service';
 import { AdminPaymentMethodTypesController } from './admin-payment-method-types.controller';
 import { AdminPaymentMethodTypesService } from './admin-payment-method-types.service';
+import { AdminExchangeRatesController } from './admin-exchange-rates.controller';
+import { AdminExchangeRatesService } from './admin-exchange-rates.service';
 import { AdminReportsController } from './admin-reports.controller';
 import { AdminReportsService } from './admin-reports.service';
 import { AdminStaffController } from './admin-staff.controller';
@@ -38,6 +40,7 @@ import { AdminPartnersService } from './admin-partners.service';
     AdminSettingsController,
     AdminServersController,
     AdminPaymentMethodTypesController,
+    AdminExchangeRatesController,
     AdminReportsController,
     AdminStaffController,
     AdminPartnersController,
@@ -53,6 +56,7 @@ import { AdminPartnersService } from './admin-partners.service';
     AdminSettingsService,
     AdminServersService,
     AdminPaymentMethodTypesService,
+    AdminExchangeRatesService,
     AdminReportsService,
     AdminStaffService,
     AdminPartnersService,

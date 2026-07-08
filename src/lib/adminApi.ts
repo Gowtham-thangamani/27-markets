@@ -172,6 +172,15 @@ export type AccountTypePatch = Partial<
   Pick<AccountTypeConfig, 'displayName' | 'spreadFrom' | 'commission' | 'leverage' | 'minDeposit' | 'popular' | 'sortOrder'>
 >
 
+export interface ExchangeRate {
+  id: string
+  base: string
+  quote: string
+  rate: string
+  updatedAt: string
+  createdAt: string
+}
+
 export type PaymentMethodCategory = 'CARD' | 'EWALLET'
 
 export interface PaymentMethodType {
@@ -316,6 +325,12 @@ export const adminApi = {
   listAccountTypes: () => api.get<AccountTypeConfig[]>('/admin/account-types'),
   updateAccountType: (type: string, patch: AccountTypePatch) =>
     api.patch<AccountTypeConfig>(`/admin/account-types/${type}`, patch),
+
+  // Exchange rates (config — Admin edits)
+  listExchangeRates: () => api.get<ExchangeRate[]>('/admin/exchange-rates'),
+  createExchangeRate: (body: { base: string; quote: string; rate: string }) => api.post<ExchangeRate>('/admin/exchange-rates', body),
+  updateExchangeRate: (id: string, rate: string) => api.patch<ExchangeRate>(`/admin/exchange-rates/${id}`, { rate }),
+  deleteExchangeRate: (id: string) => api.del<{ ok: boolean }>(`/admin/exchange-rates/${id}`),
 
   // Payment method types (Card / E-Wallet — config, Admin edits)
   listPaymentMethodTypes: (category: 'CARD' | 'EWALLET') =>

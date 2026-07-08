@@ -139,6 +139,17 @@ async function main() {
     if (!exists) await prisma.paymentMethodType.create({ data: m })
   }
 
+  // FX reference rates (idempotent by base+quote).
+  const rates = [
+    { base: 'USD', quote: 'EUR', rate: '0.92' },
+    { base: 'USD', quote: 'GBP', rate: '0.79' },
+    { base: 'USD', quote: 'AED', rate: '3.67' },
+    { base: 'USD', quote: 'INR', rate: '83.20' },
+  ]
+  for (const r of rates) {
+    await prisma.exchangeRate.upsert({ where: { base_quote: { base: r.base, quote: r.quote } }, update: {}, create: r })
+  }
+
   const admin = await upsertUser('admin@27markets.io', 'Admin123!', 'Avery', 'Stone', UserRole.ADMIN)
   const agent = await upsertUser('agent@27markets.io', 'Agent123!', 'Riley', 'Mensah', UserRole.AGENT)
   const client = await upsertUser('client@27markets.io', 'Client123!', 'Jordan', 'Avery', UserRole.CLIENT)

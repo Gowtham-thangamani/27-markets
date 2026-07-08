@@ -30,6 +30,7 @@ import AdminNotificationTemplatesPage from './pages/admin/AdminNotificationTempl
 import AdminSettingsPage from './pages/admin/AdminSettingsPage'
 import AdminServersPage from './pages/admin/AdminServersPage'
 import AdminPaymentMethodTypesPage from './pages/admin/AdminPaymentMethodTypesPage'
+import AdminExchangeRatesPage from './pages/admin/AdminExchangeRatesPage'
 import AdminPartnersPage from './pages/admin/AdminPartnersPage'
 import AdminPartnerApplicationsPage from './pages/admin/AdminPartnerApplicationsPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
@@ -154,6 +155,7 @@ export default function App() {
         <Route path="servers" element={<AdminServersPage />} />
         <Route path="credit-card-types" element={<AdminPaymentMethodTypesPage category="CARD" title="Credit Card Types" subtitle="Card brands accepted for deposits." />} />
         <Route path="ewallet-types" element={<AdminPaymentMethodTypesPage category="EWALLET" title="E-Wallet Types" subtitle="E-wallet providers accepted for deposits." />} />
+        <Route path="exchange-rates" element={<AdminExchangeRatesPage />} />
         <Route path="partners" element={<AdminPartnersPage />} />
         <Route path="partner-applications" element={<AdminPartnerApplicationsPage />} />
         <Route path="reports" element={<AdminReportsPage />} />
