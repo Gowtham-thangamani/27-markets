@@ -26,6 +26,25 @@ function makeService(overrides: { post?: jest.Mock } = {}) {
   return { service: new FundsService(prisma, ledger, accounts, audit, payments, config), post, audit, payments };
 }
 
+describe('FundsService.depositMethods', () => {
+  const svc = (gateways: { type: string; enabled: boolean }[]) => {
+    const prisma = { paymentGateway: { findMany: jest.fn().mockResolvedValue(gateways) } } as any;
+    const payments = { name: 'simulation' } as any;
+    const config = { get: jest.fn().mockReturnValue('') } as any; // no bank/crypto config
+    return new FundsService(prisma, {} as any, {} as any, {} as any, payments, config);
+  };
+
+  it('marks a rail unavailable when its gateway is disabled', async () => {
+    const methods = await svc([{ type: 'BANK', enabled: false }]).depositMethods();
+    expect(methods.find((m) => m.id === 'bank')?.status).toBe('unavailable');
+  });
+
+  it('offers e-wallets when an enabled EWALLET gateway exists', async () => {
+    const methods = await svc([{ type: 'EWALLET', enabled: true }]).depositMethods();
+    expect(methods.find((m) => m.id === 'ewallet')?.status).toBe('manual');
+  });
+});
+
 describe('FundsService.withdraw', () => {
   it('creates the withdrawal entry as PENDING (held, awaiting approval)', async () => {
     const { service, post } = makeService();

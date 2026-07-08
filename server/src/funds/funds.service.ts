@@ -66,15 +66,25 @@ export class FundsService {
     return { bank, assets };
   }
 
-  /** The deposit rails on offer and whether each is live/manual/unavailable. */
-  depositMethods() {
+  /**
+   * The deposit rails on offer and whether each is live/manual/unavailable.
+   * A rail is only offered when an *enabled* PaymentGateway of that type exists
+   * (admin-controlled) AND it is technically configured. If no gateways are
+   * configured at all, all types are treated as allowed so nothing breaks.
+   */
+  async depositMethods() {
     const cardLive = this.payments.name === 'stripe';
     const { bank, assets } = this.depositInstructions();
+
+    const gateways = await this.prisma.paymentGateway.findMany({ select: { type: true, enabled: true } });
+    const on = (type: string) =>
+      gateways.length === 0 ? true : gateways.some((g) => g.type === type && g.enabled);
+
     return [
-      { id: 'card', label: 'Credit / Debit Card', type: 'card', status: cardLive ? 'live' : 'unavailable', note: cardLive ? 'Instant · Visa/Mastercard' : 'Connect Stripe to enable' },
-      { id: 'bank', label: 'Bank Transfer', type: 'bank', status: bank ? 'manual' : 'unavailable', note: '1–3 business days', instructions: bank },
-      { id: 'crypto', label: 'Crypto', type: 'crypto', status: assets.length ? 'manual' : 'unavailable', note: 'BTC · ETH · USDT', assets },
-      { id: 'ewallet', label: 'E-Wallets', type: 'ewallet', status: 'unavailable', note: 'Skrill / Neteller — provider pending' },
+      { id: 'card', label: 'Credit / Debit Card', type: 'card', status: on('CARD') && cardLive ? 'live' : 'unavailable', note: on('CARD') ? (cardLive ? 'Instant · Visa/Mastercard' : 'Connect Stripe to enable') : 'Currently unavailable' },
+      { id: 'bank', label: 'Bank Transfer', type: 'bank', status: on('BANK') && bank ? 'manual' : 'unavailable', note: '1–3 business days', instructions: on('BANK') ? bank : undefined },
+      { id: 'crypto', label: 'Crypto', type: 'crypto', status: on('CRYPTO') && assets.length ? 'manual' : 'unavailable', note: 'BTC · ETH · USDT', assets: on('CRYPTO') ? assets : [] },
+      { id: 'ewallet', label: 'E-Wallets', type: 'ewallet', status: on('EWALLET') ? 'manual' : 'unavailable', note: on('EWALLET') ? 'Skrill / Neteller' : 'Skrill / Neteller — provider pending' },
     ];
   }
 
