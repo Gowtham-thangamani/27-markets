@@ -6,7 +6,7 @@ import { SectionHeading } from '@/components/SectionHeading'
 import { Reveal } from '@/components/Reveal'
 import { CTABand } from '@/components/marketing/CTABand'
 import { Button } from '@/components/ui'
-import { accountTiers } from '@/mock/content'
+import { useAccountTypes, type AccountTypeConfig } from '@/lib/useAccountTypes'
 import { useT } from '@/i18n/LanguageContext'
 import { staggerContainer, fadeUp } from '@/lib/motion'
 
@@ -20,6 +20,14 @@ const CONDITIONS: { labelKey: string; values: Record<string, string> }[] = [
   { labelKey: 'tcp.r.support', values: { Standard: '24/5', 'Raw Spread': '24/5 priority', VIP: '24/5 priority' } },
   { labelKey: 'tcp.r.manager', values: { Standard: '—', 'Raw Spread': '—', VIP: 'Included' } },
 ]
+
+// Rows whose values come from the editable account-type config.
+const CONFIG_ROW: Record<string, (c: AccountTypeConfig) => string> = {
+  'tcp.r.spread': (c) => `${c.spreadFrom} pips`,
+  'tcp.r.comm': (c) => c.commission,
+  'tcp.r.min': (c) => `$${c.minDeposit.toLocaleString()}`,
+  'tcp.r.lev': (c) => `Up to ${c.leverage}`,
+}
 
 // Indicative typical spreads by market — mark clearly as indicative.
 const SPREADS: { mKey: string; from: string }[] = [
@@ -40,6 +48,7 @@ const TERMS: { icon: LucideIcon; tKey: string; bKey: string }[] = [
 
 export default function TradingConditionsPage() {
   const t = useT()
+  const { tiers, byName } = useAccountTypes()
   // Word values resolve via tcp.v.* / tcp.sv.*; numbers & symbols pass through.
   const val = (v: string) => {
     for (const ns of ['tcp.v.', 'tcp.sv.']) {
@@ -72,7 +81,7 @@ export default function TradingConditionsPage() {
                   <th className="px-5 py-4 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
                     {t('tcp.condition')}
                   </th>
-                  {accountTiers.map((tier) => (
+                  {tiers.map((tier) => (
                     <th key={tier.name} className="px-5 py-4 text-left">
                       <span className="flex items-center gap-2 font-display text-base font-semibold text-white">
                         {tier.name}
@@ -93,11 +102,16 @@ export default function TradingConditionsPage() {
                 {CONDITIONS.map((row) => (
                   <tr key={row.labelKey} className="transition-colors hover:bg-white/[0.02]">
                     <td className="px-5 py-3.5 font-medium text-gray-300">{t(row.labelKey)}</td>
-                    {accountTiers.map((tier) => (
-                      <td key={tier.name} className="px-5 py-3.5 tabular-nums text-white">
-                        {row.values[tier.name] ? val(row.values[tier.name]) : '—'}
-                      </td>
-                    ))}
+                    {tiers.map((tier) => {
+                      const cfg = byName?.get(tier.name)
+                      const fn = CONFIG_ROW[row.labelKey]
+                      const raw = cfg && fn ? fn(cfg) : row.values[tier.name]
+                      return (
+                        <td key={tier.name} className="px-5 py-3.5 tabular-nums text-white">
+                          {raw ? val(raw) : '—'}
+                        </td>
+                      )
+                    })}
                   </tr>
                 ))}
               </tbody>

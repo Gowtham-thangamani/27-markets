@@ -4,13 +4,15 @@ import { Check, ArrowRight } from 'lucide-react'
 import { SectionHeading } from '@/components/SectionHeading'
 import { Reveal } from '@/components/Reveal'
 import { Button } from '@/components/ui'
-import { accountTiers, accountFeatureKey } from '@/mock/content'
+import { accountFeatureKey } from '@/mock/content'
+import { useAccountTypes } from '@/lib/useAccountTypes'
 import { useT } from '@/i18n/LanguageContext'
 import { cardStagger, cardReveal } from '@/lib/motion'
 import { cn } from '@/lib/cn'
 
 export function AccountTypesSnapshot() {
   const t = useT()
+  const { tiers } = useAccountTypes()
   return (
     <section className="section-alt relative overflow-hidden py-20 sm:py-24">
       <div className="container-x">
@@ -27,7 +29,7 @@ export function AccountTypesSnapshot() {
           viewport={{ once: true, amount: 0.2 }}
           className="mt-12 grid gap-5 md:grid-cols-3"
         >
-          {accountTiers.map((tier) => (
+          {tiers.map((tier) => (
             <motion.div
               key={tier.name}
               variants={cardReveal}
