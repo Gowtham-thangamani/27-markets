@@ -111,6 +111,8 @@ export interface ClientDetail {
   accounts: { id: string; number: string; type: string; mode: string; status: string; balance: string }[]
   notes: ClientNote[]
   tickets: { id: string; subject: string; status: TicketStatus; updatedAt: string }[]
+  kycAnswers: { label: string; value: string }[]
+  consents: { label: string; accepted: boolean }[]
 }
 
 export interface Lead {

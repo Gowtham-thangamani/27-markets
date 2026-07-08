@@ -19,6 +19,13 @@ export class SaveKycAnswersDto {
   answers!: KycAnswerItem[];
 }
 
+export class AcceptConsentsDto {
+  @IsArray()
+  @ArrayMaxSize(100)
+  @IsString({ each: true })
+  consentIds!: string[];
+}
+
 export const KYC_STEPS = ['identity', 'address', 'selfie'] as const;
 export type KycStep = (typeof KYC_STEPS)[number];
 

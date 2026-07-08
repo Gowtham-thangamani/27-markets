@@ -32,4 +32,24 @@ describe('KycService — fields & answers', () => {
     expect(upsert).toHaveBeenCalledWith(expect.objectContaining({ where: { userId_fieldId: { userId: 'u1', fieldId: 'f1' } } }));
     expect(record).toHaveBeenCalledWith(expect.objectContaining({ action: 'kyc.answers.save' }));
   });
+
+  it('listConsents returns only enabled consents', async () => {
+    const findMany = jest.fn().mockResolvedValue([]);
+    const service = new KycService({ consent: { findMany } } as any, {} as any, {} as any);
+    await service.listConsents();
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { enabled: true } }));
+  });
+
+  it('acceptConsents upserts acceptances and audits', async () => {
+    const upsert = jest.fn().mockReturnValue('op');
+    const $transaction = jest.fn().mockResolvedValue([]);
+    const record = jest.fn().mockResolvedValue(undefined);
+    const prisma = { consentAcceptance: { upsert, findMany: jest.fn().mockResolvedValue([]) }, $transaction } as any;
+    const service = new KycService(prisma, { record } as any, {} as any);
+
+    await service.acceptConsents('u1', ['c1']);
+
+    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({ where: { userId_consentId: { userId: 'u1', consentId: 'c1' } } }));
+    expect(record).toHaveBeenCalledWith(expect.objectContaining({ action: 'kyc.consents.accept' }));
+  });
 });

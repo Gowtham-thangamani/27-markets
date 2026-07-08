@@ -167,6 +167,32 @@ function ClientDetailModal({
             )}
           </div>
 
+          {(client.kycAnswers.length > 0 || client.consents.length > 0) && (
+            <div>
+              <h4 className="mb-2 text-sm font-semibold text-white">KYC information</h4>
+              {client.kycAnswers.length > 0 && (
+                <dl className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {client.kycAnswers.map((a) => (
+                    <div key={a.label} className="rounded-lg border border-white/[0.06] bg-ink-800/40 p-3">
+                      <dt className="text-xs text-gray-500">{a.label}</dt>
+                      <dd className="mt-0.5 text-sm text-white">{a.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+              {client.consents.length > 0 && (
+                <div className="space-y-1.5">
+                  {client.consents.map((c) => (
+                    <div key={c.label} className="flex items-center justify-between text-sm">
+                      <span className="text-gray-300">{c.label}</span>
+                      <Badge tone={c.accepted ? 'success' : 'neutral'}>{c.accepted ? 'Accepted' : 'Not accepted'}</Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div>
             <h4 className="mb-2 text-sm font-semibold text-white">Notes</h4>
             <div className="flex items-end gap-2">

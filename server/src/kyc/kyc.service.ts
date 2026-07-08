@@ -67,6 +67,34 @@ export class KycService {
     return this.getAnswers(userId);
   }
 
+  /** Enabled consent statements the client must agree to. */
+  listConsents() {
+    return this.prisma.consent.findMany({
+      where: { enabled: true },
+      orderBy: { sortOrder: 'asc' },
+      select: { id: true, label: true, body: true, required: true },
+    });
+  }
+
+  async getAcceptedConsentIds(userId: string): Promise<string[]> {
+    const rows = await this.prisma.consentAcceptance.findMany({ where: { userId }, select: { consentId: true } });
+    return rows.map((r) => r.consentId);
+  }
+
+  async acceptConsents(userId: string, consentIds: string[]) {
+    await this.prisma.$transaction(
+      consentIds.map((consentId) =>
+        this.prisma.consentAcceptance.upsert({
+          where: { userId_consentId: { userId, consentId } },
+          update: {},
+          create: { userId, consentId },
+        }),
+      ),
+    );
+    await this.audit.record({ userId, action: 'kyc.consents.accept', entity: 'ConsentAcceptance', entityId: userId, metadata: { count: consentIds.length } });
+    return this.getAcceptedConsentIds(userId);
+  }
+
   async status(userId: string) {
     const profile = await this.prisma.kycProfile.upsert({
       where: { userId },

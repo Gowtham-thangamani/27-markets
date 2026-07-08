@@ -15,7 +15,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { UserRole } from '@prisma/client';
 import type { Response } from 'express';
 import { KycService, type UploadedFile as KycFile } from './kyc.service';
-import { KYC_STEPS, type KycStep, ReviewKycDto, SaveKycAnswersDto } from './dto';
+import { AcceptConsentsDto, KYC_STEPS, type KycStep, ReviewKycDto, SaveKycAnswersDto } from './dto';
 import { CurrentUser, Roles } from '../common/decorators';
 import { RolesGuard } from '../auth/guards/roles.guard';
 
@@ -46,6 +46,20 @@ export class KycController {
   @Post('answers')
   saveAnswers(@CurrentUser('id') userId: string, @Body() dto: SaveKycAnswersDto) {
     return this.kyc.saveAnswers(userId, dto.answers);
+  }
+
+  /** Enabled consents + whether the client has accepted each. */
+  @Get('consents')
+  async consents(@CurrentUser('id') userId: string) {
+    const [consents, accepted] = await Promise.all([this.kyc.listConsents(), this.kyc.getAcceptedConsentIds(userId)]);
+    const acceptedSet = new Set(accepted);
+    return consents.map((c) => ({ ...c, accepted: acceptedSet.has(c.id) }));
+  }
+
+  @HttpCode(200)
+  @Post('consents')
+  acceptConsents(@CurrentUser('id') userId: string, @Body() dto: AcceptConsentsDto) {
+    return this.kyc.acceptConsents(userId, dto.consentIds);
   }
 
   /** Client uploads a document for a step (multipart). Marks the step PENDING. */

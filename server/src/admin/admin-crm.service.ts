@@ -70,6 +70,18 @@ export class AdminCrmService {
       })),
     );
 
+    // KYC answers + consent acceptances (from the onboarding form).
+    const [answerRows, fieldDefs, consentDefs, acceptedRows] = await Promise.all([
+      this.prisma.kycAnswer.findMany({ where: { userId: id } }),
+      this.prisma.kycFieldDefinition.findMany({ select: { id: true, label: true } }),
+      this.prisma.consent.findMany({ where: { enabled: true }, orderBy: { sortOrder: 'asc' }, select: { id: true, label: true } }),
+      this.prisma.consentAcceptance.findMany({ where: { userId: id }, select: { consentId: true } }),
+    ]);
+    const fieldLabel = new Map(fieldDefs.map((f) => [f.id, f.label]));
+    const kycAnswers = answerRows.map((a) => ({ label: fieldLabel.get(a.fieldId) ?? a.fieldId, value: a.value }));
+    const acceptedSet = new Set(acceptedRows.map((a) => a.consentId));
+    const consents = consentDefs.map((c) => ({ label: c.label, accepted: acceptedSet.has(c.id) }));
+
     return {
       id: user.id,
       email: user.email,
@@ -82,6 +94,8 @@ export class AdminCrmService {
       accounts,
       notes: user.clientNotesAbout,
       tickets: user.tickets,
+      kycAnswers,
+      consents,
     };
   }
 

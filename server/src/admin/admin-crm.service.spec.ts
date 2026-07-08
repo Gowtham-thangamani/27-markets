@@ -88,7 +88,14 @@ describe('AdminCrmService — clients', () => {
       clientNotesAbout: [],
       tickets: [],
     });
-    const prisma = { clientNote: { create }, user: { findUnique } } as any;
+    const prisma = {
+      clientNote: { create },
+      user: { findUnique },
+      kycAnswer: { findMany: jest.fn().mockResolvedValue([]) },
+      kycFieldDefinition: { findMany: jest.fn().mockResolvedValue([]) },
+      consent: { findMany: jest.fn().mockResolvedValue([]) },
+      consentAcceptance: { findMany: jest.fn().mockResolvedValue([]) },
+    } as any;
     const service = new AdminCrmService(prisma, {} as any, { record } as any);
 
     await service.addClientNote('staff1', 'c1', { body: 'hello' });
