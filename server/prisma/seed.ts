@@ -150,6 +150,19 @@ async function main() {
     await prisma.exchangeRate.upsert({ where: { base_quote: { base: r.base, quote: r.quote } }, update: {}, create: r })
   }
 
+  // KYC field definitions (idempotent by kind+label).
+  const kycFields = [
+    { kind: 'QUESTION', label: 'Are you a politically exposed person (PEP)?', fieldType: 'BOOLEAN', required: true, sortOrder: 0 },
+    { kind: 'QUESTION', label: 'Source of funds', fieldType: 'SELECT', required: true, sortOrder: 1 },
+    { kind: 'QUESTION', label: 'Expected annual deposit', fieldType: 'SELECT', required: false, sortOrder: 2 },
+    { kind: 'EXTENDED', label: 'Tax identification number', fieldType: 'TEXT', required: false, sortOrder: 0 },
+    { kind: 'EXTENDED', label: 'Occupation', fieldType: 'TEXT', required: false, sortOrder: 1 },
+  ]
+  for (const f of kycFields) {
+    const exists = await prisma.kycFieldDefinition.findFirst({ where: { kind: f.kind, label: f.label } })
+    if (!exists) await prisma.kycFieldDefinition.create({ data: f })
+  }
+
   const admin = await upsertUser('admin@27markets.io', 'Admin123!', 'Avery', 'Stone', UserRole.ADMIN)
   const agent = await upsertUser('agent@27markets.io', 'Agent123!', 'Riley', 'Mensah', UserRole.AGENT)
   const client = await upsertUser('client@27markets.io', 'Client123!', 'Jordan', 'Avery', UserRole.CLIENT)

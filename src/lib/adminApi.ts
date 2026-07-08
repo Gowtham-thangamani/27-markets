@@ -172,6 +172,29 @@ export type AccountTypePatch = Partial<
   Pick<AccountTypeConfig, 'displayName' | 'spreadFrom' | 'commission' | 'leverage' | 'minDeposit' | 'popular' | 'sortOrder'>
 >
 
+export type KycFieldKind = 'QUESTION' | 'EXTENDED'
+export type KycFieldType = 'TEXT' | 'NUMBER' | 'DATE' | 'SELECT' | 'BOOLEAN'
+
+export interface KycFieldDefinition {
+  id: string
+  kind: KycFieldKind
+  label: string
+  fieldType: KycFieldType
+  required: boolean
+  enabled: boolean
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export type KycFieldInput = {
+  label?: string
+  fieldType?: KycFieldType
+  required?: boolean
+  enabled?: boolean
+  sortOrder?: number
+}
+
 export interface ExchangeRate {
   id: string
   base: string
@@ -325,6 +348,13 @@ export const adminApi = {
   listAccountTypes: () => api.get<AccountTypeConfig[]>('/admin/account-types'),
   updateAccountType: (type: string, patch: AccountTypePatch) =>
     api.patch<AccountTypeConfig>(`/admin/account-types/${type}`, patch),
+
+  // KYC field definitions (Questions / Extended Fields — config, Admin edits)
+  listKycFields: (kind: KycFieldKind) => api.get<KycFieldDefinition[]>(`/admin/kyc-fields?kind=${kind}`),
+  createKycField: (body: { kind: KycFieldKind; label: string; fieldType?: KycFieldType; required?: boolean }) =>
+    api.post<KycFieldDefinition>('/admin/kyc-fields', body),
+  updateKycField: (id: string, patch: KycFieldInput) => api.patch<KycFieldDefinition>(`/admin/kyc-fields/${id}`, patch),
+  deleteKycField: (id: string) => api.del<{ ok: boolean }>(`/admin/kyc-fields/${id}`),
 
   // Exchange rates (config — Admin edits)
   listExchangeRates: () => api.get<ExchangeRate[]>('/admin/exchange-rates'),

@@ -21,6 +21,8 @@ import { AdminPaymentMethodTypesController } from './admin-payment-method-types.
 import { AdminPaymentMethodTypesService } from './admin-payment-method-types.service';
 import { AdminExchangeRatesController } from './admin-exchange-rates.controller';
 import { AdminExchangeRatesService } from './admin-exchange-rates.service';
+import { AdminKycFieldsController } from './admin-kyc-fields.controller';
+import { AdminKycFieldsService } from './admin-kyc-fields.service';
 import { AdminReportsController } from './admin-reports.controller';
 import { AdminReportsService } from './admin-reports.service';
 import { AdminStaffController } from './admin-staff.controller';
@@ -41,6 +43,7 @@ import { AdminPartnersService } from './admin-partners.service';
     AdminServersController,
     AdminPaymentMethodTypesController,
     AdminExchangeRatesController,
+    AdminKycFieldsController,
     AdminReportsController,
     AdminStaffController,
     AdminPartnersController,
@@ -57,6 +60,7 @@ import { AdminPartnersService } from './admin-partners.service';
     AdminServersService,
     AdminPaymentMethodTypesService,
     AdminExchangeRatesService,
+    AdminKycFieldsService,
     AdminReportsService,
     AdminStaffService,
     AdminPartnersService,
