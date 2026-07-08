@@ -42,19 +42,19 @@ const columns = [
   {
     titleKey: 'footer.legal',
     links: [
-      { labelKey: 'footer.clientAgreement', to: '/downloads' },
-      { labelKey: 'footer.riskDisclosure', to: '/downloads' },
+      { labelKey: 'footer.clientAgreement', to: '/legal/client-agreement' },
+      { labelKey: 'footer.riskDisclosure', to: '/legal/risk-disclosure' },
       { labelKey: 'footer.disclaimer', to: '/disclaimer' },
-      { labelKey: 'footer.privacy', to: '/about' },
-      { labelKey: 'footer.aml', to: '/about' },
+      { labelKey: 'footer.privacy', to: '/legal/privacy' },
+      { labelKey: 'footer.aml', to: '/legal/aml' },
     ],
   },
 ]
 
 const legalLinks = [
-  { labelKey: 'footer.privacy', to: '/about' },
-  { labelKey: 'footer.clientAgreement', to: '/downloads' },
-  { labelKey: 'footer.riskDisclosure', to: '/downloads' },
+  { labelKey: 'footer.privacy', to: '/legal/privacy' },
+  { labelKey: 'footer.clientAgreement', to: '/legal/client-agreement' },
+  { labelKey: 'footer.riskDisclosure', to: '/legal/risk-disclosure' },
   { labelKey: 'footer.disclaimer', to: '/disclaimer' },
 ]
 
