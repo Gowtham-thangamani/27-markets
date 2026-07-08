@@ -50,7 +50,7 @@ export const adminNav: AdminNavEntry[] = [
       { label: 'Users KYC Forms', to: '/admin/users-kyc-forms' },
       { label: 'Document Tracker', to: '/admin/document-tracker' },
       { label: 'Dormant Accounts', to: '/admin/dormant-accounts' },
-      { label: 'Staff Forms Assignments', to: '/admin/staff-forms-assignments', placeholder: true },
+      { label: 'Staff Forms Assignments', to: '/admin/staff-forms-assignments' },
       { label: 'Consents', to: '/admin/consents' },
     ],
   },
@@ -97,7 +97,7 @@ export const adminNav: AdminNavEntry[] = [
     label: 'Notifications', icon: Bell, children: [
       { label: 'Templates', to: '/admin/notification-templates' },
       { label: 'Campaigns', to: '/admin/campaigns' },
-      { label: 'Logs', to: '/admin/notification-logs', placeholder: true },
+      { label: 'Logs', to: '/admin/notification-logs' },
     ],
   },
   {

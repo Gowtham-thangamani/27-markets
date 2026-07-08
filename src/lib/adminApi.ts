@@ -219,6 +219,16 @@ export interface TextTemplate {
   updatedAt: string
 }
 
+export interface StaffFormAssignment {
+  id: string
+  kycFormId: string
+  formName: string
+  staffId: string
+  staffName: string
+  staffRole: string | null
+  createdAt: string
+}
+
 export interface KycForm {
   id: string
   name: string
@@ -430,6 +440,11 @@ export const adminApi = {
   createTextTemplate: (body: { kind: TextTemplateKind; name: string; body: string; enabled?: boolean }) => api.post<TextTemplate>('/admin/text-templates', body),
   updateTextTemplate: (id: string, patch: { name?: string; body?: string; enabled?: boolean }) => api.patch<TextTemplate>(`/admin/text-templates/${id}`, patch),
   deleteTextTemplate: (id: string) => api.del<{ ok: boolean }>(`/admin/text-templates/${id}`),
+
+  // Staff form assignments (KYC form -> staff)
+  listStaffFormAssignments: () => api.get<StaffFormAssignment[]>('/admin/staff-form-assignments'),
+  createStaffFormAssignment: (body: { kycFormId: string; staffId: string }) => api.post<StaffFormAssignment>('/admin/staff-form-assignments', body),
+  deleteStaffFormAssignment: (id: string) => api.del<{ ok: boolean }>(`/admin/staff-form-assignments/${id}`),
 
   // KYC forms (config — Admin edits)
   listKycForms: () => api.get<KycForm[]>('/admin/kyc-forms'),

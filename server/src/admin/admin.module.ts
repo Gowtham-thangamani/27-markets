@@ -31,6 +31,8 @@ import { AdminTextTemplatesController } from './admin-text-templates.controller'
 import { AdminTextTemplatesService } from './admin-text-templates.service';
 import { AdminCampaignsController } from './admin-campaigns.controller';
 import { AdminCampaignsService } from './admin-campaigns.service';
+import { AdminStaffFormAssignmentsController } from './admin-staff-form-assignments.controller';
+import { AdminStaffFormAssignmentsService } from './admin-staff-form-assignments.service';
 import { AdminReportsController } from './admin-reports.controller';
 import { AdminReportsService } from './admin-reports.service';
 import { AdminStaffController } from './admin-staff.controller';
@@ -56,6 +58,7 @@ import { AdminPartnersService } from './admin-partners.service';
     AdminConsentsController,
     AdminTextTemplatesController,
     AdminCampaignsController,
+    AdminStaffFormAssignmentsController,
     AdminReportsController,
     AdminStaffController,
     AdminPartnersController,
@@ -77,6 +80,7 @@ import { AdminPartnersService } from './admin-partners.service';
     AdminConsentsService,
     AdminTextTemplatesService,
     AdminCampaignsService,
+    AdminStaffFormAssignmentsService,
     AdminReportsService,
     AdminStaffService,
     AdminPartnersService,

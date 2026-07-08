@@ -239,6 +239,18 @@ model Consent {
   updatedAt DateTime @updatedAt
 }
 
+// Assignment of a KYC form to a staff member (who reviews it).
+// FK-less by design so it doesn't require back-relations on KycForm/User.
+model StaffFormAssignment {
+  id        String   @id @default(cuid())
+  kycFormId String
+  staffId   String
+  createdAt DateTime @default(now())
+
+  @@unique([kycFormId, staffId])
+  @@index([kycFormId])
+}
+
 // KYC field definitions, managed from the admin CRM.
 // `kind` scopes the list: QUESTION (KYC Questions) or EXTENDED (Extended Fields).
 model KycFieldDefinition {
