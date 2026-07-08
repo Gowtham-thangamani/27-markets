@@ -213,6 +213,34 @@ export class AdminFinanceService {
     return this.listByKindStatus(JournalKind.DEPOSIT, JournalStatus.POSTED);
   }
 
+  /** Every client wallet (client-liability ledger account) with its live balance. */
+  async listWallets() {
+    const accounts = await this.prisma.ledgerAccount.findMany({
+      where: { userId: { not: null } },
+      orderBy: { createdAt: 'desc' },
+      take: 500,
+      include: {
+        user: { select: { id: true, firstName: true, lastName: true, email: true } },
+        tradingAccount: { select: { number: true, type: true, mode: true, status: true } },
+      },
+    });
+    return Promise.all(
+      accounts.map(async (a) => ({
+        id: a.id,
+        code: a.code,
+        currency: a.currency,
+        balance: formatMoney(await this.ledger.balanceOf(a.id)),
+        accountNumber: a.tradingAccount?.number ?? null,
+        accountType: a.tradingAccount?.type ?? null,
+        mode: a.tradingAccount?.mode ?? null,
+        status: a.tradingAccount?.status ?? null,
+        owner: a.user
+          ? { id: a.user.id, name: `${a.user.firstName} ${a.user.lastName}`, email: a.user.email }
+          : null,
+      })),
+    );
+  }
+
   private async loadPendingWithdrawal(entryId: string) {
     const entry = await this.prisma.journalEntry.findUnique({
       where: { id: entryId },

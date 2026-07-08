@@ -89,6 +89,27 @@ describe('AdminFinanceService.allWithdrawals', () => {
   });
 });
 
+describe('AdminFinanceService.listWallets', () => {
+  it('lists client ledger accounts with their live balance + owner', async () => {
+    const findMany = jest.fn().mockResolvedValue([
+      {
+        id: 'la1', code: 'CLIENT:a1', currency: 'USD',
+        user: { id: 'u1', firstName: 'Ada', lastName: 'Lovelace', email: 'ada@x.com' },
+        tradingAccount: { number: '10012345', type: 'STANDARD', mode: 'LIVE', status: 'ACTIVE' },
+      },
+    ]);
+    const prisma = { ledgerAccount: { findMany } } as any;
+    const ledger = { balanceOf: jest.fn().mockResolvedValue(1000) } as any;
+    const service = new AdminFinanceService(prisma, ledger, {} as any, payments() as any, cfg());
+
+    const rows = await service.listWallets();
+
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: { not: null } } }));
+    expect(rows[0]).toMatchObject({ id: 'la1', accountNumber: '10012345', owner: { name: 'Ada Lovelace' } });
+    expect(rows[0].balance).toBeDefined();
+  });
+});
+
 describe('AdminFinanceService.allDepositRequests', () => {
   it('maps requests with client + status and applies a status filter', async () => {
     const findMany = jest.fn().mockResolvedValue([

@@ -58,7 +58,7 @@ export const adminNav: AdminNavEntry[] = [
     label: 'Finance', icon: Banknote, children: [
       { label: 'Transactions', to: '/admin/finance' },
       { label: 'Deposit Requests', to: '/admin/deposit-requests' },
-      { label: 'All Wallets', to: '/admin/wallets', placeholder: true },
+      { label: 'All Wallets', to: '/admin/wallets' },
       { label: 'Payment Gateways', to: '/admin/payment-gateways', placeholder: true },
       { label: 'Exchange Rates', to: '/admin/exchange-rates', placeholder: true },
       { label: 'Credit Card Types', to: '/admin/credit-card-types', placeholder: true },

@@ -47,8 +47,21 @@ export interface DepositRequestRow {
   client: { id: string; name: string; email: string } | null
 }
 
+export interface WalletRow {
+  id: string
+  code: string
+  currency: string
+  balance: string
+  accountNumber: string | null
+  accountType: string | null
+  mode: string | null
+  status: string | null
+  owner: { id: string; name: string; email: string } | null
+}
+
 /** Typed CRM finance + accounts admin API (reuses the shared `api` client). */
 export const financeApi = {
+  listWallets: () => api.get<WalletRow[]>('/admin/finance/wallets'),
   pendingWithdrawals: () => api.get<FinanceTxn[]>('/admin/finance/withdrawals'),
   /** All withdrawals, optionally filtered by status (PENDING | POSTED | REVERSED). */
   allWithdrawals: (status?: 'PENDING' | 'POSTED' | 'REVERSED') =>

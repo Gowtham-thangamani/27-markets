@@ -32,6 +32,11 @@ export class AdminFinanceController {
     return this.finance.deposits();
   }
 
+  @Get('wallets')
+  wallets() {
+    return this.finance.listWallets();
+  }
+
   @Get('deposit-requests')
   depositRequests() {
     return this.finance.pendingDepositRequests();
