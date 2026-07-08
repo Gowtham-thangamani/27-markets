@@ -45,6 +45,11 @@ export class AdminCrmController {
     return this.crm.addClientNote(staffId, id, dto);
   }
 
+  @Get('kyc-documents')
+  kycDocuments() {
+    return this.crm.listKycDocuments();
+  }
+
   // Leads
   @Get('leads')
   leads(@Query('status') status?: LeadStatus) {

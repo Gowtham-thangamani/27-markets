@@ -68,6 +68,15 @@ export interface ClientListItem {
   _count: { tradingAccounts: number }
 }
 
+export interface KycDocumentRow {
+  id: string
+  step: string
+  fileName: string
+  mimeType: string | null
+  createdAt: string
+  owner: { id: string; name: string; email: string } | null
+}
+
 export interface ClientNote {
   id: string
   body: string
@@ -363,6 +372,8 @@ export const adminApi = {
     return api.get<ClientListItem[]>(`/admin/clients${qs ? `?${qs}` : ''}`)
   },
   getClient: (id: string) => api.get<ClientDetail>(`/admin/clients/${id}`),
+  /** All uploaded KYC documents across clients (Document Tracker). */
+  listAllKycDocuments: () => api.get<KycDocumentRow[]>('/admin/kyc-documents'),
   /** Block (SUSPENDED) or unblock (ACTIVE) a client. Admin-only. */
   setClientStatus: (id: string, status: 'ACTIVE' | 'SUSPENDED') =>
     api.patch<{ id: string; status: string }>(`/admin/clients/${id}/status`, { status }),

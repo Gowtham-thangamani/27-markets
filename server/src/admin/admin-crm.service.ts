@@ -112,6 +112,25 @@ export class AdminCrmService {
     return { id: updated.id, status: updated.status };
   }
 
+  /** All uploaded KYC documents across clients (Document Tracker). */
+  async listKycDocuments() {
+    const docs = await this.prisma.kycDocument.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 500,
+      include: { kycProfile: { include: { user: { select: { id: true, firstName: true, lastName: true, email: true } } } } },
+    });
+    return docs.map((d) => ({
+      id: d.id,
+      step: d.step,
+      fileName: d.fileName,
+      mimeType: d.mimeType,
+      createdAt: d.createdAt,
+      owner: d.kycProfile?.user
+        ? { id: d.kycProfile.user.id, name: `${d.kycProfile.user.firstName} ${d.kycProfile.user.lastName}`, email: d.kycProfile.user.email }
+        : null,
+    }));
+  }
+
   // ───────────── Leads ─────────────
 
   listLeads(status?: LeadStatus) {

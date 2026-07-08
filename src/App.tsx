@@ -17,6 +17,8 @@ import AdminBlockedUsersPage from './pages/admin/AdminBlockedUsersPage'
 import AdminLeadsPage from './pages/admin/AdminLeadsPage'
 import AdminSupportPage from './pages/admin/AdminSupportPage'
 import AdminKycPage from './pages/admin/AdminKycPage'
+import AdminUsersKycPage from './pages/admin/AdminUsersKycPage'
+import AdminDocumentTrackerPage from './pages/admin/AdminDocumentTrackerPage'
 import AdminFinancePage from './pages/admin/AdminFinancePage'
 import AdminWithdrawalsPage from './pages/admin/AdminWithdrawalsPage'
 import AdminDepositRequestsPage from './pages/admin/AdminDepositRequestsPage'
@@ -146,6 +148,8 @@ export default function App() {
         <Route path="leads" element={<AdminLeadsPage />} />
         <Route path="support" element={<AdminSupportPage />} />
         <Route path="kyc" element={<AdminKycPage />} />
+        <Route path="users-kyc-forms" element={<AdminUsersKycPage />} />
+        <Route path="document-tracker" element={<AdminDocumentTrackerPage />} />
         <Route path="finance" element={<AdminFinancePage />} />
         <Route path="withdrawal-requests" element={<AdminWithdrawalsPage />} />
         <Route path="deposit-requests" element={<AdminDepositRequestsPage />} />
