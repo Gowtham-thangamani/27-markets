@@ -47,6 +47,18 @@ export interface DepositRequestRow {
   client: { id: string; name: string; email: string } | null
 }
 
+export interface AccountRequestRow {
+  id: string
+  number: string
+  type: string
+  mode: string
+  currency: string
+  leverage: string
+  status: string
+  createdAt: string
+  owner: { id: string; name: string; email: string }
+}
+
 export interface DormantAccountRow {
   id: string
   number: string
@@ -99,6 +111,8 @@ export const financeApi = {
   listAccounts: () => api.get<AdminAccount[]>('/admin/accounts'),
   /** Accounts with no activity in the last 90 days. */
   listDormantAccounts: () => api.get<DormantAccountRow[]>('/admin/accounts/dormant'),
+  /** Live accounts awaiting approval. */
+  listAccountRequests: () => api.get<AccountRequestRow[]>('/admin/accounts/requests'),
   setAccountStatus: (id: string, status: string) =>
     api.patch<{ id: string; status: string }>(`/admin/accounts/${id}/status`, { status }),
   setAccountLeverage: (id: string, leverage: string) =>

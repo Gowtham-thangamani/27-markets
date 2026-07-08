@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import {
   AccountMode,
+  AccountStatus,
   AccountType,
   JournalKind,
   LedgerAccountType,
@@ -51,6 +52,10 @@ export class AccountsService {
     const cfg = await this.prisma.accountTypeConfig.findUnique({ where: { type } });
     const leverage = cfg?.leverage ?? DEFAULT_LEVERAGE[type];
 
+    // Live accounts require admin approval (Account Requests queue); demo accounts
+    // are instant so clients can practice right away.
+    const status = mode === AccountMode.LIVE ? AccountStatus.PENDING : AccountStatus.ACTIVE;
+
     const account = await this.prisma.tradingAccount.create({
       data: {
         number,
@@ -58,6 +63,7 @@ export class AccountsService {
         type,
         mode,
         leverage,
+        status,
       },
     });
 

@@ -22,6 +22,7 @@ import AdminWithdrawalsPage from './pages/admin/AdminWithdrawalsPage'
 import AdminDepositRequestsPage from './pages/admin/AdminDepositRequestsPage'
 import AdminWalletsPage from './pages/admin/AdminWalletsPage'
 import AdminDormantAccountsPage from './pages/admin/AdminDormantAccountsPage'
+import AdminAccountRequestsPage from './pages/admin/AdminAccountRequestsPage'
 import AdminAccountsPage from './pages/admin/AdminAccountsPage'
 import AdminAccountTypesPage from './pages/admin/AdminAccountTypesPage'
 import AdminPaymentGatewaysPage from './pages/admin/AdminPaymentGatewaysPage'
@@ -142,6 +143,7 @@ export default function App() {
         <Route path="deposit-requests" element={<AdminDepositRequestsPage />} />
         <Route path="wallets" element={<AdminWalletsPage />} />
         <Route path="dormant-accounts" element={<AdminDormantAccountsPage />} />
+        <Route path="account-requests" element={<AdminAccountRequestsPage />} />
         <Route path="accounts" element={<AdminAccountsPage />} />
         <Route path="account-types" element={<AdminAccountTypesPage />} />
         <Route path="payment-gateways" element={<AdminPaymentGatewaysPage />} />

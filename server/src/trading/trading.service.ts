@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import {
+  AccountStatus,
   JournalKind,
   OrderSide,
   OrderType,
@@ -109,6 +110,9 @@ export class TradingService {
 
   async placeOrder(userId: string, dto: PlaceOrderDto) {
     const account = await this.ownedAccount(userId, dto.accountId);
+    if (account.status !== AccountStatus.ACTIVE) {
+      throw new BadRequestException('This account is not active. Live accounts require admin approval before trading.');
+    }
     if (this.exec.simulated && account.mode !== 'DEMO') {
       throw new BadRequestException(
         'Live trading requires a connected MT5 venue. Use a demo account for simulated trading.',

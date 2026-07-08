@@ -22,6 +22,11 @@ export class AdminAccountsController {
     return this.accounts.listDormant();
   }
 
+  @Get('requests')
+  requests() {
+    return this.accounts.listRequests();
+  }
+
   @Patch(':id/status')
   setStatus(@CurrentUser('id') adminId: string, @Param('id') id: string, @Body() dto: SetAccountStatusDto) {
     return this.accounts.setStatus(adminId, id, dto.status);

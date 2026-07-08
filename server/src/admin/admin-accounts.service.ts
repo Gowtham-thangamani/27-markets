@@ -88,6 +88,27 @@ export class AdminAccountsService {
     return dormant;
   }
 
+  /** Live accounts awaiting approval (the Account Requests queue). */
+  async listRequests() {
+    const accounts = await this.prisma.tradingAccount.findMany({
+      where: { status: AccountStatus.PENDING },
+      orderBy: { createdAt: 'desc' },
+      take: 300,
+      include: { user: { select: { id: true, firstName: true, lastName: true, email: true } } },
+    });
+    return accounts.map((a) => ({
+      id: a.id,
+      number: a.number,
+      type: a.type,
+      mode: a.mode,
+      currency: a.currency,
+      leverage: a.leverage,
+      status: a.status,
+      createdAt: a.createdAt,
+      owner: { id: a.user.id, name: `${a.user.firstName} ${a.user.lastName}`, email: a.user.email },
+    }));
+  }
+
   private async assertExists(id: string) {
     const a = await this.prisma.tradingAccount.findUnique({ where: { id } });
     if (!a) throw new NotFoundException('Account not found');

@@ -18,7 +18,7 @@ describe('TradingService.placeOrder (market)', () => {
     const order = { create: jest.fn().mockResolvedValue({ id: 'o1' }) };
     const position = { create: jest.fn().mockResolvedValue({ id: 'p1', status: 'OPEN' }), findMany: jest.fn().mockResolvedValue([]) };
     const prisma = {
-      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'DEMO', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
+      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', status: 'ACTIVE', mode: 'DEMO', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
       order,
       position,
     } as any;
@@ -35,7 +35,7 @@ describe('TradingService.placeOrder (market)', () => {
 
   it('rejects when required margin exceeds free margin', async () => {
     const prisma = {
-      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'DEMO', leverage: '1:1', ledgerAccount: { id: 'cl' } }) },
+      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', status: 'ACTIVE', mode: 'DEMO', leverage: '1:1', ledgerAccount: { id: 'cl' } }) },
       position: { findMany: jest.fn().mockResolvedValue([]) },
     } as any;
     const service = new TradingService(prisma, ledgerWith(100) as any, audit() as any, simExec(1000) as any, marketWith() as any, mt5conn() as any);
@@ -46,7 +46,7 @@ describe('TradingService.placeOrder (market)', () => {
 
   it('refuses simulated trading on a non-demo account', async () => {
     const prisma = {
-      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'LIVE', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
+      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', status: 'ACTIVE', mode: 'LIVE', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
     } as any;
     const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, simExec(100) as any, marketWith() as any, mt5conn() as any);
     await expect(
@@ -59,7 +59,7 @@ describe('TradingService.placeOrder (limit/stop)', () => {
   it('parks a LIMIT order as PENDING without opening a position', async () => {
     const order = { create: jest.fn().mockResolvedValue({ id: 'po1', status: 'PENDING' }) };
     const prisma = {
-      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'DEMO', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
+      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', status: 'ACTIVE', mode: 'DEMO', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
       position: { findMany: jest.fn().mockResolvedValue([]) },
       order,
     } as any;
@@ -77,7 +77,7 @@ describe('TradingService.placeOrder (limit/stop)', () => {
 
   it('requires a trigger price for limit/stop', async () => {
     const prisma = {
-      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'DEMO', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
+      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', status: 'ACTIVE', mode: 'DEMO', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
       position: { findMany: jest.fn().mockResolvedValue([]) },
     } as any;
     const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, simExec(100) as any, marketWith() as any, mt5conn() as any);
@@ -141,7 +141,7 @@ describe('TradingService.closePosition', () => {
   });
   const basePrisma = (pos: any) => ({
     position: { findUnique: jest.fn().mockResolvedValue(pos), update: jest.fn().mockImplementation(({ data }) => ({ id: 'p1', ...data })) },
-    tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'DEMO', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
+    tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', status: 'ACTIVE', mode: 'DEMO', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
     order: { create: jest.fn().mockResolvedValue({}) },
   });
 
@@ -223,7 +223,7 @@ describe('TradingService.resetDemo', () => {
   it('cancels pending, closes positions, and restores the balance', async () => {
     const post = jest.fn().mockResolvedValue({});
     const prisma = {
-      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'DEMO', leverage: '1:100', ledgerAccount: { id: 'cl' } }) },
+      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', status: 'ACTIVE', mode: 'DEMO', leverage: '1:100', ledgerAccount: { id: 'cl' } }) },
       order: { updateMany: jest.fn().mockResolvedValue({}) },
       position: { updateMany: jest.fn().mockResolvedValue({}), findMany: jest.fn().mockResolvedValue([]) },
     } as any;
@@ -237,7 +237,7 @@ describe('TradingService.resetDemo', () => {
   });
 
   it('refuses non-demo accounts', async () => {
-    const prisma = { tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'LIVE', ledgerAccount: { id: 'cl' } }) } } as any;
+    const prisma = { tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', status: 'ACTIVE', mode: 'LIVE', ledgerAccount: { id: 'cl' } }) } } as any;
     const service = new TradingService(prisma, ledgerWith(0) as any, audit() as any, simExec(1) as any, marketWith() as any, mt5conn() as any);
     await expect(service.resetDemo('u1', 'acc1')).rejects.toThrow('Only demo accounts');
   });
@@ -252,7 +252,7 @@ describe('TradingService validation', () => {
 
   it('rejects a limit buy placed above the market', async () => {
     const prisma = {
-      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', mode: 'DEMO', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
+      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', status: 'ACTIVE', mode: 'DEMO', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
       position: { findMany: jest.fn().mockResolvedValue([]) },
     } as any;
     const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, simExec(100) as any, marketWith([{ symbol: 'X', price: 100 }]) as any, mt5conn() as any);
