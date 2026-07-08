@@ -7,6 +7,7 @@ import { CTABand } from '@/components/marketing/CTABand'
 import { Accordion } from '@/components/ui'
 import { staggerContainer } from '@/lib/motion'
 import { accountTiers } from '@/mock/content'
+import { useAccountTypes, type AccountTypeConfig } from '@/lib/useAccountTypes'
 import { useT } from '@/i18n/LanguageContext'
 
 const comparison = [
@@ -19,10 +20,19 @@ const comparison = [
   { labelKey: 'acp.r.support', values: ['24/5', '24/5 Priority', '24/5 Priority'] },
 ]
 
+// Comparison rows whose values are driven by the editable account-type config.
+const CONFIG_ROW: Record<string, (c: AccountTypeConfig) => string> = {
+  'acp.r.min': (c) => `$${c.minDeposit.toLocaleString()}`,
+  'acp.r.spread': (c) => `${c.spreadFrom} pips`,
+  'acp.r.comm': (c) => c.commission,
+  'acp.r.lev': (c) => c.leverage,
+}
+
 const FAQ_IDS = ['f1', 'f2', 'f3']
 
 export default function AccountsPage() {
   const t = useT()
+  const { tiers, byName } = useAccountTypes()
   // Numeric/symbol values pass through; word values resolve via an acp.v.* key.
   const val = (v: string) => {
     const key = `acp.v.${v}`
@@ -50,7 +60,7 @@ export default function AccountsPage() {
           viewport={{ once: true, amount: 0.2 }}
           className="grid gap-6 md:grid-cols-3"
         >
-          {accountTiers.map((tier) => (
+          {tiers.map((tier) => (
             <AccountCard key={tier.name} tier={tier} />
           ))}
         </motion.div>
@@ -64,7 +74,7 @@ export default function AccountsPage() {
             <thead>
               <tr className="bg-ink-800/60 text-left text-sm">
                 <th scope="col" className="px-5 py-4 font-medium text-gray-400">{t('acp.feature')}</th>
-                {accountTiers.map((tier) => (
+                {tiers.map((tier) => (
                   <th key={tier.name} scope="col" className="px-5 py-4 font-semibold text-white">
                     {tier.name}
                   </th>
@@ -75,11 +85,15 @@ export default function AccountsPage() {
               {comparison.map((row) => (
                 <tr key={row.labelKey} className="hover:bg-white/[0.02]">
                   <td className="px-5 py-3.5 text-gray-400">{t(row.labelKey)}</td>
-                  {row.values.map((v, i) => (
-                    <td key={i} className="px-5 py-3.5 font-medium text-gray-200">
-                      {val(v)}
-                    </td>
-                  ))}
+                  {row.values.map((v, i) => {
+                    const cfg = byName?.get(accountTiers[i].name)
+                    const fn = CONFIG_ROW[row.labelKey]
+                    return (
+                      <td key={i} className="px-5 py-3.5 font-medium text-gray-200">
+                        {val(cfg && fn ? fn(cfg) : v)}
+                      </td>
+                    )
+                  })}
                 </tr>
               ))}
             </tbody>

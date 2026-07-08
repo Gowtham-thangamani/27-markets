@@ -46,13 +46,18 @@ export class AccountsService {
   async create(userId: string, type: AccountType, mode: AccountMode): Promise<AccountView> {
     const number = generateAccountNumber(mode);
 
+    // Leverage is driven by the editable AccountTypeConfig; fall back to the
+    // built-in default if no config row exists for this type.
+    const cfg = await this.prisma.accountTypeConfig.findUnique({ where: { type } });
+    const leverage = cfg?.leverage ?? DEFAULT_LEVERAGE[type];
+
     const account = await this.prisma.tradingAccount.create({
       data: {
         number,
         userId,
         type,
         mode,
-        leverage: DEFAULT_LEVERAGE[type],
+        leverage,
       },
     });
 
@@ -96,6 +101,11 @@ export class AccountsService {
 
   async get(userId: string, id: string): Promise<AccountView> {
     return this.toView(id, userId);
+  }
+
+  /** Public account-type configs (trading conditions) for the marketing site. */
+  listTypes() {
+    return this.prisma.accountTypeConfig.findMany({ orderBy: { sortOrder: 'asc' } });
   }
 
   /** Resolve the ledger account id for a user's trading account (ownership-checked). */
