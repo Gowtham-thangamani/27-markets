@@ -155,6 +155,23 @@ export interface AuditEntry {
   user: { firstName: string; lastName: string; email: string } | null
 }
 
+export interface AccountTypeConfig {
+  id: string
+  type: 'STANDARD' | 'RAW_SPREAD' | 'VIP'
+  displayName: string
+  spreadFrom: string
+  commission: string
+  leverage: string
+  minDeposit: number
+  popular: boolean
+  sortOrder: number
+  updatedAt: string
+}
+
+export type AccountTypePatch = Partial<
+  Pick<AccountTypeConfig, 'displayName' | 'spreadFrom' | 'commission' | 'leverage' | 'minDeposit' | 'popular' | 'sortOrder'>
+>
+
 export interface PartnerItem {
   id: string
   firstName: string
@@ -217,6 +234,11 @@ export const adminApi = {
     api.patch<{ id: string; role: StaffRole }>(`/admin/team/${id}/role`, { role }),
   getAuditLog: (action?: string) =>
     api.get<AuditEntry[]>(`/admin/audit${action ? `?action=${encodeURIComponent(action)}` : ''}`),
+
+  // Account types (config — Admin edits)
+  listAccountTypes: () => api.get<AccountTypeConfig[]>('/admin/account-types'),
+  updateAccountType: (type: string, patch: AccountTypePatch) =>
+    api.patch<AccountTypeConfig>(`/admin/account-types/${type}`, patch),
 
   // Partners (read-only stub)
   listPartners: () => api.get<PartnerItem[]>('/admin/partners'),

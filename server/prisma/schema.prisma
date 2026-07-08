@@ -187,6 +187,21 @@ model TradingAccount {
   @@index([userId])
 }
 
+// Editable trading conditions per account type (managed from the admin CRM).
+// One row per AccountType enum value.
+model AccountTypeConfig {
+  id          String      @id @default(cuid())
+  type        AccountType @unique
+  displayName String
+  spreadFrom  String // e.g. "0.8" (pips)
+  commission  String // e.g. "$0" or "$7 / lot"
+  leverage    String // e.g. "1:10"
+  minDeposit  Int // USD, whole dollars
+  popular     Boolean     @default(false)
+  sortOrder   Int         @default(0)
+  updatedAt   DateTime    @updatedAt
+}
+
 // ──────────────────── Double-entry ledger ────────────────────
 
 enum LedgerAccountType {

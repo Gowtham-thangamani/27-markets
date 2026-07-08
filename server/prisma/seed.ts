@@ -55,6 +55,16 @@ async function upsertUser(
 async function main() {
   console.log('Seeding…')
 
+  // Account type configs (editable from the admin CRM).
+  const accountTypeConfigs = [
+    { type: AccountType.STANDARD, displayName: 'Standard', spreadFrom: '0.8', commission: '$0', leverage: '1:10', minDeposit: 50, popular: false, sortOrder: 0 },
+    { type: AccountType.RAW_SPREAD, displayName: 'Raw Spread', spreadFrom: '0.0', commission: '$7 / lot', leverage: '1:50', minDeposit: 500, popular: true, sortOrder: 1 },
+    { type: AccountType.VIP, displayName: 'VIP', spreadFrom: '0.0', commission: 'Custom', leverage: '1:100', minDeposit: 2500, popular: false, sortOrder: 2 },
+  ]
+  for (const cfg of accountTypeConfigs) {
+    await prisma.accountTypeConfig.upsert({ where: { type: cfg.type }, update: {}, create: cfg })
+  }
+
   const admin = await upsertUser('admin@27markets.io', 'Admin123!', 'Avery', 'Stone', UserRole.ADMIN)
   const agent = await upsertUser('agent@27markets.io', 'Agent123!', 'Riley', 'Mensah', UserRole.AGENT)
   const client = await upsertUser('client@27markets.io', 'Client123!', 'Jordan', 'Avery', UserRole.CLIENT)

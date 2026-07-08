@@ -20,6 +20,7 @@ import AdminKycPage from './pages/admin/AdminKycPage'
 import AdminFinancePage from './pages/admin/AdminFinancePage'
 import AdminWithdrawalsPage from './pages/admin/AdminWithdrawalsPage'
 import AdminAccountsPage from './pages/admin/AdminAccountsPage'
+import AdminAccountTypesPage from './pages/admin/AdminAccountTypesPage'
 import AdminPartnersPage from './pages/admin/AdminPartnersPage'
 import AdminPartnerApplicationsPage from './pages/admin/AdminPartnerApplicationsPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
@@ -133,6 +134,7 @@ export default function App() {
         <Route path="finance" element={<AdminFinancePage />} />
         <Route path="withdrawal-requests" element={<AdminWithdrawalsPage />} />
         <Route path="accounts" element={<AdminAccountsPage />} />
+        <Route path="account-types" element={<AdminAccountTypesPage />} />
         <Route path="partners" element={<AdminPartnersPage />} />
         <Route path="partner-applications" element={<AdminPartnerApplicationsPage />} />
         <Route path="reports" element={<AdminReportsPage />} />
