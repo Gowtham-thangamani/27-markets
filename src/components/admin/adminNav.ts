@@ -77,7 +77,7 @@ export const adminNav: AdminNavEntry[] = [
     label: 'Introducing Brokers', icon: Handshake, children: [
       { label: 'IBs List', to: '/admin/partners' },
       { label: 'Partner Applications', to: '/admin/partner-applications' },
-      { label: 'IB Campaigns', to: '/admin/ib-campaigns', placeholder: true },
+      { label: 'IB Campaigns', to: '/admin/ib-campaigns' },
     ],
   },
   {

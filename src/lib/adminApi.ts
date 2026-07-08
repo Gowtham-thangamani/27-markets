@@ -195,6 +195,19 @@ export type AccountTypePatch = Partial<
   Pick<AccountTypeConfig, 'displayName' | 'spreadFrom' | 'commission' | 'leverage' | 'minDeposit' | 'popular' | 'sortOrder'>
 >
 
+export interface IbCampaign {
+  id: string
+  name: string
+  code: string
+  description: string | null
+  enabled: boolean
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export type IbCampaignInput = { name: string; code: string; description?: string; enabled?: boolean; sortOrder?: number }
+
 export type CampaignChannel = 'EMAIL' | 'SMS' | 'PUSH'
 export type CampaignStatus = 'DRAFT' | 'SCHEDULED' | 'SENT'
 
@@ -446,6 +459,12 @@ export const adminApi = {
   listAccountTypes: () => api.get<AccountTypeConfig[]>('/admin/account-types'),
   updateAccountType: (type: string, patch: AccountTypePatch) =>
     api.patch<AccountTypeConfig>(`/admin/account-types/${type}`, patch),
+
+  // IB campaigns (config — Admin edits)
+  listIbCampaigns: () => api.get<IbCampaign[]>('/admin/ib-campaigns'),
+  createIbCampaign: (body: IbCampaignInput) => api.post<IbCampaign>('/admin/ib-campaigns', body),
+  updateIbCampaign: (id: string, patch: Partial<IbCampaignInput>) => api.patch<IbCampaign>(`/admin/ib-campaigns/${id}`, patch),
+  deleteIbCampaign: (id: string) => api.del<{ ok: boolean }>(`/admin/ib-campaigns/${id}`),
 
   // Campaigns (config — Admin edits)
   listCampaigns: () => api.get<Campaign[]>('/admin/campaigns'),

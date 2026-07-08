@@ -187,6 +187,18 @@ model TradingAccount {
   @@index([userId])
 }
 
+// Introducing-broker (IB) campaigns with tracking codes, managed from the admin CRM.
+model IbCampaign {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  description String?
+  enabled     Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 // Notification/marketing campaigns, managed from the admin CRM.
 model Campaign {
   id        String    @id @default(cuid())

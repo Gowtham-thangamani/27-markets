@@ -206,6 +206,15 @@ async function main() {
     if (!exists) await prisma.campaign.create({ data: c })
   }
 
+  // IB campaigns (idempotent by code).
+  const ibCampaigns = [
+    { name: 'Ramadan Promo', code: 'IB-RAMADAN', description: 'Seasonal IB acquisition push.', sortOrder: 0 },
+    { name: 'YouTube Partners', code: 'IB-YT', description: 'Tracking for YouTube-referred sign-ups.', sortOrder: 1 },
+  ]
+  for (const c of ibCampaigns) {
+    await prisma.ibCampaign.upsert({ where: { code: c.code }, update: {}, create: c })
+  }
+
   const admin = await upsertUser('admin@27markets.io', 'Admin123!', 'Avery', 'Stone', UserRole.ADMIN)
   const agent = await upsertUser('agent@27markets.io', 'Agent123!', 'Riley', 'Mensah', UserRole.AGENT)
   const client = await upsertUser('client@27markets.io', 'Client123!', 'Jordan', 'Avery', UserRole.CLIENT)
