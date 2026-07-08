@@ -89,8 +89,8 @@ export const adminNav: AdminNavEntry[] = [
   },
   {
     label: 'Referrals', icon: Share2, children: [
-      { label: 'Referrals', to: '/admin/referrals', placeholder: true },
-      { label: 'User Referrals', to: '/admin/user-referrals', placeholder: true },
+      { label: 'Referrals', to: '/admin/referrals' },
+      { label: 'User Referrals', to: '/admin/user-referrals' },
     ],
   },
   {

@@ -19,6 +19,8 @@ import AdminSupportPage from './pages/admin/AdminSupportPage'
 import AdminKycPage from './pages/admin/AdminKycPage'
 import AdminUsersKycPage from './pages/admin/AdminUsersKycPage'
 import AdminDocumentTrackerPage from './pages/admin/AdminDocumentTrackerPage'
+import AdminReferralsPage from './pages/admin/AdminReferralsPage'
+import AdminUserReferralsPage from './pages/admin/AdminUserReferralsPage'
 import AdminFinancePage from './pages/admin/AdminFinancePage'
 import AdminWithdrawalsPage from './pages/admin/AdminWithdrawalsPage'
 import AdminDepositRequestsPage from './pages/admin/AdminDepositRequestsPage'
@@ -176,6 +178,8 @@ export default function App() {
         <Route path="campaigns" element={<AdminCampaignsPage />} />
         <Route path="notification-logs" element={<AdminNotificationLogsPage />} />
         <Route path="staff-forms-assignments" element={<AdminStaffFormAssignmentsPage />} />
+        <Route path="referrals" element={<AdminReferralsPage />} />
+        <Route path="user-referrals" element={<AdminUserReferralsPage />} />
         <Route path="partners" element={<AdminPartnersPage />} />
         <Route path="partner-applications" element={<AdminPartnerApplicationsPage />} />
         <Route path="reports" element={<AdminReportsPage />} />

@@ -50,6 +50,16 @@ export class AdminCrmController {
     return this.crm.listKycDocuments();
   }
 
+  @Get('referrals/summary')
+  referralsSummary() {
+    return this.crm.referralSummary();
+  }
+
+  @Get('referrals')
+  referrals() {
+    return this.crm.listReferrals();
+  }
+
   // Leads
   @Get('leads')
   leads(@Query('status') status?: LeadStatus) {

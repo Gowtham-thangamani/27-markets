@@ -68,6 +68,20 @@ export interface ClientListItem {
   _count: { tradingAccounts: number }
 }
 
+export interface ReferralRow {
+  id: string
+  referred: { id: string; name: string; email: string }
+  referrer: { id: string; name: string; email: string } | null
+  joinedAt: string
+}
+
+export interface ReferralSummaryRow {
+  id: string
+  name: string
+  email: string
+  referralCount: number
+}
+
 export interface KycDocumentRow {
   id: string
   step: string
@@ -384,6 +398,10 @@ export const adminApi = {
   getClient: (id: string) => api.get<ClientDetail>(`/admin/clients/${id}`),
   /** All uploaded KYC documents across clients (Document Tracker). */
   listAllKycDocuments: () => api.get<KycDocumentRow[]>('/admin/kyc-documents'),
+  /** Clients who signed up via a referral (Referrals). */
+  listReferrals: () => api.get<ReferralRow[]>('/admin/referrals'),
+  /** Referring partners with their referral counts (User Referrals). */
+  referralSummary: () => api.get<ReferralSummaryRow[]>('/admin/referrals/summary'),
   /** Block (SUSPENDED) or unblock (ACTIVE) a client. Admin-only. */
   setClientStatus: (id: string, status: 'ACTIVE' | 'SUSPENDED') =>
     api.patch<{ id: string; status: string }>(`/admin/clients/${id}/status`, { status }),

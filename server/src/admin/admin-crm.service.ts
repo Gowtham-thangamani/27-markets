@@ -131,6 +131,42 @@ export class AdminCrmService {
     }));
   }
 
+  /** Clients who signed up via a partner referral code (Referrals). */
+  async listReferrals() {
+    const users = await this.prisma.user.findMany({
+      where: { referredByPartnerId: { not: null } },
+      orderBy: { createdAt: 'desc' },
+      take: 500,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        createdAt: true,
+        referredByPartner: { select: { id: true, firstName: true, lastName: true, email: true } },
+      },
+    });
+    return users.map((u) => ({
+      id: u.id,
+      referred: { id: u.id, name: `${u.firstName} ${u.lastName}`, email: u.email },
+      referrer: u.referredByPartner
+        ? { id: u.referredByPartner.id, name: `${u.referredByPartner.firstName} ${u.referredByPartner.lastName}`, email: u.referredByPartner.email }
+        : null,
+      joinedAt: u.createdAt,
+    }));
+  }
+
+  /** Referring partners with their referral counts (User Referrals). */
+  async referralSummary() {
+    const partners = await this.prisma.user.findMany({
+      where: { referredClients: { some: {} } },
+      select: { id: true, firstName: true, lastName: true, email: true, _count: { select: { referredClients: true } } },
+    });
+    return partners
+      .map((p) => ({ id: p.id, name: `${p.firstName} ${p.lastName}`, email: p.email, referralCount: p._count.referredClients }))
+      .sort((a, b) => b.referralCount - a.referralCount);
+  }
+
   // ───────────── Leads ─────────────
 
   listLeads(status?: LeadStatus) {
