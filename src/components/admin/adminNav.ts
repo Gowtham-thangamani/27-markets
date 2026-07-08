@@ -102,8 +102,8 @@ export const adminNav: AdminNavEntry[] = [
   },
   {
     label: 'Templates', icon: LayoutTemplate, children: [
-      { label: 'PDF Templates', to: '/admin/pdf-templates', placeholder: true },
-      { label: 'Comment Templates', to: '/admin/comment-templates', placeholder: true },
+      { label: 'PDF Templates', to: '/admin/pdf-templates' },
+      { label: 'Comment Templates', to: '/admin/comment-templates' },
     ],
   },
   {

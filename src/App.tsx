@@ -34,6 +34,7 @@ import AdminExchangeRatesPage from './pages/admin/AdminExchangeRatesPage'
 import AdminKycFieldsPage from './pages/admin/AdminKycFieldsPage'
 import AdminKycFormsPage from './pages/admin/AdminKycFormsPage'
 import AdminConsentsPage from './pages/admin/AdminConsentsPage'
+import AdminTextTemplatesPage from './pages/admin/AdminTextTemplatesPage'
 import AdminPartnersPage from './pages/admin/AdminPartnersPage'
 import AdminPartnerApplicationsPage from './pages/admin/AdminPartnerApplicationsPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
@@ -163,6 +164,8 @@ export default function App() {
         <Route path="extended-fields" element={<AdminKycFieldsPage kind="EXTENDED" title="Extended Fields" subtitle="Additional profile fields collected from clients." />} />
         <Route path="kyc-forms" element={<AdminKycFormsPage />} />
         <Route path="consents" element={<AdminConsentsPage />} />
+        <Route path="pdf-templates" element={<AdminTextTemplatesPage kind="PDF" title="PDF Templates" subtitle="Document templates for statements, receipts, etc." />} />
+        <Route path="comment-templates" element={<AdminTextTemplatesPage kind="COMMENT" title="Comment Templates" subtitle="Canned replies staff can reuse." />} />
         <Route path="partners" element={<AdminPartnersPage />} />
         <Route path="partner-applications" element={<AdminPartnerApplicationsPage />} />
         <Route path="reports" element={<AdminReportsPage />} />

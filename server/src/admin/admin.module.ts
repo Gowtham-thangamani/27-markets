@@ -27,6 +27,8 @@ import { AdminKycFormsController } from './admin-kyc-forms.controller';
 import { AdminKycFormsService } from './admin-kyc-forms.service';
 import { AdminConsentsController } from './admin-consents.controller';
 import { AdminConsentsService } from './admin-consents.service';
+import { AdminTextTemplatesController } from './admin-text-templates.controller';
+import { AdminTextTemplatesService } from './admin-text-templates.service';
 import { AdminReportsController } from './admin-reports.controller';
 import { AdminReportsService } from './admin-reports.service';
 import { AdminStaffController } from './admin-staff.controller';
@@ -50,6 +52,7 @@ import { AdminPartnersService } from './admin-partners.service';
     AdminKycFieldsController,
     AdminKycFormsController,
     AdminConsentsController,
+    AdminTextTemplatesController,
     AdminReportsController,
     AdminStaffController,
     AdminPartnersController,
@@ -69,6 +72,7 @@ import { AdminPartnersService } from './admin-partners.service';
     AdminKycFieldsService,
     AdminKycFormsService,
     AdminConsentsService,
+    AdminTextTemplatesService,
     AdminReportsService,
     AdminStaffService,
     AdminPartnersService,

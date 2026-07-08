@@ -184,6 +184,18 @@ async function main() {
     if (!exists) await prisma.consent.create({ data: c })
   }
 
+  // Text templates (idempotent by kind+name).
+  const textTemplates = [
+    { kind: 'PDF', name: 'Account Statement', body: 'Statement for {{clientName}} — period {{period}}.\nBalance: {{balance}}', sortOrder: 0 },
+    { kind: 'PDF', name: 'Deposit Receipt', body: 'Receipt for deposit of {{amount}} by {{clientName}} on {{date}}.', sortOrder: 1 },
+    { kind: 'COMMENT', name: 'KYC follow-up', body: 'Hi {{clientName}}, we need an additional document to complete your verification.', sortOrder: 0 },
+    { kind: 'COMMENT', name: 'Withdrawal delay', body: 'Your withdrawal is being processed and will be completed within 1-3 business days.', sortOrder: 1 },
+  ]
+  for (const t of textTemplates) {
+    const exists = await prisma.textTemplate.findFirst({ where: { kind: t.kind, name: t.name } })
+    if (!exists) await prisma.textTemplate.create({ data: t })
+  }
+
   const admin = await upsertUser('admin@27markets.io', 'Admin123!', 'Avery', 'Stone', UserRole.ADMIN)
   const agent = await upsertUser('agent@27markets.io', 'Agent123!', 'Riley', 'Mensah', UserRole.AGENT)
   const client = await upsertUser('client@27markets.io', 'Client123!', 'Jordan', 'Avery', UserRole.CLIENT)

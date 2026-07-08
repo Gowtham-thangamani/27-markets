@@ -172,6 +172,19 @@ export type AccountTypePatch = Partial<
   Pick<AccountTypeConfig, 'displayName' | 'spreadFrom' | 'commission' | 'leverage' | 'minDeposit' | 'popular' | 'sortOrder'>
 >
 
+export type TextTemplateKind = 'PDF' | 'COMMENT'
+
+export interface TextTemplate {
+  id: string
+  kind: TextTemplateKind
+  name: string
+  body: string
+  enabled: boolean
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
 export interface KycForm {
   id: string
   name: string
@@ -369,6 +382,12 @@ export const adminApi = {
   listAccountTypes: () => api.get<AccountTypeConfig[]>('/admin/account-types'),
   updateAccountType: (type: string, patch: AccountTypePatch) =>
     api.patch<AccountTypeConfig>(`/admin/account-types/${type}`, patch),
+
+  // Text templates (PDF / Comment — config, Admin edits)
+  listTextTemplates: (kind: TextTemplateKind) => api.get<TextTemplate[]>(`/admin/text-templates?kind=${kind}`),
+  createTextTemplate: (body: { kind: TextTemplateKind; name: string; body: string; enabled?: boolean }) => api.post<TextTemplate>('/admin/text-templates', body),
+  updateTextTemplate: (id: string, patch: { name?: string; body?: string; enabled?: boolean }) => api.patch<TextTemplate>(`/admin/text-templates/${id}`, patch),
+  deleteTextTemplate: (id: string) => api.del<{ ok: boolean }>(`/admin/text-templates/${id}`),
 
   // KYC forms (config — Admin edits)
   listKycForms: () => api.get<KycForm[]>('/admin/kyc-forms'),
