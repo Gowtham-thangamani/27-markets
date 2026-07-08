@@ -187,6 +187,18 @@ model TradingAccount {
   @@index([userId])
 }
 
+// Editable transactional email/notification templates, managed from the admin CRM.
+// `key` maps to a code path (e.g. verify_email); body/subject support {{placeholders}}.
+model NotificationTemplate {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  name      String
+  subject   String
+  body      String
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
 enum PaymentGatewayType {
   BANK
   CRYPTO

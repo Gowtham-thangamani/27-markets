@@ -76,6 +76,31 @@ async function main() {
     if (!exists) await prisma.paymentGateway.create({ data: g })
   }
 
+  // Transactional email templates (idempotent by key — edits are preserved).
+  const templates = [
+    {
+      key: 'verify_email',
+      name: 'Verify email',
+      subject: 'Verify your 27 Markets email',
+      body: 'Welcome to 27 Markets.\n\nConfirm your email to activate your account:\n{{link}}\n\nThis link expires in 24 hours.',
+    },
+    {
+      key: 'password_reset',
+      name: 'Password reset',
+      subject: 'Reset your 27 Markets password',
+      body: "We received a request to reset your password.\n\nSet a new password:\n{{link}}\n\nThis link expires in 1 hour. If you didn't request this, ignore this email.",
+    },
+    {
+      key: 'welcome',
+      name: 'Welcome',
+      subject: 'Welcome to 27 Markets',
+      body: 'Hi {{firstName}},\n\nYour account is ready. A demo account has been created so you can start trading right away.',
+    },
+  ]
+  for (const tpl of templates) {
+    await prisma.notificationTemplate.upsert({ where: { key: tpl.key }, update: {}, create: tpl })
+  }
+
   const admin = await upsertUser('admin@27markets.io', 'Admin123!', 'Avery', 'Stone', UserRole.ADMIN)
   const agent = await upsertUser('agent@27markets.io', 'Agent123!', 'Riley', 'Mensah', UserRole.AGENT)
   const client = await upsertUser('client@27markets.io', 'Client123!', 'Jordan', 'Avery', UserRole.CLIENT)

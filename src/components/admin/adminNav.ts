@@ -95,7 +95,7 @@ export const adminNav: AdminNavEntry[] = [
   },
   {
     label: 'Notifications', icon: Bell, children: [
-      { label: 'Templates', to: '/admin/notification-templates', placeholder: true },
+      { label: 'Templates', to: '/admin/notification-templates' },
       { label: 'Campaigns', to: '/admin/campaigns', placeholder: true },
       { label: 'Logs', to: '/admin/notification-logs', placeholder: true },
     ],

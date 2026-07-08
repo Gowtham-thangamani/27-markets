@@ -172,6 +172,15 @@ export type AccountTypePatch = Partial<
   Pick<AccountTypeConfig, 'displayName' | 'spreadFrom' | 'commission' | 'leverage' | 'minDeposit' | 'popular' | 'sortOrder'>
 >
 
+export interface NotificationTemplate {
+  id: string
+  key: string
+  name: string
+  subject: string
+  body: string
+  updatedAt: string
+}
+
 export type PaymentGatewayType = 'BANK' | 'CRYPTO' | 'CARD' | 'EWALLET'
 
 export interface PaymentGateway {
@@ -264,6 +273,11 @@ export const adminApi = {
   listAccountTypes: () => api.get<AccountTypeConfig[]>('/admin/account-types'),
   updateAccountType: (type: string, patch: AccountTypePatch) =>
     api.patch<AccountTypeConfig>(`/admin/account-types/${type}`, patch),
+
+  // Notification templates (config — Admin edits)
+  listNotificationTemplates: () => api.get<NotificationTemplate[]>('/admin/notification-templates'),
+  updateNotificationTemplate: (id: string, patch: { subject?: string; body?: string }) =>
+    api.patch<NotificationTemplate>(`/admin/notification-templates/${id}`, patch),
 
   // Payment gateways (config — Admin edits)
   listPaymentGateways: () => api.get<PaymentGateway[]>('/admin/payment-gateways'),

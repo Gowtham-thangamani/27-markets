@@ -11,6 +11,8 @@ import { AdminAccountTypesController } from './admin-account-types.controller';
 import { AdminAccountTypesService } from './admin-account-types.service';
 import { AdminPaymentGatewaysController } from './admin-payment-gateways.controller';
 import { AdminPaymentGatewaysService } from './admin-payment-gateways.service';
+import { AdminNotificationTemplatesController } from './admin-notification-templates.controller';
+import { AdminNotificationTemplatesService } from './admin-notification-templates.service';
 import { AdminReportsController } from './admin-reports.controller';
 import { AdminReportsService } from './admin-reports.service';
 import { AdminStaffController } from './admin-staff.controller';
@@ -26,6 +28,7 @@ import { AdminPartnersService } from './admin-partners.service';
     AdminAccountsController,
     AdminAccountTypesController,
     AdminPaymentGatewaysController,
+    AdminNotificationTemplatesController,
     AdminReportsController,
     AdminStaffController,
     AdminPartnersController,
@@ -37,6 +40,7 @@ import { AdminPartnersService } from './admin-partners.service';
     AdminAccountsService,
     AdminAccountTypesService,
     AdminPaymentGatewaysService,
+    AdminNotificationTemplatesService,
     AdminReportsService,
     AdminStaffService,
     AdminPartnersService,
