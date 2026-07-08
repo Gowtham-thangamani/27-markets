@@ -172,6 +172,27 @@ export type AccountTypePatch = Partial<
   Pick<AccountTypeConfig, 'displayName' | 'spreadFrom' | 'commission' | 'leverage' | 'minDeposit' | 'popular' | 'sortOrder'>
 >
 
+export interface TradingServer {
+  id: string
+  name: string
+  host: string
+  platform: string
+  environment: 'LIVE' | 'DEMO'
+  enabled: boolean
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export type TradingServerInput = {
+  name: string
+  host: string
+  platform?: string
+  environment?: 'LIVE' | 'DEMO'
+  enabled?: boolean
+  sortOrder?: number
+}
+
 export interface AppSetting {
   id: string
   key: string
@@ -283,6 +304,12 @@ export const adminApi = {
   listAccountTypes: () => api.get<AccountTypeConfig[]>('/admin/account-types'),
   updateAccountType: (type: string, patch: AccountTypePatch) =>
     api.patch<AccountTypeConfig>(`/admin/account-types/${type}`, patch),
+
+  // Trading servers (config — Admin edits)
+  listServers: () => api.get<TradingServer[]>('/admin/servers'),
+  createServer: (body: TradingServerInput) => api.post<TradingServer>('/admin/servers', body),
+  updateServer: (id: string, patch: Partial<TradingServerInput>) => api.patch<TradingServer>(`/admin/servers/${id}`, patch),
+  deleteServer: (id: string) => api.del<{ ok: boolean }>(`/admin/servers/${id}`),
 
   // Platform settings (config — Admin edits)
   listSettings: () => api.get<AppSetting[]>('/admin/settings'),

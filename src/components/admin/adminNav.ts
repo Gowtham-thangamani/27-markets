@@ -70,7 +70,7 @@ export const adminNav: AdminNavEntry[] = [
       { label: 'Accounts', to: '/admin/accounts' },
       { label: 'Account Types', to: '/admin/account-types' },
       { label: 'Economic Calendar', to: '/admin/economic-calendar', placeholder: true },
-      { label: 'Servers', to: '/admin/servers', placeholder: true },
+      { label: 'Servers', to: '/admin/servers' },
     ],
   },
   {

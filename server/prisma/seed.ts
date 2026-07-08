@@ -115,6 +115,16 @@ async function main() {
     await prisma.appSetting.upsert({ where: { key: s.key }, update: {}, create: s })
   }
 
+  // Default trading servers (idempotent by name).
+  const servers = [
+    { name: '27Markets-Live', host: 'live.mt5.27markets.com', platform: 'MT5', environment: 'LIVE', sortOrder: 0 },
+    { name: '27Markets-Demo', host: 'demo.mt5.27markets.com', platform: 'MT5', environment: 'DEMO', sortOrder: 1 },
+  ]
+  for (const srv of servers) {
+    const exists = await prisma.tradingServer.findFirst({ where: { name: srv.name } })
+    if (!exists) await prisma.tradingServer.create({ data: srv })
+  }
+
   const admin = await upsertUser('admin@27markets.io', 'Admin123!', 'Avery', 'Stone', UserRole.ADMIN)
   const agent = await upsertUser('agent@27markets.io', 'Agent123!', 'Riley', 'Mensah', UserRole.AGENT)
   const client = await upsertUser('client@27markets.io', 'Client123!', 'Jordan', 'Avery', UserRole.CLIENT)

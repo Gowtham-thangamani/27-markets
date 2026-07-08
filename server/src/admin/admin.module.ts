@@ -15,6 +15,8 @@ import { AdminNotificationTemplatesController } from './admin-notification-templ
 import { AdminNotificationTemplatesService } from './admin-notification-templates.service';
 import { AdminSettingsController } from './admin-settings.controller';
 import { AdminSettingsService } from './admin-settings.service';
+import { AdminServersController } from './admin-servers.controller';
+import { AdminServersService } from './admin-servers.service';
 import { AdminReportsController } from './admin-reports.controller';
 import { AdminReportsService } from './admin-reports.service';
 import { AdminStaffController } from './admin-staff.controller';
@@ -32,6 +34,7 @@ import { AdminPartnersService } from './admin-partners.service';
     AdminPaymentGatewaysController,
     AdminNotificationTemplatesController,
     AdminSettingsController,
+    AdminServersController,
     AdminReportsController,
     AdminStaffController,
     AdminPartnersController,
@@ -45,6 +48,7 @@ import { AdminPartnersService } from './admin-partners.service';
     AdminPaymentGatewaysService,
     AdminNotificationTemplatesService,
     AdminSettingsService,
+    AdminServersService,
     AdminReportsService,
     AdminStaffService,
     AdminPartnersService,

@@ -187,6 +187,19 @@ model TradingAccount {
   @@index([userId])
 }
 
+// Trading servers clients connect to (MT5 etc.), managed from the admin CRM.
+model TradingServer {
+  id          String   @id @default(cuid())
+  name        String
+  host        String
+  platform    String   @default("MT5")
+  environment String   @default("LIVE") // LIVE | DEMO
+  enabled     Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 // Platform-wide settings (key/value) editable from the admin CRM.
 model AppSetting {
   id        String   @id @default(cuid())
