@@ -1,96 +1,102 @@
+import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { SplashScreen } from './components/SplashScreen'
 import { MaintenanceBanner } from './components/MaintenanceBanner'
 import { MarketingLayout } from './layouts/MarketingLayout'
-import LegalPage from './pages/LegalPage'
 import { PortalLayout } from './layouts/PortalLayout'
 import { AdminLayout } from './layouts/AdminLayout'
 import { RequireAuth } from './components/portal/RequireAuth'
 import { RequireStaff } from './components/admin/RequireStaff'
 import { RequirePartner } from './components/partner/RequirePartner'
 import { PartnerLayout } from './layouts/PartnerLayout'
-import PartnerDashboardPage from './pages/partner/PartnerDashboardPage'
-import PartnerClientsPage from './pages/partner/PartnerClientsPage'
-import PartnerReferralToolsPage from './pages/partner/PartnerReferralToolsPage'
-import AdminDashboardPage from './pages/admin/AdminDashboardPage'
-import AdminClientsPage from './pages/admin/AdminClientsPage'
-import AdminBlockedUsersPage from './pages/admin/AdminBlockedUsersPage'
-import AdminLeadsPage from './pages/admin/AdminLeadsPage'
-import AdminSupportPage from './pages/admin/AdminSupportPage'
-import AdminKycPage from './pages/admin/AdminKycPage'
-import AdminUsersKycPage from './pages/admin/AdminUsersKycPage'
-import AdminDocumentTrackerPage from './pages/admin/AdminDocumentTrackerPage'
-import AdminReferralsPage from './pages/admin/AdminReferralsPage'
-import AdminUserReferralsPage from './pages/admin/AdminUserReferralsPage'
-import AdminIbCampaignsPage from './pages/admin/AdminIbCampaignsPage'
-import AdminDataChangeRequestsPage from './pages/admin/AdminDataChangeRequestsPage'
-import AdminFinancePage from './pages/admin/AdminFinancePage'
-import AdminWithdrawalsPage from './pages/admin/AdminWithdrawalsPage'
-import AdminDepositRequestsPage from './pages/admin/AdminDepositRequestsPage'
-import AdminWalletsPage from './pages/admin/AdminWalletsPage'
-import AdminDormantAccountsPage from './pages/admin/AdminDormantAccountsPage'
-import AdminAccountRequestsPage from './pages/admin/AdminAccountRequestsPage'
-import AdminAccountsPage from './pages/admin/AdminAccountsPage'
-import AdminAccountTypesPage from './pages/admin/AdminAccountTypesPage'
-import AdminPaymentGatewaysPage from './pages/admin/AdminPaymentGatewaysPage'
-import AdminNotificationTemplatesPage from './pages/admin/AdminNotificationTemplatesPage'
-import AdminSettingsPage from './pages/admin/AdminSettingsPage'
-import AdminServersPage from './pages/admin/AdminServersPage'
-import AdminPaymentMethodTypesPage from './pages/admin/AdminPaymentMethodTypesPage'
-import AdminExchangeRatesPage from './pages/admin/AdminExchangeRatesPage'
-import AdminKycFieldsPage from './pages/admin/AdminKycFieldsPage'
-import AdminKycFormsPage from './pages/admin/AdminKycFormsPage'
-import AdminConsentsPage from './pages/admin/AdminConsentsPage'
-import AdminTextTemplatesPage from './pages/admin/AdminTextTemplatesPage'
-import AdminCampaignsPage from './pages/admin/AdminCampaignsPage'
-import AdminNotificationLogsPage from './pages/admin/AdminNotificationLogsPage'
-import AdminStaffFormAssignmentsPage from './pages/admin/AdminStaffFormAssignmentsPage'
-import AdminPartnersPage from './pages/admin/AdminPartnersPage'
-import AdminPartnerApplicationsPage from './pages/admin/AdminPartnerApplicationsPage'
-import AdminReportsPage from './pages/admin/AdminReportsPage'
-import AdminStaffPage from './pages/admin/AdminStaffPage'
-import AdminBlogListPage from './pages/admin/AdminBlogListPage'
-import AdminBlogEditorPage from './pages/admin/AdminBlogEditorPage'
-import AdminPlaceholderPage from './pages/admin/AdminPlaceholderPage'
 import { placeholderLinks } from './components/admin/adminNav'
 
-import HomePage from './pages/HomePage'
-import AboutPage from './pages/AboutPage'
-import MarketsPage from './pages/MarketsPage'
-import PlatformsPage from './pages/PlatformsPage'
-import AccountsPage from './pages/AccountsPage'
-import FundingPage from './pages/FundingPage'
-import TradingConditionsPage from './pages/TradingConditionsPage'
-import TrustPage from './pages/TrustPage'
-import FaqPage from './pages/FaqPage'
-import PartnershipPage from './pages/PartnershipPage'
-import ContactPage from './pages/ContactPage'
-import BlogListPage from './pages/BlogListPage'
-import BlogDetailPage from './pages/BlogDetailPage'
-import LoginPage from './pages/auth/LoginPage'
-import RegisterPage from './pages/auth/RegisterPage'
-import DemoPage from './pages/auth/DemoPage'
-import VerifyEmailPage from './pages/auth/VerifyEmailPage'
-import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
-import ResetPasswordPage from './pages/auth/ResetPasswordPage'
+// Route components are code-split: each page ships as its own chunk and is
+// fetched on navigation, so a visitor to "/" no longer downloads the admin,
+// partner, and portal bundles up front.
+const LegalPage = lazy(() => import('./pages/LegalPage'))
+const PartnerDashboardPage = lazy(() => import('./pages/partner/PartnerDashboardPage'))
+const PartnerClientsPage = lazy(() => import('./pages/partner/PartnerClientsPage'))
+const PartnerReferralToolsPage = lazy(() => import('./pages/partner/PartnerReferralToolsPage'))
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'))
+const AdminClientsPage = lazy(() => import('./pages/admin/AdminClientsPage'))
+const AdminBlockedUsersPage = lazy(() => import('./pages/admin/AdminBlockedUsersPage'))
+const AdminLeadsPage = lazy(() => import('./pages/admin/AdminLeadsPage'))
+const AdminSupportPage = lazy(() => import('./pages/admin/AdminSupportPage'))
+const AdminKycPage = lazy(() => import('./pages/admin/AdminKycPage'))
+const AdminUsersKycPage = lazy(() => import('./pages/admin/AdminUsersKycPage'))
+const AdminDocumentTrackerPage = lazy(() => import('./pages/admin/AdminDocumentTrackerPage'))
+const AdminReferralsPage = lazy(() => import('./pages/admin/AdminReferralsPage'))
+const AdminUserReferralsPage = lazy(() => import('./pages/admin/AdminUserReferralsPage'))
+const AdminIbCampaignsPage = lazy(() => import('./pages/admin/AdminIbCampaignsPage'))
+const AdminDataChangeRequestsPage = lazy(() => import('./pages/admin/AdminDataChangeRequestsPage'))
+const AdminFinancePage = lazy(() => import('./pages/admin/AdminFinancePage'))
+const AdminWithdrawalsPage = lazy(() => import('./pages/admin/AdminWithdrawalsPage'))
+const AdminDepositRequestsPage = lazy(() => import('./pages/admin/AdminDepositRequestsPage'))
+const AdminWalletsPage = lazy(() => import('./pages/admin/AdminWalletsPage'))
+const AdminDormantAccountsPage = lazy(() => import('./pages/admin/AdminDormantAccountsPage'))
+const AdminAccountRequestsPage = lazy(() => import('./pages/admin/AdminAccountRequestsPage'))
+const AdminAccountsPage = lazy(() => import('./pages/admin/AdminAccountsPage'))
+const AdminAccountTypesPage = lazy(() => import('./pages/admin/AdminAccountTypesPage'))
+const AdminPaymentGatewaysPage = lazy(() => import('./pages/admin/AdminPaymentGatewaysPage'))
+const AdminNotificationTemplatesPage = lazy(() => import('./pages/admin/AdminNotificationTemplatesPage'))
+const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'))
+const AdminServersPage = lazy(() => import('./pages/admin/AdminServersPage'))
+const AdminPaymentMethodTypesPage = lazy(() => import('./pages/admin/AdminPaymentMethodTypesPage'))
+const AdminExchangeRatesPage = lazy(() => import('./pages/admin/AdminExchangeRatesPage'))
+const AdminKycFieldsPage = lazy(() => import('./pages/admin/AdminKycFieldsPage'))
+const AdminKycFormsPage = lazy(() => import('./pages/admin/AdminKycFormsPage'))
+const AdminConsentsPage = lazy(() => import('./pages/admin/AdminConsentsPage'))
+const AdminTextTemplatesPage = lazy(() => import('./pages/admin/AdminTextTemplatesPage'))
+const AdminCampaignsPage = lazy(() => import('./pages/admin/AdminCampaignsPage'))
+const AdminNotificationLogsPage = lazy(() => import('./pages/admin/AdminNotificationLogsPage'))
+const AdminStaffFormAssignmentsPage = lazy(() => import('./pages/admin/AdminStaffFormAssignmentsPage'))
+const AdminPartnersPage = lazy(() => import('./pages/admin/AdminPartnersPage'))
+const AdminPartnerApplicationsPage = lazy(() => import('./pages/admin/AdminPartnerApplicationsPage'))
+const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'))
+const AdminStaffPage = lazy(() => import('./pages/admin/AdminStaffPage'))
+const AdminBlogListPage = lazy(() => import('./pages/admin/AdminBlogListPage'))
+const AdminBlogEditorPage = lazy(() => import('./pages/admin/AdminBlogEditorPage'))
+const AdminPlaceholderPage = lazy(() => import('./pages/admin/AdminPlaceholderPage'))
 
-import DashboardPage from './pages/portal/DashboardPage'
-import TradePage from './pages/portal/TradePage'
-import PortalAccountsPage from './pages/portal/PortalAccountsPage'
-import FundsPage from './pages/portal/FundsPage'
-import KycPage from './pages/portal/KycPage'
-import DownloadsPage from './pages/portal/DownloadsPage'
-import ProfilePage from './pages/portal/ProfilePage'
-import SupportPage from './pages/portal/SupportPage'
-import NotFoundPage from './pages/NotFoundPage'
-import PartnerApplyPage from './pages/PartnerApplyPage'
-import DisclaimerPage from './pages/DisclaimerPage'
+const HomePage = lazy(() => import('./pages/HomePage'))
+const AboutPage = lazy(() => import('./pages/AboutPage'))
+const MarketsPage = lazy(() => import('./pages/MarketsPage'))
+const PlatformsPage = lazy(() => import('./pages/PlatformsPage'))
+const AccountsPage = lazy(() => import('./pages/AccountsPage'))
+const FundingPage = lazy(() => import('./pages/FundingPage'))
+const TradingConditionsPage = lazy(() => import('./pages/TradingConditionsPage'))
+const TrustPage = lazy(() => import('./pages/TrustPage'))
+const FaqPage = lazy(() => import('./pages/FaqPage'))
+const PartnershipPage = lazy(() => import('./pages/PartnershipPage'))
+const ContactPage = lazy(() => import('./pages/ContactPage'))
+const BlogListPage = lazy(() => import('./pages/BlogListPage'))
+const BlogDetailPage = lazy(() => import('./pages/BlogDetailPage'))
+const LoginPage = lazy(() => import('./pages/auth/LoginPage'))
+const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'))
+const DemoPage = lazy(() => import('./pages/auth/DemoPage'))
+const VerifyEmailPage = lazy(() => import('./pages/auth/VerifyEmailPage'))
+const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'))
+const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'))
+
+const DashboardPage = lazy(() => import('./pages/portal/DashboardPage'))
+const TradePage = lazy(() => import('./pages/portal/TradePage'))
+const PortalAccountsPage = lazy(() => import('./pages/portal/PortalAccountsPage'))
+const FundsPage = lazy(() => import('./pages/portal/FundsPage'))
+const KycPage = lazy(() => import('./pages/portal/KycPage'))
+const DownloadsPage = lazy(() => import('./pages/portal/DownloadsPage'))
+const ProfilePage = lazy(() => import('./pages/portal/ProfilePage'))
+const SupportPage = lazy(() => import('./pages/portal/SupportPage'))
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
+const PartnerApplyPage = lazy(() => import('./pages/PartnerApplyPage'))
+const DisclaimerPage = lazy(() => import('./pages/DisclaimerPage'))
 
 export default function App() {
   return (
     <>
       <SplashScreen />
       <MaintenanceBanner />
+      <Suspense fallback={null}>
       <Routes>
       {/* Public marketing site */}
       <Route element={<MarketingLayout />}>
@@ -215,6 +221,7 @@ export default function App() {
 
       <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </Suspense>
     </>
   )
 }

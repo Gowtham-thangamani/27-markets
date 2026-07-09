@@ -31,7 +31,7 @@ export interface Feature {
 export const whyFeatures: Feature[] = [
   {
     icon: Droplets,
-    image: '/feat-liquidity.png',
+    image: '/feat-liquidity.webp',
     title: 'Deep Liquidity',
     description: 'Access institutional-grade liquidity aggregated from top-tier global providers.',
     titleKey: 'why.f1t',
@@ -39,7 +39,7 @@ export const whyFeatures: Feature[] = [
   },
   {
     icon: Gauge,
-    image: '/feat-spreads.png',
+    image: '/feat-spreads.webp',
     title: 'Tight Spreads',
     description: 'Raw spreads from 0.0 pips on major pairs with fully transparent pricing.',
     titleKey: 'why.f2t',
@@ -47,7 +47,7 @@ export const whyFeatures: Feature[] = [
   },
   {
     icon: Zap,
-    image: '/feat-execution.png',
+    image: '/feat-execution.webp',
     title: 'Fast Execution',
     description: 'Lightning-fast order execution under 30ms with no dealing desk and no re-quotes.',
     titleKey: 'why.f3t',
@@ -55,7 +55,7 @@ export const whyFeatures: Feature[] = [
   },
   {
     icon: Eye,
-    image: '/feat-transparent.png',
+    image: '/feat-transparent.webp',
     title: 'Transparent Trading',
     description: 'No hidden fees, no markups. Clear conditions you can verify on every trade.',
     titleKey: 'why.f4t',
@@ -63,7 +63,7 @@ export const whyFeatures: Feature[] = [
   },
   {
     icon: ShieldCheck,
-    image: '/feat-secure.png',
+    image: '/feat-secure.webp',
     title: 'Secure Funds',
     description: 'Segregated client accounts held with industry-leading banking partners.',
     titleKey: 'why.f5t',
@@ -81,31 +81,31 @@ export interface PartnerBenefit {
 export const partnerBenefits: PartnerBenefit[] = [
   {
     icon: Coins,
-    image: '/partner-rebates.png',
+    image: '/partner-rebates.webp',
     title: 'Competitive Rebates',
     description: 'Industry-leading rebates that scale with your referred trading volume.',
   },
   {
     icon: BarChart3,
-    image: '/partner-reports.png',
+    image: '/partner-reports.webp',
     title: 'Real-Time Reports',
     description: 'Advanced reporting and earnings analytics in a dedicated partner dashboard.',
   },
   {
     icon: UserCog,
-    image: '/partner-manager.png',
+    image: '/partner-manager.webp',
     title: 'Dedicated Manager',
     description: 'A personal account manager committed to growing your business.',
   },
   {
     icon: Megaphone,
-    image: '/partner-marketing.png',
+    image: '/partner-marketing.webp',
     title: 'Marketing Support',
     description: 'Banners, landing pages, and promotional materials ready to deploy.',
   },
   {
     icon: TrendingUp,
-    image: '/partner-growth.png',
+    image: '/partner-growth.webp',
     title: 'Business Growth',
     description: 'Grow your network and earn alongside a trusted global partner.',
   },
@@ -127,8 +127,8 @@ export const marketCategories: MarketCategory[] = [
   {
     key: 'Forex',
     icon: Handshake,
-    image: '/icon-forex.png',
-    imageLight: '/icon-forex-light.png',
+    image: '/icon-forex.webp',
+    imageLight: '/icon-forex-light.webp',
     title: 'Forex',
     subtitle: 'Major, minor & exotic currency pairs',
     examples: 'EUR/USD · GBP/USD · USD/JPY',
@@ -136,8 +136,8 @@ export const marketCategories: MarketCategory[] = [
   {
     key: 'Metals',
     icon: Coins,
-    image: '/icon-metals.png',
-    imageLight: '/icon-metals-light.png',
+    image: '/icon-metals.webp',
+    imageLight: '/icon-metals-light.webp',
     title: 'Metals',
     subtitle: 'Precious metals spot trading',
     examples: 'Gold (XAU) · Silver (XAG)',
@@ -145,8 +145,8 @@ export const marketCategories: MarketCategory[] = [
   {
     key: 'Indices',
     icon: LineChart,
-    image: '/icon-indices.png',
-    imageLight: '/icon-indices-light.png',
+    image: '/icon-indices.webp',
+    imageLight: '/icon-indices-light.webp',
     title: 'Indices',
     subtitle: 'Global index cash & futures',
     examples: 'US500 · US100 · GER40',
@@ -154,8 +154,8 @@ export const marketCategories: MarketCategory[] = [
   {
     key: 'Commodities',
     icon: Boxes,
-    image: '/icon-commodities.png',
-    imageLight: '/icon-commodities-light.png',
+    image: '/icon-commodities.webp',
+    imageLight: '/icon-commodities-light.webp',
     title: 'Commodities',
     subtitle: 'Energy, softs & agricultural',
     examples: 'Brent · WTI · NatGas',
@@ -163,7 +163,7 @@ export const marketCategories: MarketCategory[] = [
   {
     key: 'Stocks',
     icon: CandlestickChart,
-    image: '/icon-stocks.png',
+    image: '/icon-stocks.webp',
     title: 'Stocks',
     subtitle: 'Global share CFDs',
     examples: 'AAPL · TSLA · NVDA',
@@ -171,8 +171,8 @@ export const marketCategories: MarketCategory[] = [
   {
     key: 'Crypto',
     icon: Bitcoin,
-    image: '/bitcoin-coin.png',
-    imageLight: '/icon-crypto.png',
+    image: '/bitcoin-coin.webp',
+    imageLight: '/icon-crypto.webp',
     title: 'Crypto CFDs',
     subtitle: 'Top cryptocurrencies with competitive spreads',
     examples: 'BTC · ETH · SOL',

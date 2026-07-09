@@ -25,7 +25,7 @@ export function FloatingCoins() {
       {COINS.map((c, i) => (
         <img
           key={i}
-          src={`${asset(`coins/${c.img}.png`)}?v=3`}
+          src={`${asset(`coins/${c.img}.webp`)}?v=3`}
           alt=""
           className={`absolute select-none object-contain opacity-[0.22] blur-[1.5px] animate-float ${c.pos} ${c.size}`}
           style={{ animationDuration: `${c.dur}s`, animationDelay: `${c.delay}s` }}

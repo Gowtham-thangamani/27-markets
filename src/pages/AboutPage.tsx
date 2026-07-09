@@ -32,7 +32,7 @@ export default function AboutPage() {
 
         <Reveal>
           <img
-            src={asset('hero-platform-light.png')}
+            src={asset('hero-platform-light.webp')}
             alt="27 Markets trading platform on laptop and mobile"
             className="w-full select-none drop-shadow-[0_30px_90px_rgba(225,29,46,0.3)]"
           />
@@ -83,7 +83,7 @@ export default function AboutPage() {
       <section className="relative my-8 overflow-hidden">
         <div className="relative mx-auto max-w-[1600px]">
           <img
-            src={asset('building.png')}
+            src={asset('building.webp')}
             alt=""
             aria-hidden
             className="h-[340px] w-full object-cover object-top animate-[kenburns_20s_ease-in-out_infinite] sm:h-[420px] lg:h-[480px]"

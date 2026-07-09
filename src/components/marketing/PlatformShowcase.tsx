@@ -39,7 +39,7 @@ export function PlatformShowcase() {
                 className="pointer-events-none absolute left-1/2 top-1/2 h-[70%] w-[85%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/20 blur-3xl"
               />
               <img
-                src={asset('hero-platform.png')}
+                src={asset('hero-platform.webp')}
                 alt="27 Markets trading platform on desktop and mobile"
                 className="relative w-full select-none"
               />

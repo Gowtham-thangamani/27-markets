@@ -31,11 +31,11 @@ import { useLiveQuotes } from '@/lib/useLiveQuotes'
 import { whyFeatures, marketCategories } from '@/mock/content'
 
 const heroStats = [
-  { icon: Layers, image: '/stat-pips.png', value: '0.0', labelKey: 'stats.pips' },
-  { icon: Rocket, image: '/stat-leverage.png', value: '1:100', labelKey: 'stats.leverage' },
-  { icon: Gauge, image: '/stat-execution.png', value: '<30ms', labelKey: 'stats.exec' },
-  { icon: ShieldCheck, image: '/stat-liquidity.png', value: 'Tier-1', labelKey: 'stats.liq' },
-  { icon: Headphones, image: '/stat-support.png', value: '24/5', labelKey: 'stats.support' },
+  { icon: Layers, image: '/stat-pips.webp', value: '0.0', labelKey: 'stats.pips' },
+  { icon: Rocket, image: '/stat-leverage.webp', value: '1:100', labelKey: 'stats.leverage' },
+  { icon: Gauge, image: '/stat-execution.webp', value: '<30ms', labelKey: 'stats.exec' },
+  { icon: ShieldCheck, image: '/stat-liquidity.webp', value: 'Tier-1', labelKey: 'stats.liq' },
+  { icon: Headphones, image: '/stat-support.webp', value: '24/5', labelKey: 'stats.support' },
 ]
 
 // Live quotes powering the dark-theme hero slider's floating price chips.
@@ -53,8 +53,8 @@ export default function HomePage() {
         <div
           className="hero-worldmap pointer-events-none absolute inset-0"
           style={{
-            WebkitMaskImage: `url(${asset('world-dots.png')})`,
-            maskImage: `url(${asset('world-dots.png')})`,
+            WebkitMaskImage: `url(${asset('world-dots.webp')})`,
+            maskImage: `url(${asset('world-dots.webp')})`,
           }}
           aria-hidden
         />
@@ -149,7 +149,7 @@ export default function HomePage() {
           <Reveal>
             <Parallax amount={55}>
               <img
-                src={asset('growth-coins.png')}
+                src={asset('growth-coins.webp')}
                 alt="Growing returns"
                 className="mx-auto w-full max-w-md select-none drop-shadow-[0_24px_70px_rgba(225,29,46,0.3)]"
               />
@@ -194,8 +194,8 @@ export default function HomePage() {
           className="section-motif pointer-events-none absolute left-1/2 top-1/2 h-[130%] w-[130%] max-w-none -translate-x-1/2 -translate-y-1/2"
           style={{
             background: 'rgb(225 29 46)',
-            WebkitMaskImage: `url(${asset('world-dots.png')})`,
-            maskImage: `url(${asset('world-dots.png')})`,
+            WebkitMaskImage: `url(${asset('world-dots.webp')})`,
+            maskImage: `url(${asset('world-dots.webp')})`,
             WebkitMaskRepeat: 'no-repeat',
             maskRepeat: 'no-repeat',
             WebkitMaskPosition: 'center',

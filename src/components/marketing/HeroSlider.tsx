@@ -226,7 +226,7 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
               {slide.visual === 'platform' && (
                 <>
                   <img
-                    src={asset(onLight ? 'hero-platform-light.png' : 'hero-platform.png')}
+                    src={asset(onLight ? 'hero-platform-light.webp' : 'hero-platform.webp')}
                     alt="27 Markets trading platform on laptop and mobile"
                     className={`w-full select-none lg:scale-105 ${onLight ? '' : 'hero-media-fade'}`}
                   />
@@ -236,7 +236,7 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
               {slide.visual === 'globe' && (
                 <div className="relative">
                   <img
-                    src={asset('globe.png')}
+                    src={asset('globe.webp')}
                     alt="27 Markets global partner network"
                     className="globe-pulse w-full select-none"
                   />
@@ -244,15 +244,15 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
                     className="globe-sweep"
                     aria-hidden
                     style={{
-                      WebkitMaskImage: `url(${asset('globe.png')})`,
-                      maskImage: `url(${asset('globe.png')})`,
+                      WebkitMaskImage: `url(${asset('globe.webp')})`,
+                      maskImage: `url(${asset('globe.webp')})`,
                     }}
                   />
                 </div>
               )}
               {slide.visual === 'coins' && (
                 <img
-                  src={asset('growth-coins.png')}
+                  src={asset('growth-coins.webp')}
                   alt="Growing trading returns"
                   className="mx-auto w-full max-w-md select-none drop-shadow-[0_24px_70px_rgba(225,29,46,0.3)]"
                 />
