@@ -24,6 +24,7 @@ import { api } from '@/lib/api'
 import { zodResolver } from '@/lib/zodResolver'
 import { transferSchema } from '@/lib/validation'
 import { useAppSettings } from '@/lib/useAppSettings'
+import { useIdempotencyKey } from '@/lib/idempotency'
 import { formatCurrency, formatDateTime } from '@/lib/format'
 import { fundingStatusLabel } from '@/lib/fundingStatus'
 import { z } from 'zod'
@@ -112,6 +113,7 @@ const reqStatusTone = (s: DepositRequestRow['status']) => (s === 'APPROVED' ? 's
 
 function DepositTab() {
   const { accounts, deposit } = usePortalData()
+  const idem = useIdempotencyKey()
   const toast = useToast()
   const { minDeposit } = useAppSettings()
   const liveAccounts = accounts.filter((a) => a.mode === 'Live')
@@ -164,7 +166,9 @@ function DepositTab() {
     setBusy(true)
     try {
       if (active!.type === 'card') {
-        await deposit({ accountId, amount, method: 'Card' }) // redirects to Stripe, or credits inline in simulation
+        // Same key across retries so a double-submit can't double-credit.
+        await deposit({ accountId, amount, method: 'Card', idempotencyKey: idem.current })
+        idem.next()
         toast.success('Deposit submitted', 'Card deposit processing.')
         setActive(null)
         return
@@ -315,6 +319,7 @@ interface SavedCardRow {
 function SavedCards() {
   const { accounts } = usePortalData()
   const { minDeposit } = useAppSettings()
+  const idem = useIdempotencyKey()
   const toast = useToast()
   const live = accounts.filter((a) => a.mode === 'Live')
   const [cards, setCards] = useState<SavedCardRow[]>([])
@@ -384,7 +389,8 @@ function SavedCards() {
     }
     setBusy(true)
     try {
-      await api.post(`/funds/cards/${depCard!.id}/deposit`, { accountId, amount })
+      await api.post(`/funds/cards/${depCard!.id}/deposit`, { accountId, amount, idempotencyKey: idem.current })
+      idem.next()
       toast.success('Deposit submitted', `Card ••${depCard!.last4} · ${formatCurrency(Number(amount))}`)
       setDepCard(null)
       await load()
@@ -457,6 +463,7 @@ function SavedCards() {
 
 function WithdrawTab() {
   const { accounts, transactions, refresh } = usePortalData()
+  const idem = useIdempotencyKey()
   const toast = useToast()
   const liveAccounts = accounts.filter((a) => a.mode === 'Live')
   const pendingWithdrawals = transactions.filter((t) => t.kind === 'Withdrawal' && t.status === 'Pending')
@@ -495,8 +502,10 @@ function WithdrawTab() {
         accountId,
         amount,
         method: method === 'crypto' ? 'Crypto' : 'Bank Transfer',
+        idempotencyKey: idem.current,
         ...(method === 'bank' ? { accountName, accountNumber, bankName, swift } : { walletAddress, network }),
       })
+      idem.next()
       toast.success('Withdrawal requested', 'Your request is pending finance review.')
       setAmount('')
       setAccountName('')
@@ -606,6 +615,7 @@ function WithdrawTab() {
 
 function TransferTab() {
   const { accounts, transfer } = usePortalData()
+  const idem = useIdempotencyKey()
   const toast = useToast()
   const {
     register,
@@ -616,7 +626,8 @@ function TransferTab() {
 
   const onSubmit = async (values: TransferValues) => {
     try {
-      await transfer({ fromAccountId: values.from, toAccountId: values.to, amount: values.amount })
+      await transfer({ fromAccountId: values.from, toAccountId: values.to, amount: values.amount, idempotencyKey: idem.current })
+      idem.next()
       toast.success('Transfer complete', `${formatCurrency(values.amount)} moved between accounts.`)
       reset()
     } catch (err) {

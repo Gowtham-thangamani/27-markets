@@ -27,11 +27,15 @@ interface MoneyInput {
   accountId: string
   amount: string | number
   method: string
+  /** Stable key so a double-submit / retry can't be processed twice. */
+  idempotencyKey?: string
 }
 interface TransferInput {
   fromAccountId: string
   toAccountId: string
   amount: string | number
+  /** Stable key so a double-submit / retry can't be processed twice. */
+  idempotencyKey?: string
 }
 
 interface PortalDataValue {
@@ -127,13 +131,14 @@ export function PortalDataProvider({ children }: { children: ReactNode }) {
   )
 
   const deposit = useCallback(
-    async ({ accountId, amount, method }: MoneyInput) => {
+    async ({ accountId, amount, method, idempotencyKey }: MoneyInput) => {
       // With a hosted PSP (Stripe) the backend returns a checkout URL to redirect to;
       // in simulation it credits inline and returns no URL.
       const res = await api.post<{ checkoutUrl?: string }>('/funds/deposit/checkout', {
         accountId,
         amount: String(amount),
         method,
+        ...(idempotencyKey ? { idempotencyKey } : {}),
       })
       if (res?.checkoutUrl) {
         window.location.href = res.checkoutUrl
@@ -145,16 +150,26 @@ export function PortalDataProvider({ children }: { children: ReactNode }) {
   )
 
   const withdraw = useCallback(
-    async ({ accountId, amount, method }: MoneyInput) => {
-      await api.post('/funds/withdraw', { accountId, amount: String(amount), method })
+    async ({ accountId, amount, method, idempotencyKey }: MoneyInput) => {
+      await api.post('/funds/withdraw', {
+        accountId,
+        amount: String(amount),
+        method,
+        ...(idempotencyKey ? { idempotencyKey } : {}),
+      })
       await refresh()
     },
     [refresh],
   )
 
   const transfer = useCallback(
-    async ({ fromAccountId, toAccountId, amount }: TransferInput) => {
-      await api.post('/funds/transfer', { fromAccountId, toAccountId, amount: String(amount) })
+    async ({ fromAccountId, toAccountId, amount, idempotencyKey }: TransferInput) => {
+      await api.post('/funds/transfer', {
+        fromAccountId,
+        toAccountId,
+        amount: String(amount),
+        ...(idempotencyKey ? { idempotencyKey } : {}),
+      })
       await refresh()
     },
     [refresh],

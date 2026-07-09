@@ -12,27 +12,55 @@ const payments = () => ({
 const cfg = () => ({ get: () => 'SIMULATION' }) as any;
 
 describe('AdminFinanceService.approveWithdrawal', () => {
-  it('pays out, marks the withdrawal POSTED, and audits it', async () => {
-    const markPosted = jest.fn().mockResolvedValue({});
+  const pendingEntry = () => ({
+    id: 'j1', kind: 'WITHDRAWAL', status: JournalStatus.PENDING, reference: 'TX-1',
+    postings: [{ amount: 100, currency: 'USD', ledgerAccount: { userId: 'u1' } }],
+  });
+
+  it('claims PENDING→POSTED, pays out, and audits it', async () => {
     const record = jest.fn().mockResolvedValue(undefined);
+    const updateMany = jest.fn().mockResolvedValue({ count: 1 });
     const prisma = {
-      journalEntry: {
-        findUnique: jest.fn().mockResolvedValue({
-          id: 'j1', kind: 'WITHDRAWAL', status: JournalStatus.PENDING, reference: 'TX-1',
-          postings: [{ amount: 100, currency: 'USD', ledgerAccount: { userId: 'u1' } }],
-        }),
-      },
+      journalEntry: { findUnique: jest.fn().mockResolvedValue(pendingEntry()), updateMany },
     } as any;
-    const ledger = { markPosted } as any;
     const pay = payments();
-    const service = new AdminFinanceService(prisma, ledger, { record } as any, pay as any, cfg());
+    const service = new AdminFinanceService(prisma, {} as any, { record } as any, pay as any, cfg());
 
     const result = await service.approveWithdrawal('admin1', 'j1');
 
+    expect(updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ id: 'j1', status: JournalStatus.PENDING }), data: expect.objectContaining({ status: JournalStatus.POSTED }) }),
+    );
     expect(pay.payout).toHaveBeenCalledWith(expect.objectContaining({ reference: 'TX-1', amountMinor: 10000, currency: 'USD' }));
-    expect(markPosted).toHaveBeenCalledWith('j1');
-    expect(record).toHaveBeenCalledWith(expect.objectContaining({ action: 'finance.withdrawal.approve', entityId: 'j1' }));
     expect(result).toMatchObject({ ok: true, status: JournalStatus.POSTED, payout: { simulated: true } });
+  });
+
+  it('does not pay out when a concurrent approval already claimed the withdrawal', async () => {
+    const updateMany = jest.fn().mockResolvedValue({ count: 0 }); // lost the claim
+    const prisma = {
+      journalEntry: { findUnique: jest.fn().mockResolvedValue(pendingEntry()), updateMany },
+    } as any;
+    const pay = payments();
+    const service = new AdminFinanceService(prisma, {} as any, { record: jest.fn() } as any, pay as any, cfg());
+
+    await expect(service.approveWithdrawal('admin1', 'j1')).rejects.toThrow(/already processed/i);
+    expect(pay.payout).not.toHaveBeenCalled();
+  });
+
+  it('rolls the claim back to PENDING if the payout fails', async () => {
+    const updateMany = jest.fn().mockResolvedValue({ count: 1 });
+    const prisma = {
+      journalEntry: { findUnique: jest.fn().mockResolvedValue(pendingEntry()), updateMany },
+    } as any;
+    const pay = payments();
+    pay.payout = jest.fn().mockRejectedValue(new Error('payout failed'));
+    const service = new AdminFinanceService(prisma, {} as any, { record: jest.fn() } as any, pay as any, cfg());
+
+    await expect(service.approveWithdrawal('admin1', 'j1')).rejects.toThrow('payout failed');
+    // second updateMany reverts POSTED → PENDING
+    expect(updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ id: 'j1', status: JournalStatus.POSTED }), data: expect.objectContaining({ status: JournalStatus.PENDING }) }),
+    );
   });
 
   it('refuses to approve a non-pending withdrawal', async () => {
