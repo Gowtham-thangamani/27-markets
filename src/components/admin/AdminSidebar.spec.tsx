@@ -41,8 +41,8 @@ describe('AdminSidebarContent', () => {
 
   it('shows a "soon" badge on placeholder links', () => {
     renderAt('/admin/dashboard')
-    fireEvent.click(screen.getByRole('button', { name: /User Management/ }))
-    expect(screen.getByRole('link', { name: /Blocked Users/ })).toHaveTextContent(/soon/i)
+    fireEvent.click(screen.getByRole('button', { name: /Trading/ }))
+    expect(screen.getByRole('link', { name: /Economic Calendar/ })).toHaveTextContent(/soon/i)
   })
 
   it('auto-expands and highlights the parent group on a nested sub-route (e.g. blog editor)', () => {
