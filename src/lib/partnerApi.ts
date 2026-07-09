@@ -14,9 +14,12 @@ export interface PartnerDashboard {
   recentReferrals: PartnerClient[]
 }
 export interface PartnerProfile { referralCode: string; referralLink: string }
+export interface PartnerCommissionRow { id: string; amount: number; source: string; reference: string | null; client: string; date: string }
+export interface PartnerCommissions { total: number; count: number; rows: PartnerCommissionRow[] }
 
 export const partnerApi = {
   getDashboard: () => api.get<PartnerDashboard>('/partner/dashboard'),
   getClients: () => api.get<PartnerClient[]>('/partner/clients'),
   getProfile: () => api.get<PartnerProfile>('/partner/profile'),
+  getCommissions: () => api.get<PartnerCommissions>('/partner/commissions'),
 }

@@ -1,0 +1,60 @@
+# Production stack for the EC2 host: Postgres + Redis + the NestJS API.
+# Bring up with:  docker compose -f docker-compose.prod.yml up -d --build
+# The API image is built from ./Dockerfile and reads secrets from .env.production.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: apex_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: apex
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.production}
+      POSTGRES_DB: apex_markets
+    volumes:
+      - apex_pg_data:/var/lib/postgresql/data
+    # Not published to the host — only the api container reaches it over the
+    # internal docker network. Nothing on the public internet can touch Postgres.
+    expose:
+      - '5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U apex -d apex_markets']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: apex_redis
+    restart: unless-stopped
+    expose:
+      - '6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apex_api
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      # Point the app at the sibling containers regardless of what the
+      # .env.production template says (compose DNS resolves these names).
+      DATABASE_URL: postgresql://apex:${POSTGRES_PASSWORD}@postgres:5432/apex_markets?schema=public
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # nginx on the host proxies https://api.27markets.com -> 127.0.0.1:4000.
+    ports:
+      - '127.0.0.1:4000:4000'
+
+volumes:
+  apex_pg_data:

@@ -43,6 +43,43 @@ describe('PartnerPortalService.dashboard', () => {
   })
 })
 
+describe('PartnerPortalService.commissions', () => {
+  const svcWith = (commissions: any[], profile: any = { referralCode: 'ABC' }) => {
+    const prisma = {
+      partnerProfile: { findUnique: jest.fn().mockResolvedValue(profile) },
+      ibCommission: { findMany: jest.fn().mockResolvedValue(commissions) },
+      user: { findMany: jest.fn().mockResolvedValue([
+        { id: 'c1', firstName: 'Ada', lastName: 'Lovelace' },
+        { id: 'c2', firstName: 'Bob', lastName: 'Smith' },
+      ]) },
+    } as any
+    return new PartnerPortalService(prisma, { get: jest.fn() } as any)
+  }
+
+  it('returns the caller\'s commissions with a total and client names', async () => {
+    const svc = svcWith([
+      { id: 'k1', partnerId: 'p1', clientId: 'c1', amount: 100, source: 'deposit', reference: 'TX-1', createdAt: new Date() },
+      { id: 'k2', partnerId: 'p1', clientId: 'c2', amount: 50, source: 'deposit', reference: 'TX-2', createdAt: new Date() },
+    ])
+    const r = await svc.commissions('p1')
+    expect(r.total).toBe(150)
+    expect(r.count).toBe(2)
+    expect(r.rows[0]).toMatchObject({ amount: 100, source: 'deposit', client: 'Ada Lovelace' })
+    expect((svc as any).prisma.ibCommission.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { partnerId: 'p1' } }))
+  })
+
+  it('returns an empty total when there are no commissions', async () => {
+    const svc = svcWith([])
+    const r = await svc.commissions('p1')
+    expect(r).toMatchObject({ total: 0, count: 0, rows: [] })
+  })
+
+  it('throws 404 when the partner has no profile', async () => {
+    const svc = svcWith([], null)
+    await expect(svc.commissions('p1')).rejects.toBeInstanceOf(NotFoundException)
+  })
+})
+
 describe('PartnerPortalService.profile', () => {
   it('returns the referral link from CLIENT_ORIGIN + code', async () => {
     const svc = makeService([], { referralCode: 'CODE9999' })

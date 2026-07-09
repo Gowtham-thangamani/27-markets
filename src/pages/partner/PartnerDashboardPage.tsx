@@ -1,26 +1,30 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Users, ShieldCheck, UserPlus, Lock, Copy } from 'lucide-react'
+import { Users, ShieldCheck, UserPlus, DollarSign, Copy } from 'lucide-react'
 import { PageTitle } from '@/components/portal/PageTitle'
 import { SkeletonCard, ErrorState } from '@/components/ui'
 import { KpiSparkCard } from '@/components/admin/charts/KpiSparkCard'
 import { FunnelDonut } from '@/components/admin/charts/FunnelDonut'
 import { SignupsChart } from '@/components/partner/SignupsChart'
 import { useToast } from '@/context/ToastContext'
-import { relativeTime } from '@/lib/format'
+import { relativeTime, formatCurrency } from '@/lib/format'
 import { ApiError } from '@/lib/api'
-import { partnerApi, type PartnerDashboard } from '@/lib/partnerApi'
+import { partnerApi, type PartnerDashboard, type PartnerCommissions } from '@/lib/partnerApi'
 
 const KYC_COLORS: Record<string, string> = { APPROVED: '#22c55e', PENDING: '#f59e0b', NOT_SUBMITTED: '#6b7280', REJECTED: '#ef4444' }
 
 export default function PartnerDashboardPage() {
   const toast = useToast()
   const [data, setData] = useState<PartnerDashboard | null>(null)
+  const [commissions, setCommissions] = useState<PartnerCommissions | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true); setError(null)
-    try { setData(await partnerApi.getDashboard()) }
+    try {
+      const [dash, comm] = await Promise.all([partnerApi.getDashboard(), partnerApi.getCommissions()])
+      setData(dash); setCommissions(comm)
+    }
     catch (e) { setError(e instanceof ApiError ? e.message : 'Failed to load') }
     finally { setLoading(false) }
   }, [])
@@ -42,12 +46,12 @@ export default function PartnerDashboardPage() {
         <KpiSparkCard icon={Users} label="Total Referred" value={String(data.kpis.totalReferred.value)} delta={data.kpis.totalReferred.delta} spark={data.kpis.totalReferred.spark} />
         <KpiSparkCard icon={ShieldCheck} label="KYC Verified" value={String(data.kpis.kycVerified.value)} spark={data.kpis.kycVerified.spark} />
         <KpiSparkCard icon={UserPlus} label="Signups (30d)" value={String(data.kpis.signups30d.value)} delta={data.kpis.signups30d.delta} spark={data.kpis.signups30d.spark} />
-        <div className="glass-panel relative overflow-hidden p-5 opacity-70">
+        <div className="glass-panel relative overflow-hidden p-5">
           <div className="flex items-center justify-between">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-gray-500 ring-1 ring-white/10"><Lock className="h-5 w-5" /></span>
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-brand-300 ring-1 ring-white/10"><DollarSign className="h-5 w-5" /></span>
           </div>
-          <div className="mt-4 font-display text-2xl font-bold text-gray-500">—</div>
-          <div className="mt-0.5 text-sm text-gray-500">Commission · available soon</div>
+          <div className="mt-4 font-display text-2xl font-bold text-white">{formatCurrency(commissions?.total ?? 0)}</div>
+          <div className="mt-0.5 text-sm text-gray-400">Commission earned</div>
         </div>
       </div>
 
@@ -78,6 +82,28 @@ export default function PartnerDashboardPage() {
             </ul>
           )}
         </div>
+      </div>
+
+      <div className="mt-4 glass-panel p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-white">Recent commissions</h3>
+          <span className="text-xs text-gray-500">{commissions?.count ?? 0} total · {formatCurrency(commissions?.total ?? 0)} earned</span>
+        </div>
+        {!commissions || commissions.rows.length === 0 ? (
+          <p className="text-sm text-gray-500">No commissions yet. You earn a commission when a referred client deposits.</p>
+        ) : (
+          <ul className="divide-y divide-white/[0.06]">
+            {commissions.rows.slice(0, 10).map((c) => (
+              <li key={c.id} className="flex items-center justify-between py-2.5 text-sm">
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-white">{c.client}</p>
+                  <p className="truncate text-xs text-gray-500">{c.source} · {relativeTime(c.date)}</p>
+                </div>
+                <span className="font-medium text-success">{formatCurrency(c.amount)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </>
   )
