@@ -1,6 +1,7 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { RequestContextMiddleware } from './common/request-context.middleware';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { validateEnv } from './config/env.validation';
 import { CryptoModule } from './common/crypto.module';
@@ -68,4 +69,9 @@ import { HealthController } from './health/health.controller';
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    // Seed the request context (IP/UA) for every route before guards/handlers.
+    consumer.apply(RequestContextMiddleware).forRoutes('*');
+  }
+}
