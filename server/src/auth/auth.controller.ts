@@ -11,7 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService, type RequestContext } from './auth.service';
-import { RegisterDto, LoginDto, TotpVerifyDto, ChangePasswordDto, VerifyEmailDto, ForgotPasswordDto, ResetPasswordDto } from './dto';
+import { RegisterDto, LoginDto, TotpVerifyDto, ChangePasswordDto, VerifyEmailDto, ForgotPasswordDto, ResetPasswordDto, DisableTwoFactorDto } from './dto';
 import { setAuthCookies, clearAuthCookies, REFRESH_COOKIE_NAME } from './cookies';
 import { CurrentUser, Public } from '../common/decorators';
 import type { Env } from '../config/env.validation';
@@ -125,8 +125,8 @@ export class AuthController {
 
   @HttpCode(200)
   @Post('2fa/disable')
-  async disableTwoFactor(@CurrentUser('id') userId: string, @Req() req: Request) {
-    await this.auth.disableTwoFactor(userId, ctxFrom(req));
+  async disableTwoFactor(@CurrentUser('id') userId: string, @Body() dto: DisableTwoFactorDto, @Req() req: Request) {
+    await this.auth.disableTwoFactor(userId, dto, ctxFrom(req));
     return { ok: true };
   }
 }

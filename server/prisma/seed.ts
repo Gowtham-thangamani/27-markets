@@ -120,6 +120,7 @@ async function main() {
     { key: 'support_hours', label: 'Support hours', value: '24/5', group: 'General', sortOrder: 2 },
     { key: 'min_deposit_usd', label: 'Minimum deposit (USD)', value: '50', group: 'Funding', sortOrder: 0 },
     { key: 'default_currency', label: 'Default account currency', value: 'USD', group: 'Funding', sortOrder: 1 },
+    { key: 'withdrawal_dual_control_usd', label: 'Dual-approval withdrawal threshold (USD, 0 = off)', value: '0', group: 'Funding', sortOrder: 2 },
     { key: 'ib_commission_pct', label: 'IB commission (% of deposits)', value: '10', group: 'Partners', sortOrder: 0 },
     { key: 'maintenance_mode', label: 'Maintenance mode (true/false)', value: 'false', group: 'System', sortOrder: 0 },
     { key: 'maintenance_message', label: 'Maintenance message', value: 'We are performing scheduled maintenance. Please check back soon.', group: 'System', sortOrder: 1 },

@@ -7,6 +7,7 @@ export class SetAccountStatusDto {
 }
 
 export class SetLeverageDto {
-  @Matches(/^1:\d{1,4}$/, { message: 'leverage must look like "1:500"' })
+  // Format "1:N" with a sane upper bound of 1:1000 (blocks absurd values like 1:9999).
+  @Matches(/^1:([1-9]\d{0,2}|1000)$/, { message: 'leverage must look like "1:500" (max 1:1000)' })
   leverage!: string;
 }

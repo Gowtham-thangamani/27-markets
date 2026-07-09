@@ -43,6 +43,12 @@ model User {
   // 2FA (TOTP)
   twoFactorSecret  String?
   twoFactorEnabled Boolean @default(false)
+  // Last accepted TOTP time-step — reject reuse of the same code (replay guard).
+  lastTotpStep     Int?
+
+  // Brute-force protection: per-account failed-login counter + lockout window.
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
 
   // Onboarding
   emailVerified   Boolean   @default(false)
@@ -816,6 +822,10 @@ model WithdrawalDetail {
   swift          String?
   walletAddress  String?
   network        String?
+  // Dual-control (maker/checker): the first approver, if the amount crossed the
+  // configured threshold. The second (different) approver triggers the payout.
+  firstApproverId String?
+  firstApprovedAt DateTime?
   createdAt      DateTime @default(now())
 }
 

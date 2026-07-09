@@ -22,6 +22,7 @@ describe('AdminFinanceService.approveWithdrawal', () => {
     const updateMany = jest.fn().mockResolvedValue({ count: 1 });
     const prisma = {
       journalEntry: { findUnique: jest.fn().mockResolvedValue(pendingEntry()), updateMany },
+      appSetting: { findUnique: jest.fn().mockResolvedValue({ value: '0' }) }, // dual-control off
     } as any;
     const pay = payments();
     const service = new AdminFinanceService(prisma, {} as any, { record } as any, pay as any, cfg());
@@ -39,6 +40,7 @@ describe('AdminFinanceService.approveWithdrawal', () => {
     const updateMany = jest.fn().mockResolvedValue({ count: 0 }); // lost the claim
     const prisma = {
       journalEntry: { findUnique: jest.fn().mockResolvedValue(pendingEntry()), updateMany },
+      appSetting: { findUnique: jest.fn().mockResolvedValue({ value: '0' }) }, // dual-control off
     } as any;
     const pay = payments();
     const service = new AdminFinanceService(prisma, {} as any, { record: jest.fn() } as any, pay as any, cfg());
@@ -51,6 +53,7 @@ describe('AdminFinanceService.approveWithdrawal', () => {
     const updateMany = jest.fn().mockResolvedValue({ count: 1 });
     const prisma = {
       journalEntry: { findUnique: jest.fn().mockResolvedValue(pendingEntry()), updateMany },
+      appSetting: { findUnique: jest.fn().mockResolvedValue({ value: '0' }) }, // dual-control off
     } as any;
     const pay = payments();
     pay.payout = jest.fn().mockRejectedValue(new Error('payout failed'));
@@ -61,6 +64,40 @@ describe('AdminFinanceService.approveWithdrawal', () => {
     expect(updateMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: expect.objectContaining({ id: 'j1', status: JournalStatus.POSTED }), data: expect.objectContaining({ status: JournalStatus.PENDING }) }),
     );
+  });
+
+  const dualControl = (opts: { firstApproverId?: string | null }) => {
+    const updateMany = jest.fn().mockResolvedValue({ count: 1 });
+    const detailUpdate = jest.fn().mockResolvedValue({});
+    const prisma = {
+      journalEntry: { findUnique: jest.fn().mockResolvedValue({ ...pendingEntry(), postings: [{ amount: 20000, currency: 'USD', ledgerAccount: { userId: 'u1' } }] }), updateMany },
+      appSetting: { findUnique: jest.fn().mockResolvedValue({ value: '10000' }) }, // threshold $10k
+      withdrawalDetail: { findUnique: jest.fn().mockResolvedValue({ firstApproverId: opts.firstApproverId ?? null }), update: detailUpdate },
+    } as any;
+    const pay = payments();
+    const service = new AdminFinanceService(prisma, {} as any, { record: jest.fn() } as any, pay as any, cfg());
+    return { service, pay, detailUpdate, updateMany };
+  };
+
+  it('above the dual-control threshold, the first approval only records the approver (no payout)', async () => {
+    const { service, pay, detailUpdate } = dualControl({ firstApproverId: null });
+    const res = await service.approveWithdrawal('adminA', 'j1');
+    expect(res).toMatchObject({ ok: true, status: 'AWAITING_SECOND_APPROVAL' });
+    expect(detailUpdate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ firstApproverId: 'adminA' }) }));
+    expect(pay.payout).not.toHaveBeenCalled();
+  });
+
+  it('rejects a second approval from the same admin', async () => {
+    const { service, pay } = dualControl({ firstApproverId: 'adminA' });
+    await expect(service.approveWithdrawal('adminA', 'j1')).rejects.toThrow(/different admin/i);
+    expect(pay.payout).not.toHaveBeenCalled();
+  });
+
+  it('pays out on a second approval from a different admin', async () => {
+    const { service, pay } = dualControl({ firstApproverId: 'adminA' });
+    const res = await service.approveWithdrawal('adminB', 'j1');
+    expect(pay.payout).toHaveBeenCalledTimes(1);
+    expect(res).toMatchObject({ status: JournalStatus.POSTED });
   });
 
   it('refuses to approve a non-pending withdrawal', async () => {

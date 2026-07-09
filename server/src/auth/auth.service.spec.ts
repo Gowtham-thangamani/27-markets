@@ -211,3 +211,86 @@ describe('AuthService.login — login-alert email', () => {
     ).resolves.toMatchObject({ tokens: { accessToken: 'at' } });
   });
 });
+
+describe('AuthService.login — brute-force lockout (H-7)', () => {
+  const argon2mod = require('argon2');
+  const build = async (userOverrides: any) => {
+    const passwordHash = await argon2mod.hash('secret123', { type: argon2mod.argon2id });
+    const user = { id: 'u1', email: 'a@x.com', firstName: 'A', role: 'CLIENT', status: 'ACTIVE', passwordHash, twoFactorEnabled: false, failedLoginAttempts: 0, lockedUntil: null, ...userOverrides };
+    const update = jest.fn().mockResolvedValue({});
+    const prisma = {
+      user: { findUnique: jest.fn().mockResolvedValue(user), update },
+      session: { create: jest.fn().mockResolvedValue({ id: 's1' }), update: jest.fn().mockResolvedValue({}) },
+    } as any;
+    const tokens = { signAccess: jest.fn().mockResolvedValue('at'), signRefresh: jest.fn().mockResolvedValue('rt'), hashToken: jest.fn().mockReturnValue('h') } as any;
+    const config = { get: jest.fn().mockReturnValue(604800) } as any;
+    const email = { sendLoginAlert: jest.fn().mockResolvedValue(undefined) } as any;
+    const service = new AuthService(prisma, tokens, { record: jest.fn() } as any, {} as any, config, {} as any, email, {} as any);
+    return { service, update };
+  };
+
+  it('rejects login while the account is locked', async () => {
+    const { service } = await build({ lockedUntil: new Date(Date.now() + 60_000) });
+    await expect(service.login({ email: 'a@x.com', password: 'secret123' } as any, {})).rejects.toThrow(/locked/i);
+  });
+
+  it('locks the account after the 5th consecutive failed attempt', async () => {
+    const { service, update } = await build({ failedLoginAttempts: 4 });
+    await expect(service.login({ email: 'a@x.com', password: 'WRONG' } as any, {})).rejects.toThrow(/invalid credentials/i);
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'u1' }, data: expect.objectContaining({ lockedUntil: expect.any(Date) }) }));
+  });
+
+  it('resets the failed-attempt counter on a successful login', async () => {
+    const { service, update } = await build({ failedLoginAttempts: 3 });
+    await service.login({ email: 'a@x.com', password: 'secret123' } as any, {});
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'u1' }, data: expect.objectContaining({ failedLoginAttempts: 0, lockedUntil: null }) }));
+  });
+});
+
+describe('AuthService.isTotpReplay', () => {
+  it('flags a code whose step was already used', () => {
+    expect(AuthService.isTotpReplay(100, 100)).toBe(true);
+    expect(AuthService.isTotpReplay(100, 101)).toBe(true);
+  });
+  it('accepts a newer step, or when none recorded', () => {
+    expect(AuthService.isTotpReplay(100, 99)).toBe(false);
+    expect(AuthService.isTotpReplay(100, null)).toBe(false);
+    expect(AuthService.isTotpReplay(100, undefined)).toBe(false);
+  });
+});
+
+jest.mock('otplib', () => ({ authenticator: { verify: jest.fn(), generate: jest.fn(), keyuri: jest.fn(), options: {} } }));
+describe('AuthService.disableTwoFactor — re-auth (M-2)', () => {
+  const argon2mod = require('argon2');
+  const { authenticator } = require('otplib');
+  const build = async () => {
+    const passwordHash = await argon2mod.hash('mypassword', { type: argon2mod.argon2id });
+    const user = { id: 'u1', passwordHash, twoFactorEnabled: true, twoFactorSecret: 'enc-secret' };
+    const update = jest.fn().mockResolvedValue({});
+    const prisma = { user: { findUnique: jest.fn().mockResolvedValue(user), update } } as any;
+    const crypto = { decrypt: jest.fn().mockReturnValue('SECRET') } as any;
+    const service = new AuthService(prisma, {} as any, { record: jest.fn() } as any, {} as any, {} as any, crypto, {} as any, {} as any);
+    return { service, update };
+  };
+
+  it('rejects when the current password is wrong', async () => {
+    const { service, update } = await build();
+    (authenticator.verify as jest.Mock).mockReturnValue(true);
+    await expect(service.disableTwoFactor('u1', { currentPassword: 'WRONG', code: '123456' } as any, {})).rejects.toThrow();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('rejects when the TOTP code is invalid', async () => {
+    const { service, update } = await build();
+    (authenticator.verify as jest.Mock).mockReturnValue(false);
+    await expect(service.disableTwoFactor('u1', { currentPassword: 'mypassword', code: '000000' } as any, {})).rejects.toThrow();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('disables 2FA when password and TOTP are both valid', async () => {
+    const { service, update } = await build();
+    (authenticator.verify as jest.Mock).mockReturnValue(true);
+    await service.disableTwoFactor('u1', { currentPassword: 'mypassword', code: '123456' } as any, {});
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'u1' }, data: expect.objectContaining({ twoFactorEnabled: false, twoFactorSecret: null }) }));
+  });
+});

@@ -15,6 +15,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
+import { CsrfGuard } from './common/csrf.guard';
 import { UsersModule } from './users/users.module';
 import { AccountsModule } from './accounts/accounts.module';
 import { FundsModule } from './funds/funds.module';
@@ -57,6 +58,8 @@ import { HealthController } from './health/health.controller';
   ],
   controllers: [HealthController],
   providers: [
+    // CSRF: reject state-changing requests whose Origin isn't allowlisted (runs first).
+    { provide: APP_GUARD, useClass: CsrfGuard },
     // Authentication is on by default everywhere; opt out with @Public().
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     // Role checks run globally too (defense-in-depth): a controller that adds

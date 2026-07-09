@@ -17,13 +17,18 @@ import { EmailService } from '../email/email.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { LeadsService } from '../leads/leads.service';
 import { TokensService } from './tokens.service';
-import { RegisterDto, LoginDto } from './dto';
+import { RegisterDto, LoginDto, DisableTwoFactorDto } from './dto';
 import type { Env } from '../config/env.validation';
 
 export interface RequestContext {
   ip?: string;
   userAgent?: string;
 }
+
+/** Brute-force lockout: lock an account after this many consecutive failures… */
+const MAX_FAILED_ATTEMPTS = 5;
+/** …for this long (15 minutes). */
+const LOCKOUT_MS = 15 * 60 * 1000;
 
 export interface IssuedTokens {
   accessToken: string;
@@ -75,6 +80,11 @@ export class AuthService {
     }
     await this.prisma.verificationToken.update({ where: { id: token.id }, data: { usedAt: new Date() } });
     return token;
+  }
+
+  /** A TOTP code is a replay if its time-step was already accepted. */
+  static isTotpReplay(step: number, lastStep: number | null | undefined): boolean {
+    return lastStep != null && step <= lastStep;
   }
 
   toPublic(user: User): PublicUser {
@@ -180,6 +190,13 @@ export class AuthService {
 
   async login(dto: LoginDto, ctx: RequestContext): Promise<{ user: PublicUser; tokens: IssuedTokens }> {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } });
+    const now = new Date();
+
+    // Brute-force lockout: refuse while the account is locked, before any password work.
+    if (user?.lockedUntil && user.lockedUntil > now) {
+      await this.audit.record({ userId: user.id, action: 'auth.login.locked', ...ctx });
+      throw new UnauthorizedException('Account temporarily locked due to too many failed attempts. Try again later.');
+    }
 
     // Constant-ish failure: still verify against a dummy hash to reduce timing leaks.
     const ok = user
@@ -189,6 +206,17 @@ export class AuthService {
           .catch(() => false);
 
     if (!user || !ok || user.status !== 'ACTIVE') {
+      if (user) {
+        // Count this failure; lock the account once the threshold is reached.
+        const attempts = user.failedLoginAttempts + 1;
+        const lock = attempts >= MAX_FAILED_ATTEMPTS;
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: lock
+            ? { failedLoginAttempts: 0, lockedUntil: new Date(now.getTime() + LOCKOUT_MS) }
+            : { failedLoginAttempts: attempts },
+        });
+      }
       await this.audit.record({ userId: user?.id, action: 'auth.login.failed', metadata: { email: dto.email }, ...ctx });
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -200,6 +228,17 @@ export class AuthService {
       const secret = user.twoFactorSecret ? this.crypto.decrypt(user.twoFactorSecret) : '';
       const valid = authenticator.verify({ token: dto.totp, secret });
       if (!valid) throw new UnauthorizedException('Invalid two-factor code');
+      // Replay guard: reject a code from a time-step we've already accepted.
+      const step = Math.floor(now.getTime() / 30000);
+      if (AuthService.isTotpReplay(step, user.lastTotpStep)) {
+        throw new UnauthorizedException('This two-factor code was already used.');
+      }
+      await this.prisma.user.update({ where: { id: user.id }, data: { lastTotpStep: step } });
+    }
+
+    // Successful login: clear any accumulated failed-attempt / lockout state.
+    if (user.failedLoginAttempts > 0 || user.lockedUntil) {
+      await this.prisma.user.update({ where: { id: user.id }, data: { failedLoginAttempts: 0, lockedUntil: null } });
     }
 
     const tokens = await this.issueSession(user, ctx);
@@ -312,7 +351,18 @@ export class AuthService {
     await this.audit.record({ userId, action: 'auth.2fa.enabled', ...ctx });
   }
 
-  async disableTwoFactor(userId: string, ctx: RequestContext): Promise<void> {
+  async disableTwoFactor(userId: string, dto: DisableTwoFactorDto, ctx: RequestContext): Promise<void> {
+    // Step-up re-auth: disabling 2FA removes an account-takeover barrier, so it
+    // must require the current password AND a valid current code — a stolen
+    // access token alone can't turn it off.
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('Not authenticated');
+    const pwOk = await argon2.verify(user.passwordHash, dto.currentPassword).catch(() => false);
+    if (!pwOk) throw new UnauthorizedException('Current password is incorrect.');
+    const secret = user.twoFactorSecret ? this.crypto.decrypt(user.twoFactorSecret) : '';
+    if (!authenticator.verify({ token: dto.code, secret })) {
+      throw new UnauthorizedException('Invalid two-factor code.');
+    }
     await this.prisma.user.update({
       where: { id: userId },
       data: { twoFactorEnabled: false, twoFactorSecret: null },
