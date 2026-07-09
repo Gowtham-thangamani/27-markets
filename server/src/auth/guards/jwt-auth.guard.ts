@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import { IS_PUBLIC_KEY, type AuthUser } from '../../common/decorators';
+import { PrismaService } from '../../prisma/prisma.service';
 import { TokensService } from '../tokens.service';
 
 /** Validates the access token from the Authorization header or access cookie. */
@@ -15,6 +16,7 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly tokens: TokensService,
     private readonly reflector: Reflector,
+    private readonly prisma: PrismaService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -28,13 +30,25 @@ export class JwtAuthGuard implements CanActivate {
     const token = this.extractToken(req);
     if (!token) throw new UnauthorizedException('Authentication required');
 
+    let payload;
     try {
-      const payload = await this.tokens.verifyAccess(token);
-      req.user = { id: payload.sub, email: payload.email, role: payload.role };
-      return true;
+      payload = await this.tokens.verifyAccess(token);
     } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }
+
+    // Enforce account status on every request so a suspended/closed account is
+    // rejected immediately, not only after the access token expires (M-4).
+    const account = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { status: true },
+    });
+    if (!account || account.status !== 'ACTIVE') {
+      throw new UnauthorizedException('Account is not active');
+    }
+
+    req.user = { id: payload.sub, email: payload.email, role: payload.role };
+    return true;
   }
 
   private extractToken(req: Request): string | null {
