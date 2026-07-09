@@ -407,6 +407,18 @@ export interface PartnerItem {
   country: string | null
   status: string
   createdAt: string
+  referralCode: string | null
+  referredCount: number
+  commissionTotal: number
+}
+
+export interface PartnerCommission {
+  id: string
+  client: string
+  amount: number
+  source: string
+  reference: string | null
+  createdAt: string
 }
 
 export const adminApi = {
@@ -559,6 +571,7 @@ export const adminApi = {
     api.patch<PaymentGateway>(`/admin/payment-gateways/${id}`, patch),
   deletePaymentGateway: (id: string) => api.del<{ ok: boolean }>(`/admin/payment-gateways/${id}`),
 
-  // Partners (read-only stub)
+  // Partners / IB
   listPartners: () => api.get<PartnerItem[]>('/admin/partners'),
+  listPartnerCommissions: (id: string) => api.get<PartnerCommission[]>(`/admin/partners/${id}/commissions`),
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators';
 import { STAFF_ROLES } from '../common/roles';
@@ -13,5 +13,10 @@ export class AdminPartnersController {
   @Get()
   list() {
     return this.partners.listPartners();
+  }
+
+  @Get(':id/commissions')
+  commissions(@Param('id') id: string) {
+    return this.partners.partnerCommissions(id);
   }
 }
