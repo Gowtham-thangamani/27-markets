@@ -246,3 +246,15 @@ describe('AuthService.login — brute-force lockout (H-7)', () => {
     expect(update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'u1' }, data: expect.objectContaining({ failedLoginAttempts: 0, lockedUntil: null }) }));
   });
 });
+
+describe('AuthService.isTotpReplay', () => {
+  it('flags a code whose step was already used', () => {
+    expect(AuthService.isTotpReplay(100, 100)).toBe(true);
+    expect(AuthService.isTotpReplay(100, 101)).toBe(true);
+  });
+  it('accepts a newer step, or when none recorded', () => {
+    expect(AuthService.isTotpReplay(100, 99)).toBe(false);
+    expect(AuthService.isTotpReplay(100, null)).toBe(false);
+    expect(AuthService.isTotpReplay(100, undefined)).toBe(false);
+  });
+});

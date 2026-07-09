@@ -82,6 +82,11 @@ export class AuthService {
     return token;
   }
 
+  /** A TOTP code is a replay if its time-step was already accepted. */
+  static isTotpReplay(step: number, lastStep: number | null | undefined): boolean {
+    return lastStep != null && step <= lastStep;
+  }
+
   toPublic(user: User): PublicUser {
     return {
       id: user.id,
@@ -223,6 +228,12 @@ export class AuthService {
       const secret = user.twoFactorSecret ? this.crypto.decrypt(user.twoFactorSecret) : '';
       const valid = authenticator.verify({ token: dto.totp, secret });
       if (!valid) throw new UnauthorizedException('Invalid two-factor code');
+      // Replay guard: reject a code from a time-step we've already accepted.
+      const step = Math.floor(now.getTime() / 30000);
+      if (AuthService.isTotpReplay(step, user.lastTotpStep)) {
+        throw new UnauthorizedException('This two-factor code was already used.');
+      }
+      await this.prisma.user.update({ where: { id: user.id }, data: { lastTotpStep: step } });
     }
 
     // Successful login: clear any accumulated failed-attempt / lockout state.

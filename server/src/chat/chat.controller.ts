@@ -1,7 +1,8 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Public } from '../common/decorators';
-import { ChatService, type ChatMessage } from './chat.service';
+import { ChatService } from './chat.service';
+import { ChatSendDto } from './chat.dto';
 
 /**
  * Public support-assistant endpoint. Anonymous visitors can chat; a tighter
@@ -14,9 +15,8 @@ export class ChatController {
   @Public()
   @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @Post()
-  async send(@Body() body: { messages?: ChatMessage[] }) {
-    const messages = Array.isArray(body?.messages) ? body.messages : [];
-    const reply = await this.chat.reply(messages);
+  async send(@Body() body: ChatSendDto) {
+    const reply = await this.chat.reply(body.messages);
     return { reply, available: this.chat.available };
   }
 }

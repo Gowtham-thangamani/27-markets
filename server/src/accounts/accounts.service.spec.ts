@@ -1,10 +1,10 @@
 import { AccountsService } from './accounts.service';
 
 describe('AccountsService.create — live rail', () => {
-  const make = (allowLive: boolean) => {
+  const make = (allowLive: boolean, demoCount = 0) => {
     const prisma = {
       accountTypeConfig: { findUnique: jest.fn().mockResolvedValue(null) },
-      tradingAccount: { create: jest.fn().mockResolvedValue({ id: 'a1' }) },
+      tradingAccount: { create: jest.fn().mockResolvedValue({ id: 'a1' }), count: jest.fn().mockResolvedValue(demoCount) },
     } as any;
     const config = { get: jest.fn().mockReturnValue(allowLive) } as any;
     return { service: new AccountsService(prisma, {} as any, {} as any, config), prisma };
@@ -21,5 +21,11 @@ describe('AccountsService.create — live rail', () => {
     // DEMO proceeds past the rail check (may fail later on unmocked ledger calls,
     // but must NOT throw the live-rail error).
     await expect(service.create('u1', 'STANDARD' as any, 'DEMO' as any)).rejects.not.toThrow(/live accounts are not available/i);
+  });
+
+  it('caps demo accounts at 5 per user', async () => {
+    const { service, prisma } = make(false, 5); // already at the cap
+    await expect(service.create('u1', 'STANDARD' as any, 'DEMO' as any)).rejects.toThrow(/at most 5 demo accounts/i);
+    expect(prisma.tradingAccount.create).not.toHaveBeenCalled();
   });
 });

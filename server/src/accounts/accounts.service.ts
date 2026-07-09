@@ -21,6 +21,8 @@ import { formatMoney, toMoney } from '../ledger/money';
 import { generateAccountNumber, generateTxReference } from '../common/reference';
 
 const DEMO_STARTING_BALANCE = '50000';
+/** Max demo accounts a single user may open. */
+const MAX_DEMO_ACCOUNTS = 5;
 const DEFAULT_LEVERAGE: Record<AccountType, string> = {
   STANDARD: '1:10',
   RAW_SPREAD: '1:50',
@@ -54,6 +56,14 @@ export class AccountsService {
       throw new BadRequestException(
         'Live accounts are not available yet. Real funds are disabled until the platform is licensed and go-live is enabled.',
       );
+    }
+
+    // Cap demo accounts per user (each is auto-funded with virtual balance).
+    if (mode === AccountMode.DEMO) {
+      const demoCount = await this.prisma.tradingAccount.count({ where: { userId, mode: AccountMode.DEMO } });
+      if (demoCount >= MAX_DEMO_ACCOUNTS) {
+        throw new BadRequestException(`You can have at most ${MAX_DEMO_ACCOUNTS} demo accounts.`);
+      }
     }
 
     const number = generateAccountNumber(mode);
