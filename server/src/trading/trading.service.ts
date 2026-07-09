@@ -129,6 +129,12 @@ export class TradingService {
     if (account.status !== AccountStatus.ACTIVE) {
       throw new BadRequestException('This account is not active. Live accounts require admin approval before trading.');
     }
+    // Only allow instruments in the configured tradable universe — a client must
+    // not be able to submit arbitrary tickers (esp. once they reach the MT5 gateway).
+    if (!this.market.isTradable(dto.symbol)) {
+      throw new BadRequestException(`${dto.symbol} is not a tradable instrument.`);
+    }
+
     const venue = this.execFor(account);
     // A LIVE account can only trade when a real venue is configured; DEMO always
     // routes to the simulated venue (venue === simExec), so it's never blocked here.

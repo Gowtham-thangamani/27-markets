@@ -9,7 +9,7 @@ const simExec = (price: number) => ({
   fill: jest.fn().mockResolvedValue({ price, simulated: true }),
 });
 const ledgerWith = (balance: number) => ({ balanceOf: jest.fn().mockResolvedValue(balance), getSystemAccount: jest.fn().mockResolvedValue({ id: 'adj' }), post: jest.fn() });
-const marketWith = (quotes: { symbol: string; price: number }[] = []) => ({ getQuotes: jest.fn().mockResolvedValue(quotes) });
+const marketWith = (quotes: { symbol: string; price: number }[] = []) => ({ getQuotes: jest.fn().mockResolvedValue(quotes), isTradable: jest.fn().mockReturnValue(true) });
 const mt5conn = () => ({ accountIdFor: jest.fn().mockResolvedValue(undefined) });
 const audit = () => ({ record: jest.fn() });
 
@@ -78,6 +78,21 @@ describe('TradingService.placeOrder (market)', () => {
     await expect(
       service.placeOrder('u1', { accountId: 'acc1', symbol: 'X', side: 'BUY', quantity: 1 } as any),
     ).rejects.toThrow('Live trading requires a connected MT5 venue');
+  });
+});
+
+describe('TradingService.placeOrder — symbol allowlist (M-3)', () => {
+  it('rejects an order for a symbol outside the tradable universe', async () => {
+    const market = { getQuotes: jest.fn().mockResolvedValue([]), isTradable: jest.fn().mockReturnValue(false) };
+    const prisma = {
+      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', status: 'ACTIVE', mode: 'DEMO', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
+    } as any;
+    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, simExec(100) as any, market as any, mt5conn() as any);
+
+    await expect(
+      service.placeOrder('u1', { accountId: 'acc1', symbol: 'FAKE:SCAMCOIN', side: 'BUY', quantity: 1 } as any),
+    ).rejects.toThrow(/not a tradable instrument/i);
+    expect(market.isTradable).toHaveBeenCalledWith('FAKE:SCAMCOIN');
   });
 });
 

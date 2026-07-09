@@ -1,5 +1,8 @@
-import { IsEnum, IsNumber, IsOptional, IsPositive, IsString, MaxLength } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsPositive, IsString, Max, MaxLength } from 'class-validator';
 import { OrderSide, OrderType, PositionStatus } from '@prisma/client';
+
+/** Sanity ceiling on order size — blocks absurd/overflow volumes server-side. */
+const MAX_ORDER_QUANTITY = 1_000_000;
 
 export class PlaceOrderDto {
   @IsString()
@@ -14,6 +17,7 @@ export class PlaceOrderDto {
 
   @IsNumber()
   @IsPositive()
+  @Max(MAX_ORDER_QUANTITY)
   quantity!: number;
 
   @IsOptional()

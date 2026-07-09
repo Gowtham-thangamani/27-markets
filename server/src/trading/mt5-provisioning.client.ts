@@ -36,7 +36,9 @@ export class Mt5ProvisioningClient {
       });
       if (!res.ok) {
         const body = await res.text().catch(() => '');
-        throw new ServiceUnavailableException(`MT5 provisioning error ${res.status}: ${body.slice(0, 200)}`);
+        // Log upstream detail server-side; return only the status to the caller.
+        this.log.error(`MT5 provisioning error ${res.status}: ${body.slice(0, 500)}`);
+        throw new ServiceUnavailableException(`MT5 provisioning error (${res.status}).`);
       }
       return (await res.json()) as T;
     } catch (e) {

@@ -27,9 +27,10 @@ describe('Mt5GatewayClient (MetaApi)', () => {
     expect(JSON.parse(init.body)).toEqual({ actionType: 'ORDER_TYPE_BUY', symbol: 'EURUSD', volume: 0.1 });
   });
 
-  it('maps a non-ok response to ServiceUnavailable', async () => {
-    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 401, text: async () => 'bad token' }) as any;
+  it('maps a non-ok response to ServiceUnavailable without leaking the upstream body (M-4)', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 401, text: async () => 'bad token secret detail' }) as any;
     const c = new Mt5GatewayClient(cfg({ MT5_GATEWAY_URL: 'https://gw', MT5_ACCOUNT_ID: 'acc-1' }));
-    await expect(c.getAccount()).rejects.toThrow('MT5 gateway error 401');
+    await expect(c.getAccount()).rejects.toThrow('MT5 gateway error (401)');
+    await expect(c.getAccount()).rejects.not.toThrow(/bad token secret detail/);
   });
 });
