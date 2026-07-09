@@ -276,6 +276,12 @@ export class AdminFinanceService {
     );
   }
 
+  /** Withdrawal amount (USD) at/above which dual approval is required. 0 = disabled. */
+  private async dualControlThreshold(): Promise<number> {
+    const row = await this.prisma.appSetting.findUnique({ where: { key: 'withdrawal_dual_control_usd' } });
+    return Number(row?.value ?? '0') || 0;
+  }
+
   private async loadPendingWithdrawal(entryId: string) {
     const entry = await this.prisma.journalEntry.findUnique({
       where: { id: entryId },
@@ -295,8 +301,28 @@ export class AdminFinanceService {
 
     // The client-facing leg is the DEBIT on the user-owned ledger account.
     const clientLeg = entry.postings?.find((p) => p.ledgerAccount.userId);
-    const amountMinor = clientLeg ? Math.round(Number(clientLeg.amount) * 100) : 0;
+    const amount = clientLeg ? Number(clientLeg.amount) : 0;
+    const amountMinor = Math.round(amount * 100);
     const currency = clientLeg?.currency ?? 'USD';
+
+    // Dual-control (maker/checker): for amounts at/above the configured threshold
+    // (0 = disabled), a withdrawal needs two DISTINCT admin approvals before payout.
+    const threshold = await this.dualControlThreshold();
+    if (threshold > 0 && amount >= threshold) {
+      const detail = await this.prisma.withdrawalDetail.findUnique({ where: { journalEntryId: entryId } });
+      if (!detail?.firstApproverId) {
+        await this.prisma.withdrawalDetail.update({
+          where: { journalEntryId: entryId },
+          data: { firstApproverId: adminId, firstApprovedAt: new Date() },
+        });
+        await this.audit.record({ userId: adminId, action: 'finance.withdrawal.first_approval', entity: 'JournalEntry', entityId: entryId });
+        return { ok: true, status: 'AWAITING_SECOND_APPROVAL' as const };
+      }
+      if (detail.firstApproverId === adminId) {
+        throw new BadRequestException('This withdrawal needs a second approval from a different admin.');
+      }
+      // A distinct second approver — fall through to the payout.
+    }
 
     // Atomically claim the withdrawal (PENDING → POSTED). Only one approver can
     // win this conditional update, so concurrent approvals can't double-pay.

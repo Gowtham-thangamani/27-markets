@@ -822,6 +822,10 @@ model WithdrawalDetail {
   swift          String?
   walletAddress  String?
   network        String?
+  // Dual-control (maker/checker): the first approver, if the amount crossed the
+  // configured threshold. The second (different) approver triggers the payout.
+  firstApproverId String?
+  firstApprovedAt DateTime?
   createdAt      DateTime @default(now())
 }
 
