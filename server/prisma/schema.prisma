@@ -203,6 +203,19 @@ model DataChangeRequest {
   @@index([userId])
 }
 
+// Commission accrued to an introducing broker when a referred client deposits.
+model IbCommission {
+  id        String   @id @default(cuid())
+  partnerId String
+  clientId  String
+  amount    Decimal  @db.Decimal(18, 2)
+  source    String   @default("deposit")
+  reference String?
+  createdAt DateTime @default(now())
+
+  @@index([partnerId])
+}
+
 // Introducing-broker (IB) campaigns with tracking codes, managed from the admin CRM.
 model IbCampaign {
   id          String   @id @default(cuid())

@@ -103,7 +103,42 @@ export class AdminFinanceService {
       entityId: req.id,
       metadata: { amount: req.amount.toString(), method: req.method, simulated },
     });
+
+    await this.accrueReferralCommission(req.userId, req.amount.toString(), entry.reference);
     return { ok: true, status: 'APPROVED', reference: entry.reference };
+  }
+
+  /**
+   * If the depositing client was referred by a partner, accrue an IB commission
+   * = deposit × ib_commission_pct. Best-effort: never blocks the deposit.
+   */
+  private async accrueReferralCommission(clientUserId: string, depositAmount: string, reference: string) {
+    try {
+      const client = await this.prisma.user.findUnique({
+        where: { id: clientUserId },
+        select: { referredByPartnerId: true },
+      });
+      if (!client?.referredByPartnerId) return;
+
+      const setting = await this.prisma.appSetting.findUnique({ where: { key: 'ib_commission_pct' } });
+      const pct = Number(setting?.value ?? '0');
+      if (!pct || pct <= 0) return;
+
+      const commission = (Number(depositAmount) * pct) / 100;
+      if (commission <= 0) return;
+
+      await this.prisma.ibCommission.create({
+        data: {
+          partnerId: client.referredByPartnerId,
+          clientId: clientUserId,
+          amount: commission.toFixed(2),
+          source: 'deposit',
+          reference,
+        },
+      });
+    } catch {
+      // Commission accrual must never fail the deposit.
+    }
   }
 
   async rejectDepositRequest(adminId: string, requestId: string, reason?: string) {
