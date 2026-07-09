@@ -69,14 +69,15 @@ describe('FundsService.withdraw', () => {
 });
 
 describe('FundsService.deposit — live gating (H-2)', () => {
-  const build = (simulated: boolean) => {
+  const build = (simulated: boolean, minDeposit = '50') => {
     const post = jest.fn().mockResolvedValue({ id: 'j1', reference: 'TX-1', status: JournalStatus.POSTED });
+    const prisma = { appSetting: { findUnique: jest.fn().mockResolvedValue({ value: minDeposit }) } } as any;
     const ledger = { getSystemAccount: jest.fn().mockResolvedValue({ id: 'clearing' }), post } as any;
     const accounts = { ledgerAccountIdFor: jest.fn().mockResolvedValue('client-ledger') } as any;
     const audit = { record: jest.fn().mockResolvedValue(undefined) } as any;
     const payments = { name: simulated ? 'simulation' : 'stripe', simulated, assertAvailable: jest.fn() } as any;
     const config = { get: jest.fn() } as any;
-    return { service: new FundsService({} as any, ledger, accounts, audit, payments, config), post };
+    return { service: new FundsService(prisma, ledger, accounts, audit, payments, config), post };
   };
 
   it('refuses a direct inline deposit when the provider is not simulated (live)', async () => {
@@ -91,6 +92,14 @@ describe('FundsService.deposit — live gating (H-2)', () => {
     const { service, post } = build(true);
     await service.deposit('u1', { accountId: 'acc1', amount: '100', method: 'Card' } as any);
     expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a deposit below the configured minimum ($50)', async () => {
+    const { service, post } = build(true);
+    await expect(
+      service.deposit('u1', { accountId: 'acc1', amount: '10', method: 'Card' } as any),
+    ).rejects.toThrow(/minimum deposit/i);
+    expect(post).not.toHaveBeenCalled();
   });
 });
 

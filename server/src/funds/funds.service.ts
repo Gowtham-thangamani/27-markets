@@ -29,8 +29,22 @@ export class FundsService {
    * client is redirected to; the webhook credits the deposit on success. In
    * SIMULATION the provider has no redirect, so we credit inline (legacy path).
    */
+  /** The admin-configured minimum deposit (USD). Defaults to $50. */
+  private async minDepositUsd(): Promise<number> {
+    const row = await this.prisma.appSetting.findUnique({ where: { key: 'min_deposit_usd' } });
+    return Number(row?.value ?? '50') || 50;
+  }
+
+  private async assertMinDeposit(amount: string): Promise<void> {
+    const min = await this.minDepositUsd();
+    if (Number(amount) < min) {
+      throw new BadRequestException(`Minimum deposit is $${min}.`);
+    }
+  }
+
   async depositCheckout(userId: string, dto: DepositDto) {
     this.payments.assertAvailable();
+    await this.assertMinDeposit(dto.amount);
     // Validates ownership of the target account.
     await this.accounts.ledgerAccountIdFor(userId, dto.accountId);
 
@@ -94,6 +108,7 @@ export class FundsService {
    * off-platform, and finance confirms receipt before the ledger is credited.
    */
   async requestDeposit(userId: string, dto: RequestDepositDto) {
+    await this.assertMinDeposit(dto.amount);
     await this.accounts.ledgerAccountIdFor(userId, dto.accountId); // validates ownership
 
     if (dto.method === 'card') {
@@ -140,6 +155,7 @@ export class FundsService {
         'Direct deposits are only available in simulation. Live deposits must go through checkout.',
       );
     }
+    await this.assertMinDeposit(dto.amount);
     const amount = toMoney(dto.amount);
     const clientLedgerId = await this.accounts.ledgerAccountIdFor(userId, dto.accountId);
     const clearing = await this.ledger.getSystemAccount('SYSTEM:PSP_CLEARING');

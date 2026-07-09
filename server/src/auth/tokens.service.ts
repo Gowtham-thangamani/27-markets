@@ -27,6 +27,7 @@ export class TokensService {
     return this.jwt.signAsync(payload, {
       secret: this.config.get('JWT_ACCESS_SECRET', { infer: true }),
       expiresIn: this.config.get('ACCESS_TOKEN_TTL', { infer: true }),
+      algorithm: 'HS256',
     });
   }
 
@@ -34,18 +35,23 @@ export class TokensService {
     return this.jwt.signAsync(payload, {
       secret: this.config.get('JWT_REFRESH_SECRET', { infer: true }),
       expiresIn: this.config.get('REFRESH_TOKEN_TTL', { infer: true }),
+      algorithm: 'HS256',
     });
   }
 
   verifyAccess(token: string): Promise<AccessPayload> {
+    // Pin the algorithm: never let a token dictate its own verification alg
+    // (defends against alg-confusion / "alg: none" if an asymmetric key is ever added).
     return this.jwt.verifyAsync<AccessPayload>(token, {
       secret: this.config.get('JWT_ACCESS_SECRET', { infer: true }),
+      algorithms: ['HS256'],
     });
   }
 
   verifyRefresh(token: string): Promise<RefreshPayload> {
     return this.jwt.verifyAsync<RefreshPayload>(token, {
       secret: this.config.get('JWT_REFRESH_SECRET', { infer: true }),
+      algorithms: ['HS256'],
     });
   }
 
