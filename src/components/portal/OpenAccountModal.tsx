@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Modal, Button, Select } from '@/components/ui'
 import { usePortalData } from '@/context/PortalDataContext'
 import { useToast } from '@/context/ToastContext'
+import { useAppSettings } from '@/lib/useAppSettings'
 import { cn } from '@/lib/cn'
 import type { AccountType } from '@/lib/types'
 
@@ -10,8 +11,10 @@ const types: AccountType[] = ['Standard', 'Raw Spread', 'VIP']
 export function OpenAccountModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { openAccount } = usePortalData()
   const toast = useToast()
+  const { liveAccountsEnabled } = useAppSettings()
   const [type, setType] = useState<AccountType>('Raw Spread')
-  const [mode, setMode] = useState<'Live' | 'Demo'>('Live')
+  // Default to Demo; Live accounts are only offered once the go-live rail is on.
+  const [mode, setMode] = useState<'Live' | 'Demo'>('Demo')
   const [loading, setLoading] = useState(false)
 
   const submit = async () => {
@@ -54,11 +57,20 @@ export function OpenAccountModal({ open, onClose }: { open: boolean; onClose: ()
           label="Mode"
           value={mode}
           onChange={(e) => setMode(e.target.value as 'Live' | 'Demo')}
-          options={[
-            { value: 'Live', label: 'Live — trade with real funds' },
-            { value: 'Demo', label: 'Demo — $50,000 virtual balance' },
-          ]}
+          options={
+            liveAccountsEnabled
+              ? [
+                  { value: 'Demo', label: 'Demo — $50,000 virtual balance' },
+                  { value: 'Live', label: 'Live — trade with real funds' },
+                ]
+              : [{ value: 'Demo', label: 'Demo — $50,000 virtual balance' }]
+          }
         />
+        {!liveAccountsEnabled && (
+          <p className="-mt-2 text-xs text-gray-500">
+            Live accounts open once 27 Markets completes its regulatory go-live. Demo accounts trade at live prices.
+          </p>
+        )}
 
         <div className="flex gap-3 pt-1">
           <Button variant="outline" onClick={onClose} fullWidth>
