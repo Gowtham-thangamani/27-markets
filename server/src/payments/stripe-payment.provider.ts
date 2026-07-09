@@ -64,12 +64,17 @@ export class StripePaymentProvider implements PaymentProvider {
    */
   async payout(req: PayoutRequest): Promise<PayoutResult> {
     this.assertAvailable();
-    const p = await this.stripe.payouts.create({
-      amount: req.amountMinor,
-      currency: req.currency.toLowerCase(),
-      metadata: req.metadata,
-      statement_descriptor: 'Withdrawal',
-    });
+    const p = await this.stripe.payouts.create(
+      {
+        amount: req.amountMinor,
+        currency: req.currency.toLowerCase(),
+        metadata: req.metadata,
+        statement_descriptor: 'Withdrawal',
+      },
+      // Idempotency key keyed to the withdrawal reference: a retried approval
+      // (e.g. after markPosted fails) reuses the same payout instead of double-paying.
+      { idempotencyKey: `payout:${req.reference}` },
+    );
     return { payoutId: p.id, status: p.status, simulated: false };
   }
 

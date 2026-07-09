@@ -32,6 +32,18 @@ describe('StripePaymentProvider', () => {
     (p as any).client = { payouts: { create } };
     const res = await p.payout({ reference: 'TX-1', amountMinor: 5000, currency: 'USD', metadata: {} });
     expect(res).toEqual({ payoutId: 'po_1', status: 'pending', simulated: false });
-    expect(create).toHaveBeenCalledWith(expect.objectContaining({ amount: 5000, currency: 'usd' }));
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 5000, currency: 'usd' }),
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
+  });
+
+  it('payout passes a stable idempotency key from the reference (no double-pay on retry) — M-8', async () => {
+    const p = new StripePaymentProvider(cfg({ STRIPE_SECRET_KEY: 'sk_test_123' }));
+    const create = jest.fn().mockResolvedValue({ id: 'po_1', status: 'paid' });
+    (p as any).client = { payouts: { create } };
+    await p.payout({ reference: 'TX-9', amountMinor: 5000, currency: 'USD', metadata: { entryId: 'e1' } });
+    const options = create.mock.calls[0][1];
+    expect(options).toEqual(expect.objectContaining({ idempotencyKey: expect.stringContaining('TX-9') }));
   });
 });
