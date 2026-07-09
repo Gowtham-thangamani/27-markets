@@ -18,5 +18,7 @@ ENV NODE_ENV=production
 # Render/Railway inject PORT; the app reads process.env.PORT.
 EXPOSE 4000
 
-# Apply migrations, seed demo data (idempotent, non-fatal), then start.
-CMD npx prisma migrate deploy && (npm run db:seed || true) && node dist/main.js
+# Apply migrations, then start. The demo seed is intentionally NOT run here — it
+# creates well-known default credentials and self-aborts in production anyway.
+# Provision the first admin via a one-time script that reads a secret password.
+CMD npx prisma migrate deploy && node dist/main.js

@@ -30,6 +30,12 @@ export interface PostTransactionInput {
   /** Defaults to POSTED. Use PENDING for entries that await staff approval. */
   status?: JournalStatus;
   postings: PostingInput[];
+  /**
+   * Optional atomic balance guard. When set, the account row is locked FOR
+   * UPDATE and its balance re-checked INSIDE this transaction before the entry
+   * is created — closing the check-then-post race on debits (withdraw/transfer).
+   */
+  guardBalance?: { ledgerAccountId: string; atLeast: Money; message?: string };
 }
 
 // Credit-normal account types: balance = credits - debits.
@@ -78,6 +84,18 @@ export class LedgerService {
       });
       if (existing) return existing;
 
+      if (input.guardBalance) {
+        const g = input.guardBalance;
+        // Lock the account row for the life of this transaction. A concurrent
+        // guarded post on the same account blocks here until we commit, then
+        // re-reads the balance INCLUDING our debit — so it can't over-draw.
+        await tx.$queryRaw`SELECT id FROM "LedgerAccount" WHERE id = ${g.ledgerAccountId} FOR UPDATE`;
+        const available = await this.computeBalance(tx, g.ledgerAccountId);
+        if (available.lessThan(g.atLeast)) {
+          throw new BadRequestException(g.message ?? 'Insufficient balance');
+        }
+      }
+
       return tx.journalEntry.create({
         data: {
           reference: input.reference,
@@ -103,10 +121,21 @@ export class LedgerService {
 
   /** Derived balance of a ledger account from its postings. */
   async balanceOf(ledgerAccountId: string): Promise<Money> {
-    const account = await this.prisma.ledgerAccount.findUnique({ where: { id: ledgerAccountId } });
+    return this.computeBalance(this.prisma, ledgerAccountId);
+  }
+
+  /**
+   * Derive an account's balance from its postings, using the given client so it
+   * can run inside a transaction (for the FOR UPDATE balance guard) or standalone.
+   */
+  private async computeBalance(
+    client: Prisma.TransactionClient,
+    ledgerAccountId: string,
+  ): Promise<Money> {
+    const account = await client.ledgerAccount.findUnique({ where: { id: ledgerAccountId } });
     if (!account) throw new NotFoundException('Ledger account not found');
 
-    const grouped = await this.prisma.posting.groupBy({
+    const grouped = await client.posting.groupBy({
       by: ['direction'],
       where: { ledgerAccountId },
       _sum: { amount: true },

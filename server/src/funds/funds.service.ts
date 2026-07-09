@@ -132,6 +132,14 @@ export class FundsService {
   async deposit(userId: string, dto: DepositDto) {
     // SAFETY RAIL: refuses unless a payment provider can actually move funds.
     this.payments.assertAvailable();
+    // Inline self-credit is only safe in SIMULATION. In LIVE, a deposit must be
+    // created solely by the signature-verified PSP webhook / finance approval —
+    // never credited directly here (that would be free money with no charge).
+    if (!this.payments.simulated) {
+      throw new ForbiddenException(
+        'Direct deposits are only available in simulation. Live deposits must go through checkout.',
+      );
+    }
     const amount = toMoney(dto.amount);
     const clientLedgerId = await this.accounts.ledgerAccountIdFor(userId, dto.accountId);
     const clearing = await this.ledger.getSystemAccount('SYSTEM:PSP_CLEARING');
@@ -178,11 +186,6 @@ export class FundsService {
     const amount = toMoney(dto.amount);
     const clientLedgerId = await this.accounts.ledgerAccountIdFor(userId, dto.accountId);
 
-    const balance = await this.ledger.balanceOf(clientLedgerId);
-    if (balance.lessThan(amount)) {
-      throw new BadRequestException('Insufficient balance for this withdrawal');
-    }
-
     // Capture + validate the payout destination so finance pays the right place.
     const destMethod: 'bank' | 'crypto' = dto.walletAddress ? 'crypto' : 'bank';
     if (destMethod === 'crypto') {
@@ -202,6 +205,9 @@ export class FundsService {
       status: JournalStatus.PENDING,
       createdById: userId,
       memo: `Withdrawal via ${dto.method}`,
+      // Atomic, row-locked balance check inside the ledger transaction — closes
+      // the check-then-post race so concurrent withdrawals can't over-draw.
+      guardBalance: { ledgerAccountId: clientLedgerId, atLeast: amount, message: 'Insufficient balance for this withdrawal' },
       postings: [
         { ledgerAccountId: clientLedgerId, direction: PostingDirection.DEBIT, amount },
         { ledgerAccountId: payable.id, direction: PostingDirection.CREDIT, amount },
@@ -233,11 +239,6 @@ export class FundsService {
     const fromId = await this.accounts.ledgerAccountIdFor(userId, dto.fromAccountId);
     const toId = await this.accounts.ledgerAccountIdFor(userId, dto.toAccountId);
 
-    const balance = await this.ledger.balanceOf(fromId);
-    if (balance.lessThan(amount)) {
-      throw new BadRequestException('Insufficient balance for this transfer');
-    }
-
     const entry = await this.ledger.post({
       kind: JournalKind.TRANSFER,
       reference: generateTxReference(),
@@ -245,6 +246,8 @@ export class FundsService {
       simulated: this.payments.simulated,
       createdById: userId,
       memo: 'Internal transfer',
+      // Atomic, row-locked balance check (see withdraw) — no over-draw on races.
+      guardBalance: { ledgerAccountId: fromId, atLeast: amount, message: 'Insufficient balance for this transfer' },
       postings: [
         { ledgerAccountId: fromId, direction: PostingDirection.DEBIT, amount },
         { ledgerAccountId: toId, direction: PostingDirection.CREDIT, amount },

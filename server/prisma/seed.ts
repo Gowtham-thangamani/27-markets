@@ -8,6 +8,11 @@
  *   admin@27markets.io   / Admin123!     (ADMIN)
  *   agent@27markets.io   / Agent123!     (AGENT)
  *   client@27markets.io  / Client123!    (CLIENT, funded demo data)
+ *
+ * SAFETY: this demo seed creates well-known default credentials and MUST NOT run
+ * against a production database. It self-aborts when NODE_ENV=production unless
+ * ALLOW_SEED=true is explicitly set. Provision the first real admin via a
+ * separate one-time script that reads its password from a secret.
  */
 import {
   PrismaClient,
@@ -53,6 +58,13 @@ async function upsertUser(
 }
 
 async function main() {
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_SEED !== 'true') {
+    console.log(
+      'Refusing to run the demo seed in production (default credentials). ' +
+        'Set ALLOW_SEED=true only if you really mean to. Skipping.',
+    )
+    return
+  }
   console.log('Seeding…')
 
   // Account type configs (editable from the admin CRM).
@@ -108,6 +120,7 @@ async function main() {
     { key: 'support_hours', label: 'Support hours', value: '24/5', group: 'General', sortOrder: 2 },
     { key: 'min_deposit_usd', label: 'Minimum deposit (USD)', value: '50', group: 'Funding', sortOrder: 0 },
     { key: 'default_currency', label: 'Default account currency', value: 'USD', group: 'Funding', sortOrder: 1 },
+    { key: 'ib_commission_pct', label: 'IB commission (% of deposits)', value: '10', group: 'Partners', sortOrder: 0 },
     { key: 'maintenance_mode', label: 'Maintenance mode (true/false)', value: 'false', group: 'System', sortOrder: 0 },
     { key: 'maintenance_message', label: 'Maintenance message', value: 'We are performing scheduled maintenance. Please check back soon.', group: 'System', sortOrder: 1 },
   ]

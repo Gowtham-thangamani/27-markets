@@ -13,6 +13,7 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "db:seed": "ts-node prisma/seed.ts",
+    "admin:create": "ts-node prisma/create-admin.ts",
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
