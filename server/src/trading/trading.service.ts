@@ -5,6 +5,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import {
@@ -23,7 +24,7 @@ import { AuditService } from '../audit/audit.service';
 import { MarketService } from '../market/market.service';
 import { toMoney } from '../ledger/money';
 import { generateTxReference } from '../common/reference';
-import { EXECUTION_PROVIDER, type ExecutionProvider, type Fill } from './execution-provider';
+import { EXECUTION_PROVIDER, SimulationExecutionProvider, type ExecutionProvider, type Fill } from './execution-provider';
 import { Mt5ConnectionService } from './mt5-connection.service';
 import type { PlaceOrderDto, SetProtectionDto } from './trading.dto';
 
@@ -47,11 +48,26 @@ export class TradingService {
     @Inject(EXECUTION_PROVIDER) private readonly exec: ExecutionProvider,
     private readonly market: MarketService,
     private readonly mt5: Mt5ConnectionService,
+    @Optional() private readonly simExecProvider?: SimulationExecutionProvider,
   ) {}
 
-  /** The client's linked MT5 account id, only when the MT5 venue is active. */
-  private mt5AccountFor(userId: string): Promise<string | undefined> {
-    return this.exec.name === 'mt5' ? this.mt5.accountIdFor(userId) : Promise.resolve(undefined);
+  /** Always-simulated venue, used for DEMO accounts even when the live MT5 venue is active. */
+  private get simExec(): ExecutionProvider {
+    return this.simExecProvider ?? this.exec;
+  }
+
+  /**
+   * The execution venue for an account. DEMO accounts ALWAYS use the simulated
+   * venue — a demo trade must never send a real order — regardless of the
+   * globally configured provider (H-4).
+   */
+  private execFor(account: { mode: string }): ExecutionProvider {
+    return account.mode === 'DEMO' ? this.simExec : this.exec;
+  }
+
+  /** The client's linked MT5 account id, only when the given venue is the MT5 venue. */
+  private mt5AccountFor(venue: ExecutionProvider, userId: string): Promise<string | undefined> {
+    return venue.name === 'mt5' ? this.mt5.accountIdFor(userId) : Promise.resolve(undefined);
   }
 
   private async ownedAccount(userId: string, accountId: string): Promise<AccountWithLedger> {
@@ -70,20 +86,34 @@ export class TradingService {
     return n > 0 ? n : 100;
   }
 
-  private async usedMargin(accountId: string, leverage: number): Promise<number> {
-    const open = await this.prisma.position.findMany({ where: { accountId, status: PositionStatus.OPEN } });
-    return open.reduce((s, p) => s + (Number(p.entryPrice) * Number(p.quantity)) / leverage, 0);
+  /** Mark-to-market unrealized P&L across open positions (0 for any without a live quote). */
+  private async unrealizedPnl(open: Position[]): Promise<number> {
+    const symbols = [...new Set(open.map((p) => p.symbol))];
+    if (!symbols.length) return 0;
+    const quotes = await this.market.getQuotes(symbols);
+    const priceOf = (s: string) => quotes.find((q) => q.symbol === s)?.price;
+    let u = 0;
+    for (const p of open) {
+      const cur = priceOf(p.symbol);
+      if (cur == null) continue;
+      u += (cur - Number(p.entryPrice)) * Number(p.quantity) * (p.side === OrderSide.BUY ? 1 : -1);
+    }
+    return u;
   }
 
   private async assertMargin(account: AccountWithLedger, notional: number): Promise<void> {
     if (!account.ledgerAccount) return;
     const leverage = this.leverageOf(account.leverage);
     const required = notional / leverage;
-    const used = await this.usedMargin(account.id, leverage);
+    const open = await this.prisma.position.findMany({ where: { accountId: account.id, status: PositionStatus.OPEN } });
+    const used = open.reduce((s, p) => s + (Number(p.entryPrice) * Number(p.quantity)) / leverage, 0);
     const balance = Number(await this.ledger.balanceOf(account.ledgerAccount.id));
-    if (used + required > balance + 1e-6) {
+    // Free margin is measured against equity (balance + unrealized P&L), so a book
+    // sitting on unrealized losses cannot keep opening new positions until stop-out.
+    const equity = balance + (await this.unrealizedPnl(open));
+    if (used + required > equity + 1e-6) {
       throw new BadRequestException(
-        `Insufficient free margin: need ${required.toFixed(2)}, free ${(balance - used).toFixed(2)} (leverage 1:${leverage}).`,
+        `Insufficient free margin: need ${required.toFixed(2)}, free ${(equity - used).toFixed(2)} (leverage 1:${leverage}).`,
       );
     }
   }
@@ -113,18 +143,26 @@ export class TradingService {
     if (account.status !== AccountStatus.ACTIVE) {
       throw new BadRequestException('This account is not active. Live accounts require admin approval before trading.');
     }
-    if (this.exec.simulated && account.mode !== 'DEMO') {
+    // Only allow instruments in the configured tradable universe — a client must
+    // not be able to submit arbitrary tickers (esp. once they reach the MT5 gateway).
+    if (!this.market.isTradable(dto.symbol)) {
+      throw new BadRequestException(`${dto.symbol} is not a tradable instrument.`);
+    }
+
+    const venue = this.execFor(account);
+    // A LIVE account can only trade when a real venue is configured; DEMO always
+    // routes to the simulated venue (venue === simExec), so it's never blocked here.
+    if (account.mode !== 'DEMO' && venue.simulated) {
       throw new BadRequestException(
         'Live trading requires a connected MT5 venue. Use a demo account for simulated trading.',
       );
     }
-    this.exec.assertAvailable();
+    venue.assertAvailable();
     const type = dto.type ?? OrderType.MARKET;
 
     if (type === OrderType.MARKET) {
-      const fill = await this.exec.fill(dto.symbol, dto.side, dto.quantity, await this.mt5AccountFor(userId));
-      await this.assertMargin(account, fill.price * dto.quantity);
-      return this.fillAndOpen(userId, account.id, dto.symbol, dto.side, dto.quantity, fill, OrderType.MARKET);
+      const fill = await venue.fill(dto.symbol, dto.side, dto.quantity, await this.mt5AccountFor(venue, userId));
+      return this.openMarketPosition(userId, account, dto.symbol, dto.side, dto.quantity, fill);
     }
 
     if (!dto.triggerPrice || !(dto.triggerPrice > 0)) {
@@ -143,7 +181,7 @@ export class TradingService {
         price: 0,
         triggerPrice: dto.triggerPrice,
         status: 'PENDING',
-        simulated: this.exec.simulated,
+        simulated: venue.simulated,
       },
     });
     await this.audit.record({
@@ -156,29 +194,56 @@ export class TradingService {
     return order;
   }
 
-  private async fillAndOpen(
+  /**
+   * Open a market position: check margin and insert the order + position inside
+   * ONE transaction that locks the account's ledger row. Concurrent opens on the
+   * same account serialize on that lock, so racing orders can't each pass the
+   * same free-margin check and over-leverage the account (H-6).
+   */
+  private async openMarketPosition(
     userId: string,
-    accountId: string,
+    account: AccountWithLedger,
     symbol: string,
     side: OrderSide,
     quantity: number,
     fill: Fill,
-    type: OrderType,
-  ) {
-    const order = await this.prisma.order.create({
-      data: { userId, accountId, symbol, side, type, quantity, price: fill.price, status: 'FILLED', simulated: fill.simulated },
-    });
-    const position = await this.prisma.position.create({
-      data: { userId, accountId, symbol, side, quantity, entryPrice: fill.price, status: PositionStatus.OPEN },
+  ): Promise<Position> {
+    const position = await this.prisma.$transaction(async (tx) => {
+      if (account.ledgerAccount) {
+        await tx.$queryRaw`SELECT id FROM "LedgerAccount" WHERE id = ${account.ledgerAccount.id} FOR UPDATE`;
+      }
+      await this.assertMarginTx(tx, account, fill.price * quantity);
+      await tx.order.create({
+        data: { userId, accountId: account.id, symbol, side, type: OrderType.MARKET, quantity, price: fill.price, status: 'FILLED', simulated: fill.simulated },
+      });
+      return tx.position.create({
+        data: { userId, accountId: account.id, symbol, side, quantity, entryPrice: fill.price, status: PositionStatus.OPEN },
+      });
     });
     await this.audit.record({
       userId,
       action: 'trade.open',
       entity: 'Position',
       entityId: position.id,
-      metadata: { symbol, side, quantity, price: fill.price, orderId: order.id },
+      metadata: { symbol, side, quantity, price: fill.price },
     });
     return position;
+  }
+
+  /** Free-margin check using a transaction client, so it can run under a row lock. */
+  private async assertMarginTx(tx: Prisma.TransactionClient, account: AccountWithLedger, notional: number): Promise<void> {
+    if (!account.ledgerAccount) return;
+    const leverage = this.leverageOf(account.leverage);
+    const required = notional / leverage;
+    const open = await tx.position.findMany({ where: { accountId: account.id, status: PositionStatus.OPEN } });
+    const used = open.reduce((s, p) => s + (Number(p.entryPrice) * Number(p.quantity)) / leverage, 0);
+    const balance = Number(await this.ledger.balanceOf(account.ledgerAccount.id));
+    const equity = balance + (await this.unrealizedPnl(open));
+    if (used + required > equity + 1e-6) {
+      throw new BadRequestException(
+        `Insufficient free margin: need ${required.toFixed(2)}, free ${(equity - used).toFixed(2)} (leverage 1:${leverage}).`,
+      );
+    }
   }
 
   async cancelOrder(userId: string, orderId: string) {
@@ -231,6 +296,7 @@ export class TradingService {
     closeQty: number,
     fillPrice: number,
     reason: string,
+    idempotencyKey: string,
   ): Promise<number> {
     const entry = Number(position.entryPrice);
     const pnl = (fillPrice - entry) * closeQty * (position.side === OrderSide.BUY ? 1 : -1);
@@ -246,7 +312,7 @@ export class TradingService {
         quantity: closeQty,
         price: fillPrice,
         status: 'FILLED',
-        simulated: this.exec.simulated,
+        simulated: this.execFor(account).simulated,
       },
     });
 
@@ -267,8 +333,11 @@ export class TradingService {
       await this.ledger.post({
         kind: JournalKind.ADJUSTMENT,
         reference: generateTxReference(),
-        idempotencyKey: `pnl:${position.id}:${randomUUID()}`,
-        simulated: true,
+        // Deterministic key so a concurrent/duplicate close cannot post P&L twice:
+        // the ledger dedupes on idempotencyKey. The caller owns the key namespace.
+        idempotencyKey,
+        // Reflect the actual venue: real MT5 fills post non-simulated P&L.
+        simulated: this.execFor(account).simulated,
         createdById: position.userId,
         memo: `Realized P&L · ${position.symbol}${reason ? ` (${reason})` : ''}`,
         postings,
@@ -287,11 +356,16 @@ export class TradingService {
     const posQty = Number(pos.quantity);
     const closeQty = quantity && quantity > 0 && quantity < posQty ? quantity : posQty;
     const closeSide: OrderSide = pos.side === OrderSide.BUY ? OrderSide.SELL : OrderSide.BUY;
-    const fill = await this.exec.fill(pos.symbol, closeSide, closeQty, await this.mt5AccountFor(userId));
-    const pnl = await this.realizePnl(account, pos, closeQty, fill.price, '');
     const prevRealized = Number(pos.realizedPnl ?? 0);
+    // DEMO closes route through the simulated venue too (never a real order).
+    const venue = this.execFor(account);
 
     if (closeQty < posQty) {
+      // Partial close: the position stays OPEN, so this doesn't claim a status
+      // transition. Its P&L key is unique per partial. (Concurrent identical
+      // partials remain a lower-risk follow-up.)
+      const fill = await venue.fill(pos.symbol, closeSide, closeQty, await this.mt5AccountFor(venue, userId));
+      const pnl = await this.realizePnl(account, pos, closeQty, fill.price, '', `pnl:${pos.id}:partial:${randomUUID()}`);
       const updated = await this.prisma.position.update({
         where: { id: positionId },
         data: { quantity: posQty - closeQty, realizedPnl: toMoney((prevRealized + pnl).toFixed(2)) },
@@ -306,42 +380,67 @@ export class TradingService {
       return updated;
     }
 
-    const updated = await this.prisma.position.update({
-      where: { id: positionId },
-      data: {
-        status: PositionStatus.CLOSED,
-        exitPrice: fill.price,
-        realizedPnl: toMoney((prevRealized + pnl).toFixed(2)),
-        closedAt: new Date(),
-      },
+    // Full close: atomically claim the OPEN→CLOSED transition so only one of any
+    // concurrent close requests proceeds to fill + post P&L. A losing request
+    // sees count 0 and aborts before any side effect (no double fill, no double
+    // credit). The deterministic P&L key is a second line of defence.
+    const claim = await this.prisma.position.updateMany({
+      where: { id: positionId, status: PositionStatus.OPEN },
+      data: { status: PositionStatus.CLOSED, closedAt: new Date() },
     });
-    await this.audit.record({
-      userId,
-      action: 'trade.close',
-      entity: 'Position',
-      entityId: positionId,
-      metadata: { exitPrice: fill.price, realizedPnl: pnl },
-    });
-    return updated;
+    if (claim.count === 0) throw new BadRequestException('Position already closed');
+
+    try {
+      const fill = await venue.fill(pos.symbol, closeSide, closeQty, await this.mt5AccountFor(venue, userId));
+      const pnl = await this.realizePnl(account, pos, closeQty, fill.price, '', `pnl:${pos.id}:close`);
+      const updated = await this.prisma.position.update({
+        where: { id: positionId },
+        data: {
+          status: PositionStatus.CLOSED,
+          exitPrice: fill.price,
+          realizedPnl: toMoney((prevRealized + pnl).toFixed(2)),
+        },
+      });
+      await this.audit.record({
+        userId,
+        action: 'trade.close',
+        entity: 'Position',
+        entityId: positionId,
+        metadata: { exitPrice: fill.price, realizedPnl: pnl },
+      });
+      return updated;
+    } catch (err) {
+      // We exclusively hold the claim, so reverting is safe: restore OPEN so a
+      // failed close (e.g. no quote) doesn't strand the position as CLOSED.
+      await this.prisma.position.update({
+        where: { id: positionId },
+        data: { status: PositionStatus.OPEN, closedAt: null },
+      });
+      throw err;
+    }
   }
 
   /** Force-close a full position at a given price (TP/SL hit or stop-out). */
   private async autoClose(position: Position, price: number, reason: string): Promise<void> {
+    // Atomically claim the close so a concurrent tick or manual close can't
+    // double-close (and double-post P&L). Only the request that flips
+    // OPEN→CLOSED proceeds; the deterministic P&L key is a second safeguard.
+    const claim = await this.prisma.position.updateMany({
+      where: { id: position.id, status: PositionStatus.OPEN },
+      data: { status: PositionStatus.CLOSED, exitPrice: price, closedAt: new Date() },
+    });
+    if (claim.count === 0) return;
+
     const account = await this.prisma.tradingAccount.findUnique({
       where: { id: position.accountId },
       include: { ledgerAccount: true },
     });
     if (!account) return;
-    const pnl = await this.realizePnl(account, position, Number(position.quantity), price, reason);
+    const pnl = await this.realizePnl(account, position, Number(position.quantity), price, reason, `pnl:${position.id}:close`);
     const prevRealized = Number(position.realizedPnl ?? 0);
     await this.prisma.position.update({
       where: { id: position.id },
-      data: {
-        status: PositionStatus.CLOSED,
-        exitPrice: price,
-        realizedPnl: toMoney((prevRealized + pnl).toFixed(2)),
-        closedAt: new Date(),
-      },
+      data: { realizedPnl: toMoney((prevRealized + pnl).toFixed(2)) },
     });
     await this.audit.record({
       userId: position.userId,
@@ -409,12 +508,20 @@ export class TradingService {
       try {
         await this.assertMargin(account, price * Number(o.quantity));
       } catch {
-        await this.prisma.order.update({ where: { id: o.id }, data: { status: 'REJECTED' } });
+        await this.prisma.order.updateMany({ where: { id: o.id, status: 'PENDING' }, data: { status: 'REJECTED' } });
         this.logger.warn(`Pending order ${o.id} rejected at trigger (insufficient margin).`);
         continue;
       }
 
-      await this.prisma.order.update({ where: { id: o.id }, data: { status: 'FILLED', price } });
+      // Atomically claim the fill: only the tick that flips PENDING→FILLED opens
+      // the position. A concurrent tick that lost the claim (count 0) skips it,
+      // so one order can never produce two positions.
+      const claim = await this.prisma.order.updateMany({
+        where: { id: o.id, status: 'PENDING' },
+        data: { status: 'FILLED', price },
+      });
+      if (claim.count === 0) continue;
+
       await this.prisma.position.create({
         data: {
           userId: o.userId,

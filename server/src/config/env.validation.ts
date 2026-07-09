@@ -114,6 +114,17 @@ export const envSchema = z
         message: 'JWT access and refresh secrets must differ in production.',
       });
     }
+    // Without ENCRYPTION_KEY the CryptoService silently stores sensitive fields
+    // (e.g. 2FA TOTP secrets) as plaintext. That must never happen in production.
+    if (env.NODE_ENV === 'production' && !env.ENCRYPTION_KEY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['ENCRYPTION_KEY'],
+        message:
+          'ENCRYPTION_KEY is required in production so 2FA secrets and other ' +
+          'sensitive fields are encrypted at rest.',
+      });
+    }
   });
 
 export type Env = z.infer<typeof envSchema>;

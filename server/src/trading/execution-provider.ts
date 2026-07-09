@@ -12,6 +12,24 @@ import { toMt5Symbol } from './mt5-symbols';
 /** DI token for the active execution backend. */
 export const EXECUTION_PROVIDER = Symbol('EXECUTION_PROVIDER');
 
+/**
+ * Choose the execution venue, failing CLOSED: the real MT5 venue is used only
+ * when it is explicitly requested AND the live rail is on (TRADING_MODE=LIVE +
+ * ALLOW_LIVE_MODE=true). Otherwise we fall back to simulation so a stray
+ * EXECUTION_PROVIDER=mt5 can never send real orders while the platform believes
+ * it is simulating (H-3). `fellBack` flags that a requested MT5 was downgraded.
+ */
+export function chooseExecutionProvider<S, M>(
+  opts: { executionProvider: string; liveRailOn: boolean },
+  sim: S,
+  mt5: M,
+): { provider: S | M; fellBack: boolean } {
+  if (opts.executionProvider === 'mt5' && opts.liveRailOn) {
+    return { provider: mt5, fellBack: false };
+  }
+  return { provider: sim, fellBack: opts.executionProvider === 'mt5' };
+}
+
 export interface Fill {
   price: number;
   simulated: boolean;

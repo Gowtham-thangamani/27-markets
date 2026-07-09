@@ -56,4 +56,61 @@ describe('FundsService.withdraw', () => {
     expect(post.mock.calls[0][0].kind).toBe('WITHDRAWAL');
     expect(result.status).toBe(JournalStatus.PENDING);
   });
+
+  it('delegates the balance check to the atomic ledger post (guardBalance), not a racy pre-check', async () => {
+    const { service, post } = makeService();
+
+    await service.withdraw('user1', { accountId: 'acc1', amount: '100', method: 'bank', accountName: 'Jordan Avery', accountNumber: 'AE07 0331 1111 2222' } as any);
+
+    const arg = post.mock.calls[0][0];
+    expect(arg.guardBalance).toEqual(expect.objectContaining({ ledgerAccountId: 'client-ledger' }));
+    expect(Number(arg.guardBalance.atLeast)).toBe(100);
+  });
+});
+
+describe('FundsService.deposit — live gating (H-2)', () => {
+  const build = (simulated: boolean, minDeposit = '50') => {
+    const post = jest.fn().mockResolvedValue({ id: 'j1', reference: 'TX-1', status: JournalStatus.POSTED });
+    const prisma = { appSetting: { findUnique: jest.fn().mockResolvedValue({ value: minDeposit }) } } as any;
+    const ledger = { getSystemAccount: jest.fn().mockResolvedValue({ id: 'clearing' }), post } as any;
+    const accounts = { ledgerAccountIdFor: jest.fn().mockResolvedValue('client-ledger') } as any;
+    const audit = { record: jest.fn().mockResolvedValue(undefined) } as any;
+    const payments = { name: simulated ? 'simulation' : 'stripe', simulated, assertAvailable: jest.fn() } as any;
+    const config = { get: jest.fn() } as any;
+    return { service: new FundsService(prisma, ledger, accounts, audit, payments, config), post };
+  };
+
+  it('refuses a direct inline deposit when the provider is not simulated (live)', async () => {
+    const { service, post } = build(false);
+    await expect(
+      service.deposit('u1', { accountId: 'acc1', amount: '100', method: 'Card' } as any),
+    ).rejects.toThrow(/simulation/i);
+    expect(post).not.toHaveBeenCalled(); // no ledger credit
+  });
+
+  it('credits inline in simulation', async () => {
+    const { service, post } = build(true);
+    await service.deposit('u1', { accountId: 'acc1', amount: '100', method: 'Card' } as any);
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a deposit below the configured minimum ($50)', async () => {
+    const { service, post } = build(true);
+    await expect(
+      service.deposit('u1', { accountId: 'acc1', amount: '10', method: 'Card' } as any),
+    ).rejects.toThrow(/minimum deposit/i);
+    expect(post).not.toHaveBeenCalled();
+  });
+});
+
+describe('FundsService.transfer', () => {
+  it('guards the source-account balance atomically in the ledger post', async () => {
+    const { service, post } = makeService();
+
+    await service.transfer('user1', { fromAccountId: 'acc1', toAccountId: 'acc2', amount: '250' } as any);
+
+    const arg = post.mock.calls[0][0];
+    expect(arg.guardBalance).toEqual(expect.objectContaining({ ledgerAccountId: 'client-ledger' }));
+    expect(Number(arg.guardBalance.atLeast)).toBe(250);
+  });
 });

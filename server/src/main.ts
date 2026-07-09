@@ -24,6 +24,15 @@ async function bootstrap(): Promise<void> {
   // In development, reflect any origin (so localhost + any LAN IP/device work,
   // even when the IP changes). In production, lock to the CLIENT_ORIGIN list.
   const isDev = config.get('NODE_ENV', { infer: true }) !== 'production';
+
+  // In production the API sits behind a proxy/load-balancer (Render). Trust the
+  // first hop so req.ip — used for rate-limit keys and audit logging — reflects
+  // the real client via X-Forwarded-For, not the proxy. Bump the count if you
+  // add another proxy layer in front (e.g. Cloudflare). Dev has no proxy.
+  if (!isDev) {
+    app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  }
+
   const origins = config
     .get('CLIENT_ORIGIN', { infer: true })
     .split(',')

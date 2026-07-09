@@ -75,7 +75,9 @@ export class Mt5GatewayClient {
       });
       if (!res.ok) {
         const body = await res.text().catch(() => '');
-        throw new ServiceUnavailableException(`MT5 gateway error ${res.status}: ${body.slice(0, 200)}`);
+        // Log the upstream detail server-side; never surface it to the client.
+        this.log.error(`MT5 gateway error ${res.status}: ${body.slice(0, 500)}`);
+        throw new ServiceUnavailableException(`MT5 gateway error (${res.status}).`);
       }
       return (await res.json()) as T;
     } catch (e) {

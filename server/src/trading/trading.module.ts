@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Env } from '../config/env.validation';
 import { MarketModule } from '../market/market.module';
@@ -12,6 +12,7 @@ import {
   EXECUTION_PROVIDER,
   SimulationExecutionProvider,
   Mt5ExecutionProvider,
+  chooseExecutionProvider,
   type ExecutionProvider,
 } from './execution-provider';
 
@@ -38,7 +39,23 @@ import {
         config: ConfigService<Env, true>,
         sim: SimulationExecutionProvider,
         mt5: Mt5ExecutionProvider,
-      ): ExecutionProvider => (config.get('EXECUTION_PROVIDER', { infer: true }) === 'mt5' ? mt5 : sim),
+      ): ExecutionProvider => {
+        const liveRailOn =
+          config.get('TRADING_MODE', { infer: true }) === 'LIVE' &&
+          config.get('ALLOW_LIVE_MODE', { infer: true }) === true;
+        const { provider, fellBack } = chooseExecutionProvider(
+          { executionProvider: config.get('EXECUTION_PROVIDER', { infer: true }), liveRailOn },
+          sim,
+          mt5,
+        );
+        if (fellBack) {
+          new Logger('TradingModule').warn(
+            'EXECUTION_PROVIDER=mt5 ignored: the live rail is off (need TRADING_MODE=LIVE and ' +
+              'ALLOW_LIVE_MODE=true). Falling back to the simulation venue.',
+          );
+        }
+        return provider;
+      },
     },
   ],
 })

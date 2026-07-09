@@ -95,6 +95,11 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
     return this.updates$.asObservable();
   }
 
+  /** True if the symbol is in the configured tradable universe (open if none configured). */
+  isTradable(symbol: string): boolean {
+    return this.symbols.length === 0 || this.symbols.includes(symbol);
+  }
+
   async getQuotes(symbols: string[]): Promise<Quote[]> {
     const out: Quote[] = [];
     for (const s of symbols) {
