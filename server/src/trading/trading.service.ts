@@ -86,20 +86,34 @@ export class TradingService {
     return n > 0 ? n : 100;
   }
 
-  private async usedMargin(accountId: string, leverage: number): Promise<number> {
-    const open = await this.prisma.position.findMany({ where: { accountId, status: PositionStatus.OPEN } });
-    return open.reduce((s, p) => s + (Number(p.entryPrice) * Number(p.quantity)) / leverage, 0);
+  /** Mark-to-market unrealized P&L across open positions (0 for any without a live quote). */
+  private async unrealizedPnl(open: Position[]): Promise<number> {
+    const symbols = [...new Set(open.map((p) => p.symbol))];
+    if (!symbols.length) return 0;
+    const quotes = await this.market.getQuotes(symbols);
+    const priceOf = (s: string) => quotes.find((q) => q.symbol === s)?.price;
+    let u = 0;
+    for (const p of open) {
+      const cur = priceOf(p.symbol);
+      if (cur == null) continue;
+      u += (cur - Number(p.entryPrice)) * Number(p.quantity) * (p.side === OrderSide.BUY ? 1 : -1);
+    }
+    return u;
   }
 
   private async assertMargin(account: AccountWithLedger, notional: number): Promise<void> {
     if (!account.ledgerAccount) return;
     const leverage = this.leverageOf(account.leverage);
     const required = notional / leverage;
-    const used = await this.usedMargin(account.id, leverage);
+    const open = await this.prisma.position.findMany({ where: { accountId: account.id, status: PositionStatus.OPEN } });
+    const used = open.reduce((s, p) => s + (Number(p.entryPrice) * Number(p.quantity)) / leverage, 0);
     const balance = Number(await this.ledger.balanceOf(account.ledgerAccount.id));
-    if (used + required > balance + 1e-6) {
+    // Free margin is measured against equity (balance + unrealized P&L), so a book
+    // sitting on unrealized losses cannot keep opening new positions until stop-out.
+    const equity = balance + (await this.unrealizedPnl(open));
+    if (used + required > equity + 1e-6) {
       throw new BadRequestException(
-        `Insufficient free margin: need ${required.toFixed(2)}, free ${(balance - used).toFixed(2)} (leverage 1:${leverage}).`,
+        `Insufficient free margin: need ${required.toFixed(2)}, free ${(equity - used).toFixed(2)} (leverage 1:${leverage}).`,
       );
     }
   }
@@ -224,9 +238,10 @@ export class TradingService {
     const open = await tx.position.findMany({ where: { accountId: account.id, status: PositionStatus.OPEN } });
     const used = open.reduce((s, p) => s + (Number(p.entryPrice) * Number(p.quantity)) / leverage, 0);
     const balance = Number(await this.ledger.balanceOf(account.ledgerAccount.id));
-    if (used + required > balance + 1e-6) {
+    const equity = balance + (await this.unrealizedPnl(open));
+    if (used + required > equity + 1e-6) {
       throw new BadRequestException(
-        `Insufficient free margin: need ${required.toFixed(2)}, free ${(balance - used).toFixed(2)} (leverage 1:${leverage}).`,
+        `Insufficient free margin: need ${required.toFixed(2)}, free ${(equity - used).toFixed(2)} (leverage 1:${leverage}).`,
       );
     }
   }
@@ -321,7 +336,8 @@ export class TradingService {
         // Deterministic key so a concurrent/duplicate close cannot post P&L twice:
         // the ledger dedupes on idempotencyKey. The caller owns the key namespace.
         idempotencyKey,
-        simulated: true,
+        // Reflect the actual venue: real MT5 fills post non-simulated P&L.
+        simulated: this.execFor(account).simulated,
         createdById: position.userId,
         memo: `Realized P&L · ${position.symbol}${reason ? ` (${reason})` : ''}`,
         postings,

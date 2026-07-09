@@ -130,6 +130,52 @@ describe('TradingService — DEMO always uses the simulated venue (H-4)', () => 
   });
 });
 
+describe('TradingService.placeOrder — equity-based margin (M-10)', () => {
+  it('rejects a new order when unrealized losses have eaten the free margin', async () => {
+    // Balance 1000, one open position (entry 100 x5 = notional 500, used 500 at 1:1),
+    // now marked to 20 → unrealized -400 → equity 600, free = 100.
+    const openLoser = { id: 'p0', symbol: 'X', side: 'BUY', quantity: new Prisma.Decimal(5), entryPrice: new Prisma.Decimal(100) };
+    const txClient = {
+      $queryRaw: jest.fn().mockResolvedValue([{ id: 'cl' }]),
+      order: { create: jest.fn() },
+      position: { findMany: jest.fn().mockResolvedValue([openLoser]), create: jest.fn() },
+    };
+    const prisma = {
+      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', status: 'ACTIVE', mode: 'DEMO', leverage: '1:1', ledgerAccount: { id: 'cl' } }) },
+      $transaction: jest.fn().mockImplementation((cb: any) => cb(txClient)),
+    } as any;
+    const market = { getQuotes: jest.fn().mockResolvedValue([{ symbol: 'X', price: 20 }]), isTradable: jest.fn().mockReturnValue(true) };
+    const service = new TradingService(prisma, ledgerWith(1000) as any, audit() as any, simExec(20) as any, market as any, mt5conn() as any);
+
+    // New order needs 120 margin (20 x 6 at 1:1) but only 100 free after unrealized losses.
+    await expect(
+      service.placeOrder('u1', { accountId: 'acc1', symbol: 'X', side: 'BUY', quantity: 6 } as any),
+    ).rejects.toThrow(/free margin/i);
+  });
+});
+
+describe('TradingService.closePosition — P&L simulated flag follows the venue (M-9)', () => {
+  it('posts realized P&L as non-simulated when the account trades on a live venue', async () => {
+    const mt5exec = { name: 'mt5', simulated: false, assertAvailable: jest.fn(), fill: jest.fn().mockResolvedValue({ price: 110, simulated: false }) };
+    const ledger = ledgerWith(1000);
+    const prisma = {
+      position: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'p1', userId: 'u1', accountId: 'acc1', symbol: 'X', side: 'BUY', quantity: new Prisma.Decimal(1), entryPrice: new Prisma.Decimal(100), status: 'OPEN', realizedPnl: null }),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        update: jest.fn().mockImplementation(({ data }) => ({ id: 'p1', ...data })),
+      },
+      tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', status: 'ACTIVE', mode: 'LIVE', leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
+      order: { create: jest.fn().mockResolvedValue({}) },
+    } as any;
+    const service = new TradingService(prisma, ledger as any, audit() as any, mt5exec as any, marketWith() as any, mt5conn() as any);
+
+    await service.closePosition('u1', 'p1');
+
+    expect(ledger.post).toHaveBeenCalledTimes(1);
+    expect(ledger.post.mock.calls[0][0].simulated).toBe(false);
+  });
+});
+
 describe('TradingService.placeOrder (limit/stop)', () => {
   it('parks a LIMIT order as PENDING without opening a position', async () => {
     const order = { create: jest.fn().mockResolvedValue({ id: 'po1', status: 'PENDING' }) };
