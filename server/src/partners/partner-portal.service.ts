@@ -19,6 +19,9 @@ export interface PartnerDashboard {
   recentReferrals: PartnerClient[];
 }
 
+export interface PartnerCommissionRow { id: string; amount: number; source: string; reference: string | null; client: string; date: string }
+export interface PartnerCommissions { total: number; count: number; rows: PartnerCommissionRow[] }
+
 const DAYS = 90;
 const CLIENT_SELECT = {
   id: true, firstName: true, lastName: true, email: true, country: true, createdAt: true,
@@ -91,6 +94,37 @@ export class PartnerPortalService {
       select: CLIENT_SELECT,
     });
     return rows.map((r) => this.toClient(r));
+  }
+
+  /** The partner's own accrued commissions (newest first) with a running total. */
+  async commissions(partnerId: string): Promise<PartnerCommissions> {
+    const profile = await this.prisma.partnerProfile.findUnique({ where: { userId: partnerId } });
+    if (!profile) throw new NotFoundException('Partner profile not found');
+
+    const rows = await this.prisma.ibCommission.findMany({
+      where: { partnerId },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
+    const clientIds = [...new Set(rows.map((r) => r.clientId))];
+    const clients = clientIds.length
+      ? await this.prisma.user.findMany({ where: { id: { in: clientIds } }, select: { id: true, firstName: true, lastName: true } })
+      : [];
+    const nameById = new Map(clients.map((c) => [c.id, `${c.firstName} ${c.lastName}`]));
+
+    const total = rows.reduce((s, r) => s + Number(r.amount), 0);
+    return {
+      total: Number(total.toFixed(2)),
+      count: rows.length,
+      rows: rows.map((r) => ({
+        id: r.id,
+        amount: Number(r.amount),
+        source: r.source,
+        reference: r.reference,
+        client: nameById.get(r.clientId) ?? '—',
+        date: r.createdAt.toISOString(),
+      })),
+    };
   }
 
   async profile(partnerId: string): Promise<{ referralCode: string; referralLink: string }> {

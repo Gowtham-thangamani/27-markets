@@ -17,6 +17,9 @@ export class PartnerPortalController {
   @Get('clients')
   clients(@CurrentUser('id') userId: string) { return this.portal.clients(userId); }
 
+  @Get('commissions')
+  commissions(@CurrentUser('id') userId: string) { return this.portal.commissions(userId); }
+
   @Get('profile')
   profile(@CurrentUser('id') userId: string) { return this.portal.profile(userId); }
 }

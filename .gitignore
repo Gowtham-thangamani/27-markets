@@ -4,10 +4,11 @@ dist-ssr
 *.local
 .vite
 
-# Env (never commit real secrets; .env.example is the template)
+# Env (never commit real secrets; *.example files are templates)
 .env
 .env.*
 !.env.example
+!.env.production.example
 
 # Logs
 *.log
