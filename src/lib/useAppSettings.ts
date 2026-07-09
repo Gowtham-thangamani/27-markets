@@ -8,6 +8,7 @@ export interface PublicSettings {
   minDeposit: number
   maintenanceMode: boolean
   maintenanceMessage: string
+  liveAccountsEnabled: boolean
 }
 
 const DEFAULTS: PublicSettings = {
@@ -17,6 +18,7 @@ const DEFAULTS: PublicSettings = {
   minDeposit: 50,
   maintenanceMode: false,
   maintenanceMessage: '',
+  liveAccountsEnabled: false,
 }
 
 // Shared across all consumers so the public settings are fetched once.
