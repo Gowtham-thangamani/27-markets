@@ -1,8 +1,10 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   AccountMode,
   AccountStatus,
@@ -14,6 +16,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { LedgerService } from '../ledger/ledger.service';
 import { AuditService } from '../audit/audit.service';
+import type { Env } from '../config/env.validation';
 import { formatMoney, toMoney } from '../ledger/money';
 import { generateAccountNumber, generateTxReference } from '../common/reference';
 
@@ -42,9 +45,17 @@ export class AccountsService {
     private readonly prisma: PrismaService,
     private readonly ledger: LedgerService,
     private readonly audit: AuditService,
+    private readonly config: ConfigService<Env, true>,
   ) {}
 
   async create(userId: string, type: AccountType, mode: AccountMode): Promise<AccountView> {
+    // Simulation rail: real (LIVE) accounts must not be created until go-live.
+    if (mode === AccountMode.LIVE && !this.config.get('ALLOW_LIVE_MODE', { infer: true })) {
+      throw new BadRequestException(
+        'Live accounts are not available yet. Real funds are disabled until the platform is licensed and go-live is enabled.',
+      );
+    }
+
     const number = generateAccountNumber(mode);
 
     // Leverage is driven by the editable AccountTypeConfig; fall back to the
