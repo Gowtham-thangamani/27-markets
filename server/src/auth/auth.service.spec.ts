@@ -1,7 +1,8 @@
+import * as argon2 from 'argon2';
 import { AuthService } from './auth.service';
 
 // Constructor: (prisma, tokens, audit, leads, config, crypto, email, accounts)
-const make = (prisma: any, email: any = { sendVerifyEmail: jest.fn(), sendPasswordReset: jest.fn(), sendWelcome: jest.fn() }) =>
+const make = (prisma: any, email: any = { sendVerifyEmail: jest.fn(), sendPasswordReset: jest.fn(), sendWelcome: jest.fn(), sendLoginAlert: jest.fn() }) =>
   new AuthService(prisma, {} as any, { record: jest.fn() } as any, {} as any, {} as any, {} as any, email as any, {} as any);
 
 const future = new Date(Date.now() + 60_000);
@@ -170,5 +171,43 @@ describe('AuthService.register – referral attribution', () => {
     await service.register({ ...validRegisterDto }, { ip: '127.0.0.1' });
 
     expect(partnerFindUnique).not.toHaveBeenCalled();
+  });
+});
+
+describe('AuthService.login — login-alert email', () => {
+  const loginSetup = async (opts: { alertRejects?: boolean } = {}) => {
+    const passwordHash = await argon2.hash('secret123', { type: argon2.argon2id });
+    const user = { id: 'u1', email: 'alice@example.com', firstName: 'Alice', role: 'CLIENT', status: 'ACTIVE', passwordHash, twoFactorEnabled: false };
+    const prisma = {
+      user: { findUnique: jest.fn().mockResolvedValue(user) },
+      session: { create: jest.fn().mockResolvedValue({ id: 's1' }), update: jest.fn().mockResolvedValue({}) },
+    } as any;
+    const tokens = { signAccess: jest.fn().mockResolvedValue('at'), signRefresh: jest.fn().mockResolvedValue('rt'), hashToken: jest.fn().mockReturnValue('h') } as any;
+    const config = { get: jest.fn().mockReturnValue(604800) } as any;
+    const email = {
+      sendLoginAlert: opts.alertRejects ? jest.fn().mockRejectedValue(new Error('smtp down')) : jest.fn().mockResolvedValue(undefined),
+    } as any;
+    const audit = { record: jest.fn() } as any;
+    const service = new AuthService(prisma, tokens, audit, {} as any, config, {} as any, email, {} as any);
+    return { service, email };
+  };
+
+  it('sends a login alert with the sign-in IP and device on success', async () => {
+    const { service, email } = await loginSetup();
+
+    await service.login({ email: 'alice@example.com', password: 'secret123' } as any, { ip: '9.9.9.9', userAgent: 'Firefox' });
+
+    expect(email.sendLoginAlert).toHaveBeenCalledWith(
+      'alice@example.com',
+      expect.objectContaining({ firstName: 'Alice', ip: '9.9.9.9', device: 'Firefox' }),
+    );
+  });
+
+  it('still succeeds when the alert email fails (non-blocking)', async () => {
+    const { service } = await loginSetup({ alertRejects: true });
+
+    await expect(
+      service.login({ email: 'alice@example.com', password: 'secret123' } as any, { ip: '9.9.9.9', userAgent: 'Firefox' }),
+    ).resolves.toMatchObject({ tokens: { accessToken: 'at' } });
   });
 });

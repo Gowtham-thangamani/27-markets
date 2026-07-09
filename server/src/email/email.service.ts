@@ -24,6 +24,14 @@ const DEFAULTS: Record<string, TemplateCopy> = {
     subject: 'Welcome to 27 Markets',
     body: 'Hi {{firstName}},\n\nYour account is ready. A demo account has been created so you can start trading right away.',
   },
+  login_alert: {
+    subject: 'New sign-in to your 27 Markets account',
+    body:
+      'Hi {{firstName}},\n\nWe noticed a new sign-in to your account.\n\n' +
+      'When: {{time}}\nIP address: {{ip}}\nDevice: {{device}}\n\n' +
+      "If this was you, no action is needed. If you don't recognise this activity, " +
+      'reset your password immediately and enable two-factor authentication.',
+  },
 };
 
 /** Builds + sends the transactional onboarding emails from editable templates. */
@@ -69,6 +77,15 @@ export class EmailService {
 
   async sendWelcome(to: string, firstName: string): Promise<void> {
     const { subject, text } = await this.render('welcome', { firstName });
+    return this.provider.send({ to, subject, text });
+  }
+
+  /** Security notification sent after a successful sign-in. */
+  async sendLoginAlert(
+    to: string,
+    vars: { firstName: string; time: string; ip: string; device: string },
+  ): Promise<void> {
+    const { subject, text } = await this.render('login_alert', vars);
     return this.provider.send({ to, subject, text });
   }
 }

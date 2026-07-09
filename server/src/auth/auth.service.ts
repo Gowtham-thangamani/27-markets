@@ -204,6 +204,15 @@ export class AuthService {
 
     const tokens = await this.issueSession(user, ctx);
     await this.audit.record({ userId: user.id, action: 'auth.login', ...ctx });
+    // Security notification — fire-and-forget so a mail failure never blocks login.
+    void this.email
+      .sendLoginAlert(user.email, {
+        firstName: user.firstName,
+        time: new Date().toISOString(),
+        ip: ctx.ip ?? 'unknown',
+        device: ctx.userAgent ?? 'unknown',
+      })
+      .catch(() => undefined);
     return { user: this.toPublic(user), tokens };
   }
 
