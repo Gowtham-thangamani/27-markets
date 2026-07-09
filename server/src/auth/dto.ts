@@ -115,6 +115,16 @@ export class TotpVerifyDto {
   code!: string;
 }
 
+export class DisableTwoFactorDto {
+  @IsString()
+  @MinLength(1)
+  currentPassword!: string;
+
+  @IsString()
+  @Matches(/^\d{6}$/, { message: 'TOTP code must be 6 digits' })
+  code!: string;
+}
+
 export class ChangePasswordDto {
   @IsString()
   @MinLength(1)

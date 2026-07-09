@@ -10,6 +10,7 @@ export function SecuritySettings() {
   const toast = useToast()
   const [twoFactor, setTwoFactor] = useState<boolean | null>(null)
   const [pwOpen, setPwOpen] = useState(false)
+  const [disableOpen, setDisableOpen] = useState(false)
   const [setupData, setSetupData] = useState<TwoFactorSetup | null>(null)
 
   const refresh = useCallback(async () => {
@@ -33,15 +34,6 @@ export function SecuritySettings() {
     }
   }
 
-  const disable = async () => {
-    try {
-      await authApi.disable2fa()
-      toast.info('2FA disabled', 'Two-factor authentication has been turned off.')
-      void refresh()
-    } catch (e) {
-      toast.error('Could not disable 2FA', (e as Error).message)
-    }
-  }
 
   return (
     <div className="glass-panel p-6">
@@ -68,7 +60,7 @@ export function SecuritySettings() {
             )}
           </div>
           {twoFactor ? (
-            <Button size="sm" variant="ghost" onClick={disable}>
+            <Button size="sm" variant="ghost" onClick={() => setDisableOpen(true)}>
               Disable
             </Button>
           ) : (
@@ -88,7 +80,65 @@ export function SecuritySettings() {
           void refresh()
         }}
       />
+      <Disable2faModal
+        open={disableOpen}
+        onClose={() => setDisableOpen(false)}
+        onDisabled={() => {
+          setDisableOpen(false)
+          void refresh()
+        }}
+      />
     </div>
+  )
+}
+
+function Disable2faModal({ open, onClose, onDisabled }: { open: boolean; onClose: () => void; onDisabled: () => void }) {
+  const toast = useToast()
+  const [password, setPassword] = useState('')
+  const [code, setCode] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  const submit = async () => {
+    setError(null)
+    if (!password) return setError('Enter your current password')
+    if (!/^\d{6}$/.test(code)) return setError('Enter the 6-digit code from your authenticator')
+    setSaving(true)
+    try {
+      await authApi.disable2fa(password, code)
+      toast.info('2FA disabled', 'Two-factor authentication has been turned off.')
+      setPassword('')
+      setCode('')
+      onDisabled()
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Could not disable 2FA')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title="Disable two-factor authentication" description="Confirm your identity to turn off 2FA — this removes an account-protection layer.">
+      <div className="space-y-4">
+        <Input label="Current password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <Input
+          label="Authentication code"
+          inputMode="numeric"
+          placeholder="123456"
+          value={code}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+          error={error ?? undefined}
+        />
+        <div className="flex gap-3">
+          <Button variant="outline" fullWidth onClick={onClose}>
+            Cancel
+          </Button>
+          <Button fullWidth loading={saving} onClick={submit}>
+            Disable 2FA
+          </Button>
+        </div>
+      </div>
+    </Modal>
   )
 }
 

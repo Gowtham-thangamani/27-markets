@@ -17,7 +17,7 @@ import { EmailService } from '../email/email.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { LeadsService } from '../leads/leads.service';
 import { TokensService } from './tokens.service';
-import { RegisterDto, LoginDto } from './dto';
+import { RegisterDto, LoginDto, DisableTwoFactorDto } from './dto';
 import type { Env } from '../config/env.validation';
 
 export interface RequestContext {
@@ -351,7 +351,18 @@ export class AuthService {
     await this.audit.record({ userId, action: 'auth.2fa.enabled', ...ctx });
   }
 
-  async disableTwoFactor(userId: string, ctx: RequestContext): Promise<void> {
+  async disableTwoFactor(userId: string, dto: DisableTwoFactorDto, ctx: RequestContext): Promise<void> {
+    // Step-up re-auth: disabling 2FA removes an account-takeover barrier, so it
+    // must require the current password AND a valid current code — a stolen
+    // access token alone can't turn it off.
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('Not authenticated');
+    const pwOk = await argon2.verify(user.passwordHash, dto.currentPassword).catch(() => false);
+    if (!pwOk) throw new UnauthorizedException('Current password is incorrect.');
+    const secret = user.twoFactorSecret ? this.crypto.decrypt(user.twoFactorSecret) : '';
+    if (!authenticator.verify({ token: dto.code, secret })) {
+      throw new UnauthorizedException('Invalid two-factor code.');
+    }
     await this.prisma.user.update({
       where: { id: userId },
       data: { twoFactorEnabled: false, twoFactorSecret: null },

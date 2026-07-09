@@ -258,3 +258,39 @@ describe('AuthService.isTotpReplay', () => {
     expect(AuthService.isTotpReplay(100, undefined)).toBe(false);
   });
 });
+
+jest.mock('otplib', () => ({ authenticator: { verify: jest.fn(), generate: jest.fn(), keyuri: jest.fn(), options: {} } }));
+describe('AuthService.disableTwoFactor — re-auth (M-2)', () => {
+  const argon2mod = require('argon2');
+  const { authenticator } = require('otplib');
+  const build = async () => {
+    const passwordHash = await argon2mod.hash('mypassword', { type: argon2mod.argon2id });
+    const user = { id: 'u1', passwordHash, twoFactorEnabled: true, twoFactorSecret: 'enc-secret' };
+    const update = jest.fn().mockResolvedValue({});
+    const prisma = { user: { findUnique: jest.fn().mockResolvedValue(user), update } } as any;
+    const crypto = { decrypt: jest.fn().mockReturnValue('SECRET') } as any;
+    const service = new AuthService(prisma, {} as any, { record: jest.fn() } as any, {} as any, {} as any, crypto, {} as any, {} as any);
+    return { service, update };
+  };
+
+  it('rejects when the current password is wrong', async () => {
+    const { service, update } = await build();
+    (authenticator.verify as jest.Mock).mockReturnValue(true);
+    await expect(service.disableTwoFactor('u1', { currentPassword: 'WRONG', code: '123456' } as any, {})).rejects.toThrow();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('rejects when the TOTP code is invalid', async () => {
+    const { service, update } = await build();
+    (authenticator.verify as jest.Mock).mockReturnValue(false);
+    await expect(service.disableTwoFactor('u1', { currentPassword: 'mypassword', code: '000000' } as any, {})).rejects.toThrow();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('disables 2FA when password and TOTP are both valid', async () => {
+    const { service, update } = await build();
+    (authenticator.verify as jest.Mock).mockReturnValue(true);
+    await service.disableTwoFactor('u1', { currentPassword: 'mypassword', code: '123456' } as any, {});
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'u1' }, data: expect.objectContaining({ twoFactorEnabled: false, twoFactorSecret: null }) }));
+  });
+});
