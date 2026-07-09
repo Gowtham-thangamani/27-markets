@@ -22,7 +22,7 @@ export function Logo({ className, size = 48 }: LogoProps) {
     <span className={cn('inline-flex items-center', className)}>
       {/* inline height overrides Tailwind preflight `img { height: auto }` */}
       <img
-        src={asset(onLight ? 'logo-black.png' : 'logo-white.png')}
+        src={asset(onLight ? 'logo-black.webp' : 'logo-white.webp')}
         alt="27 Markets"
         style={{ height: size, width: 'auto' }}
         className="select-none"

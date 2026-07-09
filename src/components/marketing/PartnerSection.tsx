@@ -53,7 +53,7 @@ export function PartnerSection() {
                 />
                 <Parallax amount={45} className="relative mx-auto w-full max-w-2xl lg:scale-110">
                   <img
-                    src={asset('globe.png')}
+                    src={asset('globe.webp')}
                     alt="27 Markets global trading network"
                     className="globe-pulse w-full select-none"
                   />
@@ -61,8 +61,8 @@ export function PartnerSection() {
                     className="globe-sweep"
                     aria-hidden
                     style={{
-                      WebkitMaskImage: `url(${asset('globe.png')})`,
-                      maskImage: `url(${asset('globe.png')})`,
+                      WebkitMaskImage: `url(${asset('globe.webp')})`,
+                      maskImage: `url(${asset('globe.webp')})`,
                     }}
                   />
                 </Parallax>

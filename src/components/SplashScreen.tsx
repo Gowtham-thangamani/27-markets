@@ -58,7 +58,7 @@ export function SplashScreen() {
           <div className="relative flex flex-col items-center">
             {/* Logo — a gentle fade + rise */}
             <motion.img
-              src={asset('logo-white.png')}
+              src={asset('logo-white.webp')}
               alt="27 Markets"
               style={{ height: 72, width: 'auto' }}
               className="select-none"

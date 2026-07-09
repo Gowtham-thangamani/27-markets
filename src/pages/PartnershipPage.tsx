@@ -31,7 +31,7 @@ export default function PartnershipPage() {
             <div className="mb-6 flex justify-center">
               <span className="relative inline-block">
                 <img
-                  src={asset('logo.png')}
+                  src={asset('logo.webp')}
                   alt="27 Markets"
                   className="globe-pulse block h-16 w-auto select-none sm:h-20"
                 />
@@ -40,8 +40,8 @@ export default function PartnershipPage() {
                   className="infinity-sweep"
                   aria-hidden
                   style={{
-                    WebkitMaskImage: `url(${asset('logo.png')})`,
-                    maskImage: `url(${asset('logo.png')})`,
+                    WebkitMaskImage: `url(${asset('logo.webp')})`,
+                    maskImage: `url(${asset('logo.webp')})`,
                   }}
                 />
               </span>

@@ -53,7 +53,7 @@ export default function ContactPage() {
         <div className="space-y-4">
           <Reveal>
             <img
-              src={asset('hero-trading.png')}
+              src={asset('hero-trading.webp')}
               alt="27 Markets — bull market strength"
               className="mb-2 w-full select-none rounded-2xl drop-shadow-[0_30px_90px_rgba(225,29,46,0.3)]"
             />

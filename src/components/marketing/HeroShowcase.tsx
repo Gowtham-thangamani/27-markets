@@ -69,7 +69,7 @@ function CalloutCard({ tag, icon: Icon, title, desc, side }: Callout) {
 export function HeroShowcase({ onLight }: { onLight?: boolean }) {
   const themeLight = useThemeSafe() === 'light'
   const light = onLight ?? themeLight
-  const device = light ? 'hero-platform-light.png' : 'hero-platform.png'
+  const device = light ? 'hero-platform-light.webp' : 'hero-platform.webp'
   const left = CALLOUTS.filter((c) => c.side === 'left')
   const right = CALLOUTS.filter((c) => c.side === 'right')
 
