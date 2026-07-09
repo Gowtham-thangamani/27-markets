@@ -211,3 +211,38 @@ describe('AuthService.login — login-alert email', () => {
     ).resolves.toMatchObject({ tokens: { accessToken: 'at' } });
   });
 });
+
+describe('AuthService.login — brute-force lockout (H-7)', () => {
+  const argon2mod = require('argon2');
+  const build = async (userOverrides: any) => {
+    const passwordHash = await argon2mod.hash('secret123', { type: argon2mod.argon2id });
+    const user = { id: 'u1', email: 'a@x.com', firstName: 'A', role: 'CLIENT', status: 'ACTIVE', passwordHash, twoFactorEnabled: false, failedLoginAttempts: 0, lockedUntil: null, ...userOverrides };
+    const update = jest.fn().mockResolvedValue({});
+    const prisma = {
+      user: { findUnique: jest.fn().mockResolvedValue(user), update },
+      session: { create: jest.fn().mockResolvedValue({ id: 's1' }), update: jest.fn().mockResolvedValue({}) },
+    } as any;
+    const tokens = { signAccess: jest.fn().mockResolvedValue('at'), signRefresh: jest.fn().mockResolvedValue('rt'), hashToken: jest.fn().mockReturnValue('h') } as any;
+    const config = { get: jest.fn().mockReturnValue(604800) } as any;
+    const email = { sendLoginAlert: jest.fn().mockResolvedValue(undefined) } as any;
+    const service = new AuthService(prisma, tokens, { record: jest.fn() } as any, {} as any, config, {} as any, email, {} as any);
+    return { service, update };
+  };
+
+  it('rejects login while the account is locked', async () => {
+    const { service } = await build({ lockedUntil: new Date(Date.now() + 60_000) });
+    await expect(service.login({ email: 'a@x.com', password: 'secret123' } as any, {})).rejects.toThrow(/locked/i);
+  });
+
+  it('locks the account after the 5th consecutive failed attempt', async () => {
+    const { service, update } = await build({ failedLoginAttempts: 4 });
+    await expect(service.login({ email: 'a@x.com', password: 'WRONG' } as any, {})).rejects.toThrow(/invalid credentials/i);
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'u1' }, data: expect.objectContaining({ lockedUntil: expect.any(Date) }) }));
+  });
+
+  it('resets the failed-attempt counter on a successful login', async () => {
+    const { service, update } = await build({ failedLoginAttempts: 3 });
+    await service.login({ email: 'a@x.com', password: 'secret123' } as any, {});
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'u1' }, data: expect.objectContaining({ failedLoginAttempts: 0, lockedUntil: null }) }));
+  });
+});

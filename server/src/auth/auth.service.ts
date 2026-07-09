@@ -25,6 +25,11 @@ export interface RequestContext {
   userAgent?: string;
 }
 
+/** Brute-force lockout: lock an account after this many consecutive failures… */
+const MAX_FAILED_ATTEMPTS = 5;
+/** …for this long (15 minutes). */
+const LOCKOUT_MS = 15 * 60 * 1000;
+
 export interface IssuedTokens {
   accessToken: string;
   refreshToken: string;
@@ -180,6 +185,13 @@ export class AuthService {
 
   async login(dto: LoginDto, ctx: RequestContext): Promise<{ user: PublicUser; tokens: IssuedTokens }> {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } });
+    const now = new Date();
+
+    // Brute-force lockout: refuse while the account is locked, before any password work.
+    if (user?.lockedUntil && user.lockedUntil > now) {
+      await this.audit.record({ userId: user.id, action: 'auth.login.locked', ...ctx });
+      throw new UnauthorizedException('Account temporarily locked due to too many failed attempts. Try again later.');
+    }
 
     // Constant-ish failure: still verify against a dummy hash to reduce timing leaks.
     const ok = user
@@ -189,6 +201,17 @@ export class AuthService {
           .catch(() => false);
 
     if (!user || !ok || user.status !== 'ACTIVE') {
+      if (user) {
+        // Count this failure; lock the account once the threshold is reached.
+        const attempts = user.failedLoginAttempts + 1;
+        const lock = attempts >= MAX_FAILED_ATTEMPTS;
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: lock
+            ? { failedLoginAttempts: 0, lockedUntil: new Date(now.getTime() + LOCKOUT_MS) }
+            : { failedLoginAttempts: attempts },
+        });
+      }
       await this.audit.record({ userId: user?.id, action: 'auth.login.failed', metadata: { email: dto.email }, ...ctx });
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -200,6 +223,11 @@ export class AuthService {
       const secret = user.twoFactorSecret ? this.crypto.decrypt(user.twoFactorSecret) : '';
       const valid = authenticator.verify({ token: dto.totp, secret });
       if (!valid) throw new UnauthorizedException('Invalid two-factor code');
+    }
+
+    // Successful login: clear any accumulated failed-attempt / lockout state.
+    if (user.failedLoginAttempts > 0 || user.lockedUntil) {
+      await this.prisma.user.update({ where: { id: user.id }, data: { failedLoginAttempts: 0, lockedUntil: null } });
     }
 
     const tokens = await this.issueSession(user, ctx);
