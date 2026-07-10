@@ -102,10 +102,6 @@ function TickerIcon({ symbol }: { symbol: string }) {
 
 // Curated symbols for the homepage strip.
 const TICKER = [
-  'BINANCE:BTCUSDT',
-  'BINANCE:ETHUSDT',
-  'BINANCE:SOLUSDT',
-  'BINANCE:XRPUSDT',
   'OANDA:EUR_USD',
   'OANDA:GBP_USD',
   'OANDA:USD_JPY',

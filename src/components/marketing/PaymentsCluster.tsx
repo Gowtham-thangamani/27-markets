@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { Landmark, ShieldCheck, Lock, BadgeCheck } from 'lucide-react'
-import { SiVisa, SiPaypal, SiApplepay, SiGooglepay, SiBitcoin } from 'react-icons/si'
+import { SiVisa, SiPaypal, SiApplepay, SiGooglepay } from 'react-icons/si'
 import { Reveal } from '@/components/Reveal'
 import { asset } from '@/lib/asset'
 import { cardReveal, cardStagger } from '@/lib/motion'
@@ -29,7 +29,6 @@ type Brand =
   | 'perfectmoney'
   | 'worldpay'
   | 'banktransfer'
-  | 'crypto'
 
 interface Bubble {
   brand: Brand
@@ -49,7 +48,6 @@ const BUBBLES: Bubble[] = [
   { brand: 'banktransfer', label: 'Bank Transfer', top: '28%', left: '74%', size: 'md' },
   { brand: 'mastercard', label: 'Mastercard', top: '66%', left: '11%', size: 'lg' },
   { brand: 'neteller', label: 'Neteller', top: '58%', left: '52%', size: 'md' },
-  { brand: 'crypto', label: 'Crypto', top: '52%', left: '80%', size: 'sm' },
   { brand: 'paypal', label: 'PayPal', top: '82%', left: '40%', size: 'md' },
   { brand: 'worldpay', label: 'WorldPay', top: '82%', left: '70%', size: 'sm' },
 ]
@@ -104,8 +102,6 @@ function BrandLogo({ brand, size }: { brand: Brand; size: Bubble['size'] }) {
       return <SiApplepay className={h} style={{ color: '#000000' }} aria-hidden />
     case 'googlepay':
       return <SiGooglepay className={h} style={{ color: '#5F6368' }} aria-hidden />
-    case 'crypto':
-      return <SiBitcoin className={h} style={{ color: '#F7931A' }} aria-hidden />
     case 'mastercard':
       return (
         <svg viewBox="0 0 48 30" className={size === 'lg' ? 'h-9 w-14' : 'h-8 w-12'} aria-hidden>
@@ -162,8 +158,8 @@ export function PaymentsCluster() {
               Methods of payment, card types &amp; currencies accepted
             </h2>
             <p className="mt-4 max-w-md text-base leading-relaxed text-gray-300">
-              Fund your account securely using major credit and debit cards, e-wallets, bank
-              transfers, and crypto. All accounts are held in USD, with a minimum deposit of just
+              Fund your account securely using major credit and debit cards, e-wallets, and bank
+              transfers. All accounts are held in USD, with a minimum deposit of just
               $50 and no minimum withdrawal.
             </p>
           </Reveal>

@@ -15,7 +15,6 @@ const categories: (InstrumentCategory | 'All')[] = [
   'Indices',
   'Commodities',
   'Stocks',
-  'Crypto',
 ]
 
 export function InstrumentsExplorer({ initialCategory }: { initialCategory?: InstrumentCategory }) {
