@@ -153,7 +153,7 @@ export function Navbar() {
         )}
       >
         <Link to="/" aria-label="27 Markets home">
-          <Logo size={23} />
+          <Logo size={40} />
         </Link>
 
         <ul className="hidden items-center gap-1 lg:flex">
