@@ -82,6 +82,7 @@ model User {
   savedCards          SavedCard[]
   verificationTokens  VerificationToken[]
   mt5Connection       Mt5Connection?
+  notifications       Notification[]
 
   // Partner / IB
   partnerProfile      PartnerProfile?      @relation("UserPartnerProfile")
@@ -92,6 +93,27 @@ model User {
   partnerAppResult    PartnerApplication?  @relation("PartnerAppResult")
 
   @@index([email])
+}
+
+enum NotificationKind {
+  INFO
+  SUCCESS
+  WARNING
+}
+
+// Per-user in-app notification (deposit confirmed, withdrawal paid, etc.).
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  kind      NotificationKind @default(INFO)
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
 }
 
 enum Mt5ConnectionStatus {

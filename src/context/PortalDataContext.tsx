@@ -21,7 +21,7 @@ import type {
   TradingAccount,
   Transaction,
 } from '@/lib/types'
-import { seedNotifications, seedTickets } from '@/mock/data'
+import { seedTickets } from '@/mock/data'
 
 interface MoneyInput {
   accountId: string
@@ -69,26 +69,26 @@ export function PortalDataProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // No backend module for these yet — kept client-side and clearly local.
+  // Support tickets have no backend module yet — kept client-side and clearly local.
   const [tickets, setTickets] = useLocalStorage<SupportTicket[]>('apex.tickets', seedTickets)
-  const [notifications, setNotifications] = useLocalStorage<NotificationItem[]>(
-    'apex.notifications',
-    seedNotifications,
-  )
+  // Notifications are backend-persisted (deposit/withdrawal events, etc.).
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
 
   const refresh = useCallback(async () => {
     if (!isAuthenticated) return
     setLoading(true)
     setError(null)
     try {
-      const [accs, txs, kycStatus] = await Promise.all([
+      const [accs, txs, kycStatus, notifs] = await Promise.all([
         api.get<ApiAccount[]>('/accounts'),
         api.get<ApiTransaction[]>('/funds/history'),
         api.get<ApiKycStatus>('/kyc'),
+        api.get<NotificationItem[]>('/notifications').catch(() => [] as NotificationItem[]),
       ])
       setAccounts(accs.map(mapAccount))
       setTransactions(txs.map(mapTransaction))
       setKyc(mapKyc(kycStatus))
+      setNotifications(notifs)
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Failed to load portal data')
     } finally {
@@ -103,6 +103,7 @@ export function PortalDataProvider({ children }: { children: ReactNode }) {
       setAccounts([])
       setTransactions([])
       setKyc([])
+      setNotifications([])
     }
   }, [isAuthenticated, refresh])
 
@@ -200,10 +201,10 @@ export function PortalDataProvider({ children }: { children: ReactNode }) {
     [setTickets],
   )
 
-  const markAllNotificationsRead = useCallback(
-    () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true }))),
-    [setNotifications],
-  )
+  const markAllNotificationsRead = useCallback(() => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+    void api.post('/notifications/read-all').catch(() => undefined)
+  }, [])
 
   return (
     <PortalDataContext.Provider
