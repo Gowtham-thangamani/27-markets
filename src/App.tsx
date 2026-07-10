@@ -43,6 +43,7 @@ const AdminNotificationTemplatesPage = lazy(() => import('./pages/admin/AdminNot
 const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'))
 const AdminServersPage = lazy(() => import('./pages/admin/AdminServersPage'))
 const AdminEconomicCalendarPage = lazy(() => import('./pages/admin/AdminEconomicCalendarPage'))
+const AdminInstrumentsPage = lazy(() => import('./pages/admin/AdminInstrumentsPage'))
 const AdminPaymentMethodTypesPage = lazy(() => import('./pages/admin/AdminPaymentMethodTypesPage'))
 const AdminExchangeRatesPage = lazy(() => import('./pages/admin/AdminExchangeRatesPage'))
 const AdminKycFieldsPage = lazy(() => import('./pages/admin/AdminKycFieldsPage'))
@@ -181,6 +182,7 @@ export default function App() {
         <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="servers" element={<AdminServersPage />} />
         <Route path="economic-calendar" element={<AdminEconomicCalendarPage />} />
+        <Route path="instruments" element={<AdminInstrumentsPage />} />
         <Route path="credit-card-types" element={<AdminPaymentMethodTypesPage category="CARD" title="Credit Card Types" subtitle="Card brands accepted for deposits." />} />
         <Route path="ewallet-types" element={<AdminPaymentMethodTypesPage category="EWALLET" title="E-Wallet Types" subtitle="E-wallet providers accepted for deposits." />} />
         <Route path="exchange-rates" element={<AdminExchangeRatesPage />} />

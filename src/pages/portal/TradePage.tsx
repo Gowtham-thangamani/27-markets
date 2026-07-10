@@ -12,7 +12,7 @@ import { useLiveQuotes } from '@/lib/useLiveQuotes'
 import { useCandles } from '@/lib/useCandles'
 import { ApiError } from '@/lib/api'
 import { tradingApi, type OrderSide, type OrderType, type OrderStatus, type Order, type Position, type Margin } from '@/lib/tradingApi'
-import { instruments } from '@/mock/data'
+import { useTradeInstruments } from '@/lib/useTradeInstruments'
 import { formatCurrency } from '@/lib/format'
 import { cn } from '@/lib/cn'
 
@@ -35,14 +35,6 @@ function Stat({ label, value, tone = 'neutral' }: { label: string; value: string
   )
 }
 
-// Tradeable instruments = those with a live price feed (simulated execution
-// fills at the live price). Derived from the shared instrument list so the
-// terminal stays in sync with the public markets page.
-const INSTRUMENTS = instruments
-  .filter((i) => i.feed)
-  .map((i) => ({ sym: i.feed as string, label: i.symbol, name: i.name }))
-const symLabel = (s: string) => INSTRUMENTS.find((i) => i.sym === s)?.label ?? s
-const isTradeable = (s: string | null): s is string => !!s && INSTRUMENTS.some((i) => i.sym === s)
 const fmtNum = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 export default function TradePage() {
@@ -53,6 +45,12 @@ export default function TradePage() {
   const [params] = useSearchParams()
   const urlSymbol = params.get('symbol')
   const demoAccounts = useMemo(() => accounts.filter((a) => a.mode === 'Demo'), [accounts])
+
+  // Tradeable instruments = those with a live price feed, from the admin-managed
+  // backend catalog (falls back to the shared seed until it loads).
+  const INSTRUMENTS = useTradeInstruments()
+  const symLabel = (s: string) => INSTRUMENTS.find((i) => i.sym === s)?.label ?? s
+  const isTradeable = (s: string | null): s is string => !!s && INSTRUMENTS.some((i) => i.sym === s)
 
   const [positions, setPositions] = useState<Position[]>([])
   const [orders, setOrders] = useState<Order[]>([])

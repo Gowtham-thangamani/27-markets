@@ -158,6 +158,24 @@ model EconomicEvent {
   @@index([enabled, eventAt])
 }
 
+// Tradeable instrument catalog, managed from the admin CRM. Live prices come
+// from the market feed (via `feed`); this defines the tradeable universe.
+model TradingInstrument {
+  id        String   @id @default(cuid())
+  symbol    String   @unique // display symbol, e.g. "EUR/USD"
+  name      String
+  category  String // Forex | Metals | Indices | Commodities | Stocks | Crypto
+  feed      String? // provider feed symbol (e.g. "OANDA:EUR_USD"); null = no live feed
+  spread    Float    @default(0)
+  enabled   Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([enabled, sortOrder])
+  @@index([category])
+}
+
 enum Mt5ConnectionStatus {
   PENDING
   CONNECTED
