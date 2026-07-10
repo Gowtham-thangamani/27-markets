@@ -30,6 +30,7 @@ import { LeadsModule } from './leads/leads.module';
 import { PartnersModule } from './partners/partners.module';
 import { ChatModule } from './chat/chat.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { DownloadsModule } from './downloads/downloads.module';
 import { HealthController } from './health/health.controller';
 
 @Module({
@@ -57,6 +58,7 @@ import { HealthController } from './health/health.controller';
     PartnersModule,
     ChatModule,
     NotificationsModule,
+    DownloadsModule,
   ],
   controllers: [HealthController],
   providers: [

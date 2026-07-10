@@ -57,6 +57,7 @@ const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'))
 const AdminStaffPage = lazy(() => import('./pages/admin/AdminStaffPage'))
 const AdminBlogListPage = lazy(() => import('./pages/admin/AdminBlogListPage'))
 const AdminBlogEditorPage = lazy(() => import('./pages/admin/AdminBlogEditorPage'))
+const AdminDownloadsPage = lazy(() => import('./pages/admin/AdminDownloadsPage'))
 const AdminPlaceholderPage = lazy(() => import('./pages/admin/AdminPlaceholderPage'))
 
 const HomePage = lazy(() => import('./pages/HomePage'))
@@ -199,6 +200,7 @@ export default function App() {
         <Route path="blog" element={<AdminBlogListPage />} />
         <Route path="blog/new" element={<AdminBlogEditorPage />} />
         <Route path="blog/:id" element={<AdminBlogEditorPage />} />
+        <Route path="downloads" element={<AdminDownloadsPage />} />
         {placeholderLinks().map((l) => (
           <Route key={l.to} path={l.to.replace('/admin/', '')} element={<AdminPlaceholderPage />} />
         ))}
