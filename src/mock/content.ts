@@ -163,7 +163,7 @@ export const marketCategories: MarketCategory[] = [
   {
     key: 'Stocks',
     icon: CandlestickChart,
-    image: '/icon-stocks.webp',
+    image: '/icon-stocks-neon.webp',
     title: 'Stocks',
     subtitle: 'Global share CFDs',
     examples: 'AAPL · TSLA · NVDA',
