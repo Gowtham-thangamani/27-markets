@@ -17,6 +17,7 @@ export default function PartnerDashboardPage() {
   const [data, setData] = useState<PartnerDashboard | null>(null)
   const [commissions, setCommissions] = useState<PartnerCommissions | null>(null)
   const [loading, setLoading] = useState(true)
+  const [payingOut, setPayingOut] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
@@ -29,6 +30,20 @@ export default function PartnerDashboardPage() {
     finally { setLoading(false) }
   }, [])
   useEffect(() => { void load() }, [load])
+
+  const requestPayout = useCallback(async () => {
+    setPayingOut(true)
+    try {
+      const r = await partnerApi.requestPayout()
+      toast.success('Payout requested', `${formatCurrency(r.amount)} is pending finance approval.`)
+      const comm = await partnerApi.getCommissions()
+      setCommissions(comm)
+    } catch (e) {
+      toast.error('Could not request payout', e instanceof ApiError ? e.message : 'Please try again.')
+    } finally {
+      setPayingOut(false)
+    }
+  }, [toast])
 
   if (error) return (<><PageTitle title="Dashboard" subtitle="Your referral performance." /><ErrorState description={error} onRetry={load} /></>)
   if (loading || !data) return (<><PageTitle title="Dashboard" subtitle="Your referral performance." /><div className="grid grid-cols-2 gap-4 lg:grid-cols-4">{Array.from({length:4}).map((_,i)=><SkeletonCard key={i} />)}</div></>)
@@ -85,9 +100,20 @@ export default function PartnerDashboardPage() {
       </div>
 
       <div className="mt-4 glass-panel p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-white">Recent commissions</h3>
-          <span className="text-xs text-gray-500">{commissions?.count ?? 0} total · {formatCurrency(commissions?.total ?? 0)} earned</span>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-white">Recent commissions</h3>
+            <p className="mt-0.5 text-xs text-gray-500">
+              {formatCurrency(commissions?.total ?? 0)} earned · {formatCurrency(commissions?.available ?? 0)} available to withdraw
+            </p>
+          </div>
+          <button
+            disabled={!commissions || commissions.available <= 0 || payingOut}
+            onClick={requestPayout}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-3 py-2 text-xs font-semibold text-onaccent hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {payingOut ? 'Requesting…' : `Request payout${commissions && commissions.available > 0 ? ` · ${formatCurrency(commissions.available)}` : ''}`}
+          </button>
         </div>
         {!commissions || commissions.rows.length === 0 ? (
           <p className="text-sm text-gray-500">No commissions yet. You earn a commission when a referred client deposits.</p>

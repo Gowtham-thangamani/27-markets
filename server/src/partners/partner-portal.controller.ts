@@ -1,5 +1,5 @@
 // server/src/partners/partner-portal.controller.ts
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser, Roles } from '../common/decorators';
@@ -19,6 +19,10 @@ export class PartnerPortalController {
 
   @Get('commissions')
   commissions(@CurrentUser('id') userId: string) { return this.portal.commissions(userId); }
+
+  @HttpCode(200)
+  @Post('payouts')
+  requestPayout(@CurrentUser('id') userId: string) { return this.portal.requestPayout(userId); }
 
   @Get('profile')
   profile(@CurrentUser('id') userId: string) { return this.portal.profile(userId); }

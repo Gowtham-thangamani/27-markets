@@ -219,7 +219,37 @@ model IbCommission {
   reference String?
   createdAt DateTime @default(now())
 
+  // When set, this commission has been reserved by / settled in a payout.
+  payoutId String?
+  payout   PartnerPayout? @relation(fields: [payoutId], references: [id])
+
   @@index([partnerId])
+  @@index([payoutId])
+}
+
+enum PartnerPayoutStatus {
+  PENDING
+  PAID
+  REJECTED
+}
+
+// A partner's request to be paid out their accrued commission. Mirrors the
+// deposit/withdrawal "request → admin approve" pattern. The included commissions
+// are linked via IbCommission.payoutId (reserved on request, released on reject).
+model PartnerPayout {
+  id           String              @id @default(cuid())
+  partnerId    String
+  amount       Decimal             @db.Decimal(18, 2)
+  status       PartnerPayoutStatus @default(PENDING)
+  reference    String              @unique
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime            @default(now())
+
+  commissions IbCommission[]
+
+  @@index([partnerId])
+  @@index([status])
 }
 
 // Introducing-broker (IB) campaigns with tracking codes, managed from the admin CRM.

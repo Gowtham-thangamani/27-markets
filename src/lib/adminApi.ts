@@ -412,6 +412,15 @@ export interface PartnerItem {
   commissionTotal: number
 }
 
+export interface PartnerPayout {
+  id: string
+  reference: string
+  amount: number
+  status: string
+  createdAt: string
+  partner: { name: string; email: string } | null
+}
+
 export interface PartnerCommission {
   id: string
   client: string
@@ -574,4 +583,7 @@ export const adminApi = {
   // Partners / IB
   listPartners: () => api.get<PartnerItem[]>('/admin/partners'),
   listPartnerCommissions: (id: string) => api.get<PartnerCommission[]>(`/admin/partners/${id}/commissions`),
+  listPartnerPayouts: () => api.get<PartnerPayout[]>('/admin/partners/payouts/pending'),
+  approvePartnerPayout: (id: string) => api.post(`/admin/partners/payouts/${id}/approve`),
+  rejectPartnerPayout: (id: string) => api.post(`/admin/partners/payouts/${id}/reject`),
 }
