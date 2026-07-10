@@ -6,6 +6,7 @@ import { Reveal } from '@/components/Reveal'
 import { PageHeader } from '@/components/marketing/PageHeader'
 import { useToast } from '@/context/ToastContext'
 import { asset } from '@/lib/asset'
+import { api, ApiError } from '@/lib/api'
 import { zodResolver } from '@/lib/zodResolver'
 import { contactSchema, type ContactValues } from '@/lib/validation'
 import { useT } from '@/i18n/LanguageContext'
@@ -32,12 +33,25 @@ export default function ContactPage() {
   } = useForm<ContactValues>({ resolver: zodResolver(contactSchema) })
 
   const onSubmit = async (values: ContactValues) => {
-    await new Promise((r) => setTimeout(r, 800))
-    toast.success(
-      t('ctp.toastTitle'),
-      t('ctp.toastBody').replace('{name}', values.fullName.split(' ')[0]),
-    )
-    reset()
+    try {
+      await api.post('/leads', {
+        name: values.fullName,
+        email: values.email,
+        subject: values.subject,
+        message: values.message,
+        source: 'MANUAL',
+      })
+      toast.success(
+        t('ctp.toastTitle'),
+        t('ctp.toastBody').replace('{name}', values.fullName.split(' ')[0]),
+      )
+      reset()
+    } catch (e) {
+      toast.error(
+        'Message not sent',
+        e instanceof ApiError ? e.message : 'Please try again, or email info@27markets.com.',
+      )
+    }
   }
 
   return (

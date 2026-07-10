@@ -35,6 +35,13 @@ export default function DisclaimerPage() {
             directors, officers or employees.
           </p>
           <p>
+            <span className="font-semibold text-white">Restricted Regions:</span> 27 Markets Ltd
+            does not provide services for citizens/residents of the United States, Cuba, Iraq,
+            Myanmar, North Korea, Sudan, United Arab Emirates and India. The services of 27 Markets
+            Ltd are not intended for distribution to, or use by, any person in any country or
+            jurisdiction where such distribution or use would be contrary to local law or regulation.
+          </p>
+          <p>
             Information on this site is not directed at residents in any country or jurisdiction where
             such distribution or use would be contrary to local law or regulation.
           </p>

@@ -121,6 +121,8 @@ export interface Lead {
   email: string
   phone: string | null
   country: string | null
+  subject: string | null
+  message: string | null
   source: LeadSource
   status: LeadStatus
   assignedToId: string | null
