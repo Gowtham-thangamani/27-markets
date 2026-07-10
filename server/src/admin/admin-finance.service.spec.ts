@@ -10,6 +10,7 @@ const payments = () => ({
   simulated: true,
 });
 const cfg = () => ({ get: () => 'SIMULATION' }) as any;
+const notify = () => ({ create: jest.fn() }) as any;
 
 describe('AdminFinanceService.approveWithdrawal', () => {
   const pendingEntry = () => ({
@@ -25,7 +26,7 @@ describe('AdminFinanceService.approveWithdrawal', () => {
       appSetting: { findUnique: jest.fn().mockResolvedValue({ value: '0' }) }, // dual-control off
     } as any;
     const pay = payments();
-    const service = new AdminFinanceService(prisma, {} as any, { record } as any, pay as any, cfg());
+    const service = new AdminFinanceService(prisma, {} as any, { record } as any, pay as any, cfg(), notify());
 
     const result = await service.approveWithdrawal('admin1', 'j1');
 
@@ -43,7 +44,7 @@ describe('AdminFinanceService.approveWithdrawal', () => {
       appSetting: { findUnique: jest.fn().mockResolvedValue({ value: '0' }) }, // dual-control off
     } as any;
     const pay = payments();
-    const service = new AdminFinanceService(prisma, {} as any, { record: jest.fn() } as any, pay as any, cfg());
+    const service = new AdminFinanceService(prisma, {} as any, { record: jest.fn() } as any, pay as any, cfg(), notify());
 
     await expect(service.approveWithdrawal('admin1', 'j1')).rejects.toThrow(/already processed/i);
     expect(pay.payout).not.toHaveBeenCalled();
@@ -57,7 +58,7 @@ describe('AdminFinanceService.approveWithdrawal', () => {
     } as any;
     const pay = payments();
     pay.payout = jest.fn().mockRejectedValue(new Error('payout failed'));
-    const service = new AdminFinanceService(prisma, {} as any, { record: jest.fn() } as any, pay as any, cfg());
+    const service = new AdminFinanceService(prisma, {} as any, { record: jest.fn() } as any, pay as any, cfg(), notify());
 
     await expect(service.approveWithdrawal('admin1', 'j1')).rejects.toThrow('payout failed');
     // second updateMany reverts POSTED → PENDING
@@ -75,7 +76,7 @@ describe('AdminFinanceService.approveWithdrawal', () => {
       withdrawalDetail: { findUnique: jest.fn().mockResolvedValue({ firstApproverId: opts.firstApproverId ?? null }), update: detailUpdate },
     } as any;
     const pay = payments();
-    const service = new AdminFinanceService(prisma, {} as any, { record: jest.fn() } as any, pay as any, cfg());
+    const service = new AdminFinanceService(prisma, {} as any, { record: jest.fn() } as any, pay as any, cfg(), notify());
     return { service, pay, detailUpdate, updateMany };
   };
 
@@ -100,11 +101,22 @@ describe('AdminFinanceService.approveWithdrawal', () => {
     expect(res).toMatchObject({ status: JournalStatus.POSTED });
   });
 
+  it('notifies the client when a withdrawal is approved', async () => {
+    const notifications = { create: jest.fn() };
+    const prisma = {
+      journalEntry: { findUnique: jest.fn().mockResolvedValue(pendingEntry()), updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
+      appSetting: { findUnique: jest.fn().mockResolvedValue({ value: '0' }) },
+    } as any;
+    const service = new AdminFinanceService(prisma, {} as any, { record: jest.fn() } as any, payments() as any, cfg(), notifications as any);
+    await service.approveWithdrawal('admin1', 'j1');
+    expect(notifications.create).toHaveBeenCalledWith('u1', expect.objectContaining({ title: 'Withdrawal approved' }));
+  });
+
   it('refuses to approve a non-pending withdrawal', async () => {
     const prisma = {
       journalEntry: { findUnique: jest.fn().mockResolvedValue({ id: 'j1', kind: 'WITHDRAWAL', status: JournalStatus.POSTED }) },
     } as any;
-    const service = new AdminFinanceService(prisma, {} as any, {} as any, payments() as any, cfg());
+    const service = new AdminFinanceService(prisma, {} as any, {} as any, payments() as any, cfg(), notify());
 
     await expect(service.approveWithdrawal('admin1', 'j1')).rejects.toThrow('Withdrawal is not pending');
   });
@@ -133,7 +145,7 @@ describe('AdminFinanceService.allWithdrawals', () => {
       journalEntry: { findMany },
       withdrawalDetail: { findMany: jest.fn().mockResolvedValue([{ journalEntryId: 'w-paid', method: 'bank', accountName: 'Ada L' }]) },
     } as any;
-    const service = new AdminFinanceService(prisma, {} as any, {} as any, payments() as any, cfg());
+    const service = new AdminFinanceService(prisma, {} as any, {} as any, payments() as any, cfg(), notify());
 
     const rows = await service.allWithdrawals();
 
@@ -146,7 +158,7 @@ describe('AdminFinanceService.allWithdrawals', () => {
   it('passes a status filter through to the query', async () => {
     const findMany = jest.fn().mockResolvedValue([]);
     const prisma = { journalEntry: { findMany }, withdrawalDetail: { findMany: jest.fn().mockResolvedValue([]) } } as any;
-    const service = new AdminFinanceService(prisma, {} as any, {} as any, payments() as any, cfg());
+    const service = new AdminFinanceService(prisma, {} as any, {} as any, payments() as any, cfg(), notify());
 
     await service.allWithdrawals(JournalStatus.PENDING);
 
@@ -165,7 +177,7 @@ describe('AdminFinanceService.listWallets', () => {
     ]);
     const prisma = { ledgerAccount: { findMany } } as any;
     const ledger = { balanceOf: jest.fn().mockResolvedValue(1000) } as any;
-    const service = new AdminFinanceService(prisma, ledger, {} as any, payments() as any, cfg());
+    const service = new AdminFinanceService(prisma, ledger, {} as any, payments() as any, cfg(), notify());
 
     const rows = await service.listWallets();
 
@@ -185,7 +197,7 @@ describe('AdminFinanceService.allDepositRequests', () => {
       },
     ]);
     const prisma = { depositRequest: { findMany } } as any;
-    const service = new AdminFinanceService(prisma, {} as any, {} as any, payments() as any, cfg());
+    const service = new AdminFinanceService(prisma, {} as any, {} as any, payments() as any, cfg(), notify());
 
     const rows = await service.allDepositRequests('APPROVED' as any);
 
@@ -196,7 +208,7 @@ describe('AdminFinanceService.allDepositRequests', () => {
   it('omits the where filter when no status is given', async () => {
     const findMany = jest.fn().mockResolvedValue([]);
     const prisma = { depositRequest: { findMany } } as any;
-    const service = new AdminFinanceService(prisma, {} as any, {} as any, payments() as any, cfg());
+    const service = new AdminFinanceService(prisma, {} as any, {} as any, payments() as any, cfg(), notify());
 
     await service.allDepositRequests();
 
@@ -211,7 +223,7 @@ describe('AdminFinanceService.rejectWithdrawal', () => {
     const prisma = {
       journalEntry: { findUnique: jest.fn().mockResolvedValue({ id: 'j1', kind: 'WITHDRAWAL', status: JournalStatus.PENDING }) },
     } as any;
-    const service = new AdminFinanceService(prisma, { reverse } as any, { record } as any, payments() as any, cfg());
+    const service = new AdminFinanceService(prisma, { reverse } as any, { record } as any, payments() as any, cfg(), notify());
 
     const result = await service.rejectWithdrawal('admin1', 'j1', 'bad details');
 
@@ -229,7 +241,7 @@ describe('AdminFinanceService.adjust', () => {
       tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', ledgerAccount: { id: 'client-ledger' } }) },
     } as any;
     const ledger = { getSystemAccount: jest.fn().mockResolvedValue({ id: 'adj' }), post } as any;
-    const service = new AdminFinanceService(prisma, ledger, { record } as any, payments() as any, cfg());
+    const service = new AdminFinanceService(prisma, ledger, { record } as any, payments() as any, cfg(), notify());
 
     await service.adjust('admin1', { tradingAccountId: 'acc1', amount: '50', direction: 'CREDIT', memo: 'goodwill' });
 
@@ -255,7 +267,7 @@ describe('AdminFinanceService deposit requests', () => {
       tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', ledgerAccount: { id: 'client-ledger' } }) },
     } as any;
     const ledger = { getSystemAccount: jest.fn().mockResolvedValue({ id: 'clearing' }), post } as any;
-    const service = new AdminFinanceService(prisma, ledger, { record } as any, payments() as any, cfg());
+    const service = new AdminFinanceService(prisma, ledger, { record } as any, payments() as any, cfg(), notify());
 
     const res = await service.approveDepositRequest('admin1', 'd1');
 
@@ -271,7 +283,7 @@ describe('AdminFinanceService deposit requests', () => {
   it('rejectDepositRequest marks the request REJECTED', async () => {
     const update = jest.fn().mockResolvedValue({});
     const prisma = { depositRequest: { findUnique: jest.fn().mockResolvedValue({ id: 'd1', status: 'PENDING' }), update } } as any;
-    const service = new AdminFinanceService(prisma, {} as any, { record: jest.fn() } as any, payments() as any, cfg());
+    const service = new AdminFinanceService(prisma, {} as any, { record: jest.fn() } as any, payments() as any, cfg(), notify());
 
     const res = await service.rejectDepositRequest('admin1', 'd1', 'no proof');
 

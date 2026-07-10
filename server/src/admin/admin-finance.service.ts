@@ -8,6 +8,7 @@ import { AuditService } from '../audit/audit.service';
 import { formatMoney, toMoney } from '../ledger/money';
 import { generateTxReference } from '../common/reference';
 import { PAYMENT_PROVIDER, type PaymentProvider } from '../payments/payment-provider';
+import { NotificationsService } from '../notifications/notifications.service';
 import type { Env } from '../config/env.validation';
 import type { AdjustmentDto } from './admin-finance.dto';
 
@@ -19,6 +20,7 @@ export class AdminFinanceService {
     private readonly audit: AuditService,
     @Inject(PAYMENT_PROVIDER) private readonly payments: PaymentProvider,
     private readonly config: ConfigService<Env, true>,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ── Deposit requests (manual bank/crypto rails) ──
@@ -105,6 +107,11 @@ export class AdminFinanceService {
     });
 
     await this.accrueReferralCommission(req.userId, req.amount.toString(), entry.reference);
+    await this.notifications.create(req.userId, {
+      title: 'Deposit confirmed',
+      body: `$${formatMoney(amount)} has been credited to your account.`,
+      kind: 'SUCCESS',
+    });
     return { ok: true, status: 'APPROVED', reference: entry.reference };
   }
 
@@ -358,17 +365,32 @@ export class AdminFinanceService {
       entityId: entryId,
       metadata: { payoutId: payout.payoutId, payoutStatus: payout.status, simulated: payout.simulated },
     });
+    if (clientLeg?.ledgerAccount.userId) {
+      await this.notifications.create(clientLeg.ledgerAccount.userId, {
+        title: 'Withdrawal approved',
+        body: `Your withdrawal of $${formatMoney(toMoney(amount))} has been approved and paid out.`,
+        kind: 'SUCCESS',
+      });
+    }
     return { ok: true, status: JournalStatus.POSTED, payout };
   }
 
   async rejectWithdrawal(adminId: string, entryId: string, reason?: string) {
-    await this.loadPendingWithdrawal(entryId);
+    const entry = await this.loadPendingWithdrawal(entryId);
+    const clientLeg = entry.postings?.find((p) => p.ledgerAccount.userId);
     await this.ledger.reverse(entryId, {
       reference: generateTxReference(),
       idempotencyKey: `reject:${entryId}`,
       reversedById: adminId,
       memo: reason ? `Withdrawal rejected: ${reason}` : 'Withdrawal rejected',
     });
+    if (clientLeg?.ledgerAccount.userId) {
+      await this.notifications.create(clientLeg.ledgerAccount.userId, {
+        title: 'Withdrawal rejected',
+        body: `Your withdrawal of $${formatMoney(toMoney(Number(clientLeg.amount)))} was rejected and the funds returned to your balance.${reason ? ` Reason: ${reason}` : ''}`,
+        kind: 'WARNING',
+      });
+    }
     await this.audit.record({
       userId: adminId,
       action: 'finance.withdrawal.reject',
