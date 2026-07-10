@@ -8,7 +8,6 @@ import {
   LineChart,
   Boxes,
   CandlestickChart,
-  Bitcoin,
   Building2,
   Handshake,
   BarChart3,
@@ -167,15 +166,6 @@ export const marketCategories: MarketCategory[] = [
     title: 'Stocks',
     subtitle: 'Global share CFDs',
     examples: 'AAPL · TSLA · NVDA',
-  },
-  {
-    key: 'Crypto',
-    icon: Bitcoin,
-    image: '/bitcoin-coin.webp',
-    imageLight: '/icon-crypto.webp',
-    title: 'Crypto CFDs',
-    subtitle: 'Top cryptocurrencies with competitive spreads',
-    examples: 'BTC · ETH · SOL',
   },
 ]
 

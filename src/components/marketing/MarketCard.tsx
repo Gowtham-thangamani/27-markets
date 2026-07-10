@@ -18,8 +18,6 @@ const ICON_SCALE_DARK: Record<string, number> = {
   Indices: 1.16,
   Commodities: 1.08,
   Stocks: 0.91,
-  // Dark Crypto uses bitcoin-coin.webp (glyph ~91px), not icon-crypto.webp.
-  Crypto: 1.21,
 }
 const ICON_SCALE_LIGHT: Record<string, number> = {
   Forex: 0.98,
@@ -27,7 +25,6 @@ const ICON_SCALE_LIGHT: Record<string, number> = {
   Indices: 1.14,
   Commodities: 1.11,
   Stocks: 0.91,
-  Crypto: 0.89,
 }
 
 export function MarketCard({ category }: { category: MarketCategory }) {
