@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Mail, MapPin, ShieldCheck, Lock, DollarSign, Headphones } from 'lucide-react'
+import { Mail, MapPin, Phone, ShieldCheck, Lock, DollarSign, Headphones } from 'lucide-react'
 import type { ComponentType } from 'react'
 import { FaFacebookF, FaInstagram, FaLinkedinIn, FaTiktok } from 'react-icons/fa6'
 import { Logo } from '@/components/Logo'
@@ -92,6 +92,12 @@ export function Footer() {
               className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-white transition-colors hover:text-brand-400"
             >
               <Mail className="h-4 w-4 text-brand-400" /> {supportEmail}
+            </a>
+            <a
+              href="tel:+31103602083"
+              className="mt-3 flex items-center gap-2 text-sm font-medium text-white transition-colors hover:text-brand-400"
+            >
+              <Phone className="h-4 w-4 text-brand-400" /> +31 10 360 2083
             </a>
             <p className="mt-3 flex items-start gap-2 text-sm leading-relaxed text-gray-400">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" />

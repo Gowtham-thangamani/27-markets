@@ -1,17 +1,26 @@
 import { useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
-import { Mail, MessageSquare, MapPin, Send } from 'lucide-react'
+import { Mail, MessageSquare, MapPin, Send, Phone, type LucideIcon } from 'lucide-react'
 import { Button, Input, Textarea } from '@/components/ui'
 import { Reveal } from '@/components/Reveal'
 import { PageHeader } from '@/components/marketing/PageHeader'
 import { useToast } from '@/context/ToastContext'
 import { asset } from '@/lib/asset'
+import { api, ApiError } from '@/lib/api'
 import { zodResolver } from '@/lib/zodResolver'
 import { contactSchema, type ContactValues } from '@/lib/validation'
 import { useT } from '@/i18n/LanguageContext'
 
-const channels = [
-  { icon: Mail, tKey: 'ctp.c1t', value: 'info@27markets.com', noteKey: 'ctp.c1note' },
+const channels: {
+  icon: LucideIcon
+  tKey: string
+  value?: string
+  valueKey?: string
+  href?: string
+  noteKey: string
+}[] = [
+  { icon: Mail, tKey: 'ctp.c1t', value: 'info@27markets.com', href: 'mailto:info@27markets.com', noteKey: 'ctp.c1note' },
+  { icon: Phone, tKey: 'ctp.c4t', value: '+31 10 360 2083', href: 'tel:+31103602083', noteKey: 'ctp.c4note' },
   { icon: MessageSquare, tKey: 'ctp.c2t', valueKey: 'ctp.c2v', noteKey: 'ctp.c2note' },
   {
     icon: MapPin,
@@ -32,12 +41,25 @@ export default function ContactPage() {
   } = useForm<ContactValues>({ resolver: zodResolver(contactSchema) })
 
   const onSubmit = async (values: ContactValues) => {
-    await new Promise((r) => setTimeout(r, 800))
-    toast.success(
-      t('ctp.toastTitle'),
-      t('ctp.toastBody').replace('{name}', values.fullName.split(' ')[0]),
-    )
-    reset()
+    try {
+      await api.post('/leads', {
+        name: values.fullName,
+        email: values.email,
+        subject: values.subject,
+        message: values.message,
+        source: 'MANUAL',
+      })
+      toast.success(
+        t('ctp.toastTitle'),
+        t('ctp.toastBody').replace('{name}', values.fullName.split(' ')[0]),
+      )
+      reset()
+    } catch (e) {
+      toast.error(
+        'Message not sent',
+        e instanceof ApiError ? e.message : 'Please try again, or email info@27markets.com.',
+      )
+    }
   }
 
   return (
@@ -66,7 +88,17 @@ export default function ContactPage() {
                 </span>
                 <div>
                   <h3 className="font-display text-lg font-semibold text-white">{t(c.tKey)}</h3>
-                  <p className="mt-0.5 font-medium text-brand-300">{c.valueKey ? t(c.valueKey) : c.value}</p>
+                  <p className="mt-0.5 font-medium text-brand-300">
+                    {c.href ? (
+                      <a href={c.href} className="transition-colors hover:text-brand-200">
+                        {c.valueKey ? t(c.valueKey) : c.value}
+                      </a>
+                    ) : c.valueKey ? (
+                      t(c.valueKey)
+                    ) : (
+                      c.value
+                    )}
+                  </p>
                   <p className="mt-1 text-sm text-gray-500">{t(c.noteKey)}</p>
                 </div>
               </div>

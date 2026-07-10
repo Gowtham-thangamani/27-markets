@@ -199,15 +199,6 @@ export const instruments: Instrument[] = [
   mk('GOOGL', 'Alphabet Inc.', 'Stocks', 178.4, 0.54, 0.06, 'GOOGL'),
   mk('META', 'Meta Platforms', 'Stocks', 504.2, 1.18, 0.07, 'META'),
   mk('AMD', 'Advanced Micro Devices', 'Stocks', 162.3, -0.84, 0.07, 'AMD'),
-  // ── Crypto (live via Binance) ──
-  mk('BTC/USD', 'Bitcoin', 'Crypto', 64280.0, 1.86, 18.0, 'BINANCE:BTCUSDT'),
-  mk('ETH/USD', 'Ethereum', 'Crypto', 3412.0, 2.42, 2.4, 'BINANCE:ETHUSDT'),
-  mk('SOL/USD', 'Solana', 'Crypto', 142.8, 4.12, 0.6, 'BINANCE:SOLUSDT'),
-  mk('XRP/USD', 'Ripple', 'Crypto', 0.4821, -0.92, 0.01, 'BINANCE:XRPUSDT'),
-  mk('ADA/USD', 'Cardano', 'Crypto', 0.4512, 1.34, 0.01, 'BINANCE:ADAUSDT'),
-  mk('DOGE/USD', 'Dogecoin', 'Crypto', 0.1284, 3.21, 0.005, 'BINANCE:DOGEUSDT'),
-  mk('LTC/USD', 'Litecoin', 'Crypto', 84.2, 0.92, 0.2, 'BINANCE:LTCUSDT'),
-  mk('LINK/USD', 'Chainlink', 'Crypto', 14.62, 2.18, 0.05, 'BINANCE:LINKUSDT'),
 ]
 
 /** All live feed symbols across instruments — used to configure the market stream. */

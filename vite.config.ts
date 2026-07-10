@@ -2,10 +2,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'node:path'
 
-export default defineConfig(({ command }) => ({
-  // GitHub Pages serves this project at /27-markets/. Vercel + local dev serve
-  // at root /. Vercel sets process.env.VERCEL=1 during its build.
-  base: process.env.VERCEL ? '/' : command === 'build' ? '/27-markets/' : '/',
+export default defineConfig(() => ({
+  // Served at the domain root (S3 + CloudFront / local dev), so base is '/'.
+  // (Was '/27-markets/' for the retired GitHub Pages deploy.)
+  base: '/',
   plugins: [react()],
   resolve: {
     alias: {

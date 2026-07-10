@@ -21,4 +21,6 @@ EXPOSE 4000
 # Apply migrations, then start. The demo seed is intentionally NOT run here — it
 # creates well-known default credentials and self-aborts in production anyway.
 # Provision the first admin via a one-time script that reads a secret password.
-CMD npx prisma migrate deploy && node dist/main.js
+# Nest emits dist/src/main.js (tsconfig includes both src and prisma, so the
+# common root is the project dir). Launch the built entrypoint at that path.
+CMD npx prisma migrate deploy && node dist/src/main.js

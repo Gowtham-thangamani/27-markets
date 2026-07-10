@@ -37,7 +37,6 @@ const SPREADS: { mKey: string; from: string }[] = [
   { mKey: 'tcp.m4', from: '0.4 pts' },
   { mKey: 'tcp.m5', from: '0.03' },
   { mKey: 'tcp.m6', from: 'Variable' },
-  { mKey: 'tcp.m7', from: 'Variable' },
 ]
 
 const TERMS: { icon: LucideIcon; tKey: string; bKey: string }[] = [

@@ -12,6 +12,9 @@ export default function DisclaimerPage() {
       <PageHeader breadcrumb={['Home', TITLE]} title={TITLE} description={INTRO} />
       <section className="container-x py-12">
         <div className="glass-panel mx-auto max-w-3xl space-y-5 p-8 text-sm leading-relaxed text-gray-300">
+          <p className="text-white/90">
+            <span className="font-semibold text-white">27 Markets Ltd.</span> — Registration No. 2026-00485
+          </p>
           <p>
             <span className="font-semibold text-white">Risk statement:</span> An investment in
             derivatives may mean investors may lose an amount even greater than their original
@@ -30,6 +33,13 @@ export default function DisclaimerPage() {
             proceeding with any currency or spot metals trade. Nothing in this site should be read or
             construed as constituting advice on the part of 27 Markets Ltd or any of its affiliates,
             directors, officers or employees.
+          </p>
+          <p>
+            <span className="font-semibold text-white">Restricted Regions:</span> 27 Markets Ltd
+            does not provide services for citizens/residents of the United States, Cuba, Iraq,
+            Myanmar, North Korea, Sudan, United Arab Emirates and India. The services of 27 Markets
+            Ltd are not intended for distribution to, or use by, any person in any country or
+            jurisdiction where such distribution or use would be contrary to local law or regulation.
           </p>
           <p>
             Information on this site is not directed at residents in any country or jurisdiction where

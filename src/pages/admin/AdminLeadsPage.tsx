@@ -186,6 +186,17 @@ function LeadDetailModal({
             <Info label="Country" value={lead.country ?? '—'} />
           </div>
 
+          {lead.message && (
+            <div>
+              <h4 className="mb-1 text-sm font-semibold text-white">
+                Enquiry{lead.subject ? ` — ${lead.subject}` : ''}
+              </h4>
+              <p className="whitespace-pre-wrap rounded-lg bg-white/[0.04] p-3 text-sm text-gray-200">
+                {lead.message}
+              </p>
+            </div>
+          )}
+
           <div>
             <h4 className="mb-2 text-sm font-semibold text-white">Notes</h4>
             <div className="flex items-end gap-2">

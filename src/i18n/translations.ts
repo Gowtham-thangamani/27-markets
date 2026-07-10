@@ -191,7 +191,7 @@ const en: Dict = {
   'rev.q2': 'Funding and withdrawals have been smooth and clear. No surprise fees, which is rare in this space.',
   'rev.r2': 'Swing trader',
   'rev.q3': 'The web platform is clean and fast, and support actually replies. It just feels trustworthy.',
-  'rev.r3': 'Crypto CFD trader',
+  'rev.r3': 'CFD trader',
 
   // ── Account types snapshot ──
   'accts.eyebrow': 'Account types',
@@ -236,7 +236,7 @@ const en: Dict = {
   'faqH.q4': 'Is my money safe? How are client funds held?',
   'faqH.a4': 'Client funds are kept in segregated accounts, separate from company operating capital. Every session is protected with encryption and optional two-factor authentication.',
   'faqH.q5': 'What can I trade, and what are the conditions?',
-  'faqH.a5': 'Trade 100+ instruments across forex, metals, indices, commodities, shares, and crypto CFDs. Spreads, leverage, and swap details are shown per account type on our Accounts page.',
+  'faqH.a5': 'Trade 100+ instruments across forex, metals, indices, commodities, and shares. Spreads, leverage, and swap details are shown per account type on our Accounts page.',
   'faqH.q6': 'Do you offer a demo account, and how does it work?',
   'faqH.a6': 'Yes. Open a free demo funded with virtual capital and trade the live platform with real market data — no deposit and no risk. Switch to a live account whenever you are ready.',
   'faqH.q7': 'Which platforms and devices can I trade on?',
@@ -276,7 +276,7 @@ const en: Dict = {
   'pfp.f5t': 'One account, every device',
   'pfp.f5d': 'Seamlessly switch between web and desktop in real time.',
   'pfp.f6t': 'All markets',
-  'pfp.f6d': 'Forex, indices, commodities, shares, and crypto CFDs in one place.',
+  'pfp.f6d': 'Forex, indices, commodities, and shares in one place.',
 
   // ── Blog / Insights ──
   'blg.title': 'Insights & market news',
@@ -463,6 +463,8 @@ const en: Dict = {
   'ctp.c2note': 'Instant assistance',
   'ctp.c3t': 'Registered Office',
   'ctp.c3note': 'Saint Lucia · Reg. No. 2026-00485',
+  'ctp.c4t': 'Call Us',
+  'ctp.c4note': 'International line',
   'ctp.formTitle': 'Send us a message',
   'ctp.formDesc': "Fill out the form and we'll get back to you shortly.",
   'ctp.fullName': 'Full Name',
@@ -515,7 +517,7 @@ const en: Dict = {
   'faqp.g2q1': 'What is the minimum deposit, and are there fees?',
   'faqp.g2a1': 'You can start from $50. All accounts are held in USD. We keep funding transparent — any applicable provider fee is shown before you confirm a transaction.',
   'faqp.g2q2': 'Which payment methods can I use?',
-  'faqp.g2a2': 'Cards (Visa/Mastercard), e-wallets, bank transfer, and crypto (USDT and major coins). Cards and e-wallets are typically instant; bank transfers take 1–3 business days.',
+  'faqp.g2a2': 'Cards (Visa/Mastercard), e-wallets, and bank transfer. Cards and e-wallets are typically instant; bank transfers take 1–3 business days.',
   'faqp.g2q3': 'How and when can I withdraw my funds?',
   'faqp.g2a3': 'There is no minimum withdrawal. Request a payout anytime from your portal and we return funds to your original method as quickly as possible, after a finance review.',
   'faqp.g3t': 'Safety & security',
@@ -529,7 +531,7 @@ const en: Dict = {
   'faqp.g4q1': 'Which platforms and devices can I trade on?',
   'faqp.g4a1': 'One account works across our web trader and MetaTrader 5 desktop terminal, synced so you can pick up exactly where you left off.',
   'faqp.g4q2': 'What can I trade, and what are the conditions?',
-  'faqp.g4a2': 'Trade 100+ instruments across forex, metals, indices, commodities, shares, and crypto CFDs. Spreads, leverage, and swap details are shown per account type on our Accounts page.',
+  'faqp.g4a2': 'Trade 100+ instruments across forex, metals, indices, commodities, and shares. Spreads, leverage, and swap details are shown per account type on our Accounts page.',
   'faqp.g4q3': "What's the difference between the account types?",
   'faqp.g4a3': 'Standard, Raw Spread, and VIP accounts differ in spreads, commission, and features. Compare them on the Accounts page to find the right fit.',
 
@@ -637,7 +639,6 @@ const en: Dict = {
   'tcp.m4': 'Indices (US500)',
   'tcp.m5': 'Oil (WTI)',
   'tcp.m6': 'Shares CFDs',
-  'tcp.m7': 'Crypto CFDs (BTC/USD)',
   'tcp.sv.12 cents': '12 cents',
   'tcp.sv.0.4 pts': '0.4 pts',
   'tcp.sv.Variable': 'Variable',
@@ -686,10 +687,10 @@ const en: Dict = {
   'mktp.desc': 'Diversify your portfolio with 100+ instruments across multiple asset classes — all on institutional-grade infrastructure.',
   'mktp.rtEyebrow': 'Real-time',
   'mktp.rtTitle': 'Live market overview',
-  'mktp.rtDesc': 'Streaming prices for major crypto, forex, metals, and equities. DFM real-time pending a licensed feed.',
+  'mktp.rtDesc': 'Streaming prices for major forex, metals, and equities. DFM real-time pending a licensed feed.',
   'mktp.liEyebrow': 'Live Instruments',
   'mktp.liTitle': 'Explore the markets',
-  'mktp.liDesc': 'Search and filter across forex, metals, indices, commodities, stocks, and crypto.',
+  'mktp.liDesc': 'Search and filter across forex, metals, indices, commodities, and stocks.',
 
   // ── Partner section ──
   'partner.eyebrow': 'Partner With 27 Markets',
@@ -923,7 +924,7 @@ const ar: Dict = {
   'rev.q2': 'كانت عمليات التمويل والسحب سلسة وواضحة. بلا رسوم مفاجئة، وهذا نادر في هذا المجال.',
   'rev.r2': 'متداول متأرجح',
   'rev.q3': 'منصة الويب نظيفة وسريعة، والدعم يردّ فعلاً. تمنحك شعوراً بالثقة.',
-  'rev.r3': 'متداول عقود فروقات رقمية',
+  'rev.r3': 'متداول عقود فروقات',
 
   // ── Account types snapshot ──
   'accts.eyebrow': 'أنواع الحسابات',
@@ -968,7 +969,7 @@ const ar: Dict = {
   'faqH.q4': 'هل أموالي آمنة؟ كيف تُحفظ أموال العملاء؟',
   'faqH.a4': 'تُحفظ أموال العملاء في حسابات منفصلة عن رأس مال تشغيل الشركة. وتُحمى كل جلسة بالتشفير والمصادقة الثنائية الاختيارية.',
   'faqH.q5': 'ماذا يمكنني أن أتداول، وما الشروط؟',
-  'faqH.a5': 'تداول أكثر من 100 أداة عبر الفوركس والمعادن والمؤشرات والسلع والأسهم والعملات الرقمية. تُعرض تفاصيل السبريد والرافعة والمبادلة لكل نوع حساب في صفحة الحسابات.',
+  'faqH.a5': 'تداول أكثر من 100 أداة عبر الفوركس والمعادن والمؤشرات والسلع والأسهم. تُعرض تفاصيل السبريد والرافعة والمبادلة لكل نوع حساب في صفحة الحسابات.',
   'faqH.q6': 'هل تقدّمون حساباً تجريبياً، وكيف يعمل؟',
   'faqH.a6': 'نعم. افتح حساباً تجريبياً مجانياً برأس مال افتراضي وتداول على المنصة الحية ببيانات سوق حقيقية — بلا إيداع وبلا مخاطر. انتقل إلى حساب حقيقي متى شئت.',
   'faqH.q7': 'ما المنصات والأجهزة التي يمكنني التداول عليها؟',
@@ -1008,7 +1009,7 @@ const ar: Dict = {
   'pfp.f5t': 'حساب واحد، كل جهاز',
   'pfp.f5d': 'انتقل بسلاسة بين الويب وسطح المكتب في الوقت الفعلي.',
   'pfp.f6t': 'جميع الأسواق',
-  'pfp.f6d': 'الفوركس والمؤشرات والسلع والأسهم والعملات الرقمية في مكان واحد.',
+  'pfp.f6d': 'الفوركس والمؤشرات والسلع والأسهم في مكان واحد.',
 
   // ── Blog / Insights ──
   'blg.title': 'الرؤى وأخبار السوق',
@@ -1195,6 +1196,8 @@ const ar: Dict = {
   'ctp.c2note': 'مساعدة فورية',
   'ctp.c3t': 'المكتب المسجّل',
   'ctp.c3note': 'سانت لوسيا · رقم التسجيل 2026-00485',
+  'ctp.c4t': 'اتصل بنا',
+  'ctp.c4note': 'خط دولي',
   'ctp.formTitle': 'أرسل لنا رسالة',
   'ctp.formDesc': 'املأ النموذج وسنعاود التواصل معك قريباً.',
   'ctp.fullName': 'الاسم الكامل',
@@ -1247,7 +1250,7 @@ const ar: Dict = {
   'faqp.g2q1': 'ما الحد الأدنى للإيداع، وهل توجد رسوم؟',
   'faqp.g2a1': 'يمكنك البدء من 50 دولاراً. جميع الحسابات بالدولار الأمريكي. نحافظ على شفافية التمويل — تُعرض أي رسوم للمزوّد قبل تأكيد المعاملة.',
   'faqp.g2q2': 'ما طرق الدفع التي يمكنني استخدامها؟',
-  'faqp.g2a2': 'البطاقات (فيزا/ماستركارد) والمحافظ الإلكترونية والتحويل البنكي والعملات الرقمية (USDT وأبرز العملات). البطاقات والمحافظ فورية عادةً؛ التحويلات البنكية تستغرق 1–3 أيام عمل.',
+  'faqp.g2a2': 'البطاقات (فيزا/ماستركارد) والمحافظ الإلكترونية والتحويل البنكي. البطاقات والمحافظ فورية عادةً؛ التحويلات البنكية تستغرق 1–3 أيام عمل.',
   'faqp.g2q3': 'كيف ومتى يمكنني سحب أموالي؟',
   'faqp.g2a3': 'لا يوجد حد أدنى للسحب. اطلب دفعة في أي وقت من بوابتك ونعيد الأموال إلى طريقتك الأصلية بأسرع ما يمكن، بعد مراجعة مالية.',
   'faqp.g3t': 'الأمان والحماية',
@@ -1261,7 +1264,7 @@ const ar: Dict = {
   'faqp.g4q1': 'ما المنصات والأجهزة التي يمكنني التداول عليها؟',
   'faqp.g4a1': 'حساب واحد يعمل عبر منصة الويب ومنصة ميتاتريدر 5 لسطح المكتب، متزامنة لتتابع من حيث توقفت بالضبط.',
   'faqp.g4q2': 'ماذا يمكنني أن أتداول، وما الشروط؟',
-  'faqp.g4a2': 'تداول أكثر من 100 أداة عبر الفوركس والمعادن والمؤشرات والسلع والأسهم والعملات الرقمية. تُعرض تفاصيل السبريد والرافعة والمبادلة لكل نوع حساب في صفحة الحسابات.',
+  'faqp.g4a2': 'تداول أكثر من 100 أداة عبر الفوركس والمعادن والمؤشرات والسلع والأسهم. تُعرض تفاصيل السبريد والرافعة والمبادلة لكل نوع حساب في صفحة الحسابات.',
   'faqp.g4q3': 'ما الفرق بين أنواع الحسابات؟',
   'faqp.g4a3': 'تختلف حسابات العادي والخام وVIP في السبريد والعمولة والمزايا. قارنها في صفحة الحسابات لتجد الأنسب.',
 
@@ -1418,10 +1421,10 @@ const ar: Dict = {
   'mktp.desc': 'نوّع محفظتك بأكثر من 100 أداة عبر فئات أصول متعددة — جميعها على بنية تحتية بمستوى مؤسسي.',
   'mktp.rtEyebrow': 'فوري',
   'mktp.rtTitle': 'نظرة عامة على السوق الحية',
-  'mktp.rtDesc': 'أسعار متدفقة لأهم العملات الرقمية والفوركس والمعادن والأسهم. بيانات سوق دبي المالي الفورية بانتظار تغذية مرخّصة.',
+  'mktp.rtDesc': 'أسعار متدفقة لأهم الفوركس والمعادن والأسهم. بيانات سوق دبي المالي الفورية بانتظار تغذية مرخّصة.',
   'mktp.liEyebrow': 'أدوات حية',
   'mktp.liTitle': 'استكشف الأسواق',
-  'mktp.liDesc': 'ابحث وصفِّ عبر الفوركس والمعادن والمؤشرات والسلع والأسهم والعملات الرقمية.',
+  'mktp.liDesc': 'ابحث وصفِّ عبر الفوركس والمعادن والمؤشرات والسلع والأسهم.',
 
   // ── Partner section ──
   'partner.eyebrow': 'كن شريكاً مع 27 ماركتس',

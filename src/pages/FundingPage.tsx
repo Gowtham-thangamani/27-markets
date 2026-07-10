@@ -4,7 +4,6 @@ import {
   CreditCard,
   Landmark,
   Wallet,
-  Bitcoin,
   ArrowDownToLine,
   ArrowUpFromLine,
   DollarSign,
@@ -25,7 +24,6 @@ const methods: { icon: LucideIcon; tKey: string; bKey: string; timeKey: string }
   { icon: CreditCard, tKey: 'fnd.m1t', bKey: 'fnd.m1b', timeKey: 'fnd.time.instant' },
   { icon: Wallet, tKey: 'fnd.m2t', bKey: 'fnd.m2b', timeKey: 'fnd.time.instant' },
   { icon: Landmark, tKey: 'fnd.m3t', bKey: 'fnd.m3b', timeKey: 'fnd.time.bank' },
-  { icon: Bitcoin, tKey: 'fnd.m4t', bKey: 'fnd.m4b', timeKey: 'fnd.time.network' },
 ]
 
 const terms: { icon: LucideIcon; labelKey: string; value: string; valueKey?: string }[] = [

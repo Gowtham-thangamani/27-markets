@@ -59,11 +59,10 @@ function NewsCard({ item }: { item: NewsItem }) {
   )
 }
 
-const CAT_ORDER = ['forex', 'crypto', 'general'] as const
+const CAT_ORDER = ['forex', 'general'] as const
 const CAT_KEY: Record<string, string> = {
   all: 'news.all',
   forex: 'news.forex',
-  crypto: 'news.crypto',
   general: 'news.general',
 }
 

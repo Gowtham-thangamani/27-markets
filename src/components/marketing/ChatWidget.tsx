@@ -1,78 +1,87 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { MessageCircle, X, Send, Sparkles } from 'lucide-react'
-import { api } from '@/lib/api'
+import { MessageCircle, X, Sparkles, LifeBuoy, ArrowRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { api, ApiError } from '@/lib/api'
+import { BOT_GREETING, BOT_TOPICS, type BotLink } from '@/mock/supportBot'
 
 interface Msg {
   role: 'user' | 'assistant'
   content: string
+  links?: BotLink[]
 }
 
-const GREETING: Msg = {
-  role: 'assistant',
-  content:
-    "Hi! I'm the 27 Markets assistant. Ask me about accounts, funding, platforms, or getting started.",
-}
-
-const QUICK_REPLIES = [
-  'How do I open an account?',
-  'What is the minimum deposit?',
-  'How do withdrawals work?',
-  'Is my money safe?',
-]
+const GREETING: Msg = { role: 'assistant', content: BOT_GREETING }
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /**
- * AI support chat widget. Talks to the public /support-chat endpoint (Claude).
- * If the backend has no API key it replies with a graceful fallback, so the
- * widget degrades safely rather than erroring.
+ * Rule-based support assistant. No AI / no external API cost: it answers from a
+ * fixed set of topics (see src/mock/supportBot.ts) and can file a support
+ * ticket, which is captured as a lead in the admin CRM (POST /leads).
  */
 export function ChatWidget() {
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Msg[]>([GREETING])
-  const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [mode, setMode] = useState<'menu' | 'ticket'>('menu')
   const scrollRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLTextAreaElement>(null)
 
-  // Keep the transcript pinned to the latest message.
+  // Ticket form
+  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
+  const [sending, setSending] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
-  }, [messages, loading])
+  }, [messages, mode])
 
-  useEffect(() => {
-    if (open) inputRef.current?.focus()
-  }, [open])
+  const pickTopic = (id: string) => {
+    const topic = BOT_TOPICS.find((t) => t.id === id)
+    if (!topic) return
+    setMessages((m) => [
+      ...m,
+      { role: 'user', content: topic.label },
+      { role: 'assistant', content: topic.answer, links: topic.links },
+    ])
+  }
 
-  const send = async (text: string) => {
-    const trimmed = text.trim()
-    if (!trimmed || loading) return
-    const next = [...messages, { role: 'user' as const, content: trimmed }]
-    setMessages(next)
-    setInput('')
-    setLoading(true)
+  const goto = (to: string) => {
+    setOpen(false)
+    navigate(to)
+  }
+
+  const submitTicket = async () => {
+    setFormError(null)
+    const name = form.name.trim()
+    const email = form.email.trim()
+    const message = form.message.trim()
+    if (name.length < 2) return setFormError('Please enter your name.')
+    if (!EMAIL_RE.test(email)) return setFormError('Please enter a valid email address.')
+    if (message.length < 5) return setFormError('Please describe how we can help.')
+    setSending(true)
     try {
-      // Send only the real conversation (drop the canned greeting).
-      const history = next.filter((m) => m !== GREETING)
-      const res = await api.post<{ reply: string }>('/support-chat', { messages: history })
-      setMessages((m) => [...m, { role: 'assistant', content: res.reply }])
-    } catch {
+      await api.post('/leads', {
+        name,
+        email,
+        subject: form.subject.trim() || 'Support request',
+        message,
+        source: 'MANUAL',
+      })
+      setMode('menu')
+      setForm({ name: '', email: '', subject: '', message: '' })
       setMessages((m) => [
         ...m,
         {
           role: 'assistant',
-          content:
-            'Sorry — I could not reach the assistant just now. Please try again, or contact our team via the Contact page.',
+          content: `Thanks, ${name.split(' ')[0]}! Your message has been sent to our support team. We'll reply to ${email} as soon as we can.`,
         },
       ])
+    } catch (e) {
+      setFormError(
+        e instanceof ApiError ? e.message : 'Could not send just now — please try again.',
+      )
     } finally {
-      setLoading(false)
-    }
-  }
-
-  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      void send(input)
+      setSending(false)
     }
   }
 
@@ -82,7 +91,7 @@ export function ChatWidget() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-label={open ? 'Close chat' : 'Chat with the 27 Markets assistant'}
+        aria-label={open ? 'Close chat' : 'Chat with 27 Markets support'}
         aria-expanded={open}
         className="group fixed bottom-24 right-4 z-50 flex items-center gap-2 rounded-full bg-brand-500 py-3 pl-3 pr-4 text-sm font-semibold text-white shadow-[0_10px_30px_-6px_rgba(225,29,46,0.6)] transition-all hover:-translate-y-0.5 hover:bg-brand-600 lg:bottom-6"
       >
@@ -108,7 +117,7 @@ export function ChatWidget() {
                 <Sparkles className="h-4 w-4" />
               </span>
               <div className="flex-1">
-                <div className="text-sm font-semibold text-white">27 Markets Assistant</div>
+                <div className="text-sm font-semibold text-white">27 Markets Support</div>
                 <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-success" /> Online
                 </div>
@@ -126,78 +135,112 @@ export function ChatWidget() {
             {/* Messages */}
             <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
               {messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-                      m.role === 'user'
-                        ? 'rounded-br-sm bg-brand-500 text-white'
-                        : 'rounded-bl-sm bg-white/[0.06] text-gray-100'
-                    }`}
-                  >
-                    {m.content}
+                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] ${m.role === 'user' ? '' : 'space-y-2'}`}>
+                    <div
+                      className={`whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                        m.role === 'user'
+                          ? 'rounded-br-sm bg-brand-500 text-white'
+                          : 'rounded-bl-sm bg-white/[0.06] text-gray-100'
+                      }`}
+                    >
+                      {m.content}
+                    </div>
+                    {m.links && m.links.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {m.links.map((l) => (
+                          <button
+                            key={l.to}
+                            type="button"
+                            onClick={() => goto(l.to)}
+                            className="inline-flex items-center gap-1 rounded-full border border-brand-500/40 bg-brand-500/[0.1] px-3 py-1.5 text-xs font-semibold text-brand-200 transition-colors hover:bg-brand-500/[0.2]"
+                          >
+                            {l.label} <ArrowRight className="h-3 w-3" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
-
-              {loading && (
-                <div className="flex justify-start">
-                  <div className="flex gap-1 rounded-2xl rounded-bl-sm bg-white/[0.06] px-4 py-3">
-                    {[0, 1, 2].map((d) => (
-                      <span
-                        key={d}
-                        className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400"
-                        style={{ animationDelay: `${d * 0.15}s` }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Quick replies (only before the first user message) */}
-              {messages.length === 1 && !loading && (
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {QUICK_REPLIES.map((q) => (
-                    <button
-                      key={q}
-                      type="button"
-                      onClick={() => void send(q)}
-                      className="rounded-full border border-brand-500/30 bg-brand-500/[0.08] px-3 py-1.5 text-xs font-medium text-brand-200 transition-colors hover:bg-brand-500/[0.16]"
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
 
-            {/* Input */}
+            {/* Action area */}
             <div className="border-t border-white/[0.08] bg-white/[0.02] p-3">
-              <div className="flex items-end gap-2">
-                <textarea
-                  ref={inputRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={onKeyDown}
-                  rows={1}
-                  placeholder="Ask a question…"
-                  className="max-h-28 flex-1 resize-none rounded-xl border border-white/10 bg-ink-800 px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-brand-500/50 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => void send(input)}
-                  disabled={!input.trim() || loading}
-                  aria-label="Send message"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-500 text-white transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <Send className="h-4 w-4" />
-                </button>
-              </div>
-              <p className="mt-2 px-1 text-center text-[10px] leading-tight text-gray-500">
-                AI assistant — may be inaccurate. Not investment advice. Trading involves risk.
-              </p>
+              {mode === 'ticket' ? (
+                <div className="space-y-2">
+                  <div className="px-1 text-xs font-semibold text-white">Raise a support ticket</div>
+                  <input
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="Your name"
+                    className="w-full rounded-lg border border-white/10 bg-ink-800 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:border-brand-500/50 focus:outline-none"
+                  />
+                  <input
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder="Your email"
+                    type="email"
+                    className="w-full rounded-lg border border-white/10 bg-ink-800 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:border-brand-500/50 focus:outline-none"
+                  />
+                  <input
+                    value={form.subject}
+                    onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                    placeholder="Subject (optional)"
+                    className="w-full rounded-lg border border-white/10 bg-ink-800 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:border-brand-500/50 focus:outline-none"
+                  />
+                  <textarea
+                    value={form.message}
+                    onChange={(e) => setForm({ ...form, message: e.target.value })}
+                    placeholder="How can we help?"
+                    rows={3}
+                    className="w-full resize-none rounded-lg border border-white/10 bg-ink-800 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:border-brand-500/50 focus:outline-none"
+                  />
+                  {formError && <p className="px-1 text-xs text-brand-300">{formError}</p>}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { setMode('menu'); setFormError(null) }}
+                      className="flex-1 rounded-lg border border-white/10 py-2 text-sm font-medium text-gray-300 hover:bg-white/[0.06]"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void submitTicket()}
+                      disabled={sending}
+                      className="flex-1 rounded-lg bg-brand-500 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-50"
+                    >
+                      {sending ? 'Sending…' : 'Send'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    {BOT_TOPICS.map((t) => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => pickTopic(t.id)}
+                        className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-gray-200 transition-colors hover:border-brand-500/40 hover:text-white"
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMode('ticket')}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-500/[0.12] py-2 text-sm font-semibold text-brand-200 ring-1 ring-inset ring-brand-500/30 transition-colors hover:bg-brand-500/[0.2]"
+                  >
+                    <LifeBuoy className="h-4 w-4" /> Raise a support ticket
+                  </button>
+                  <p className="px-1 text-center text-[10px] leading-tight text-gray-500">
+                    Not investment advice. Trading involves risk.
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
         )}

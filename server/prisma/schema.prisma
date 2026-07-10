@@ -683,6 +683,9 @@ model Lead {
   email           String
   phone           String?
   country         String?
+  // Optional enquiry details captured from the public contact form / support bot.
+  subject         String?
+  message         String?
   source          LeadSource @default(MANUAL)
   status          LeadStatus @default(NEW)
   assignedToId    String?

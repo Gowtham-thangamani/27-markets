@@ -13,7 +13,6 @@ import {
   BarChart3,
   Boxes,
   CandlestickChart,
-  Bitcoin,
   Handshake,
   UserPlus,
   Mail,
@@ -79,7 +78,6 @@ const navItems: NavItem[] = [
       { label: 'Indices', labelKey: 'nav.indices', to: '/markets?category=Indices', desc: 'Global index CFDs', icon: BarChart3 },
       { label: 'Commodities', labelKey: 'nav.commodities', to: '/markets?category=Commodities', desc: 'Energy & agriculture', icon: Boxes },
       { label: 'Stocks', labelKey: 'nav.stocks', to: '/markets?category=Stocks', desc: 'Global share CFDs', icon: CandlestickChart },
-      { label: 'Crypto', labelKey: 'nav.crypto', to: '/markets?category=Crypto', desc: 'Top cryptocurrencies', icon: Bitcoin },
     ],
   },
   {
@@ -155,7 +153,7 @@ export function Navbar() {
         )}
       >
         <Link to="/" aria-label="27 Markets home">
-          <Logo size={23} />
+          <Logo size={40} />
         </Link>
 
         <ul className="hidden items-center gap-1 lg:flex">
