@@ -101,7 +101,15 @@ function TickerIcon({ symbol }: { symbol: string }) {
 }
 
 // Curated symbols for the homepage strip.
+// Crypto (BINANCE:*) streams free via Binance's public WS with no API key, so it
+// populates even when the backend has no Finnhub key. Forex/metals/stocks only
+// appear once a Finnhub-keyed feed is configured; until then they're silently
+// omitted (the strip shows whatever has live data).
 const TICKER = [
+  'BINANCE:BTCUSDT',
+  'BINANCE:ETHUSDT',
+  'BINANCE:SOLUSDT',
+  'BINANCE:XRPUSDT',
   'OANDA:EUR_USD',
   'OANDA:GBP_USD',
   'OANDA:USD_JPY',
