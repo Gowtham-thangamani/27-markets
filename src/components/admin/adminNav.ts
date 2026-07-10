@@ -69,7 +69,7 @@ export const adminNav: AdminNavEntry[] = [
     label: 'Trading', icon: CandlestickChart, children: [
       { label: 'Accounts', to: '/admin/accounts' },
       { label: 'Account Types', to: '/admin/account-types' },
-      { label: 'Economic Calendar', to: '/admin/economic-calendar', placeholder: true },
+      { label: 'Economic Calendar', to: '/admin/economic-calendar' },
       { label: 'Servers', to: '/admin/servers' },
     ],
   },

@@ -20,9 +20,9 @@ describe('adminNav', () => {
     }
   })
 
-  it('placeholderLinks returns only placeholder links and is non-empty', () => {
+  it('placeholderLinks returns only placeholder-flagged links', () => {
     const links = placeholderLinks()
-    expect(links.length).toBeGreaterThan(0)
+    // May be empty (all sections are built) — but every entry must be a placeholder.
     expect(links.every((l) => l.placeholder === true)).toBe(true)
   })
 

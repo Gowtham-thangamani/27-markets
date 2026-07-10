@@ -31,6 +31,7 @@ import { PartnersModule } from './partners/partners.module';
 import { ChatModule } from './chat/chat.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { DownloadsModule } from './downloads/downloads.module';
+import { EconomicCalendarModule } from './economic-calendar/economic-calendar.module';
 import { HealthController } from './health/health.controller';
 
 @Module({
@@ -59,6 +60,7 @@ import { HealthController } from './health/health.controller';
     ChatModule,
     NotificationsModule,
     DownloadsModule,
+    EconomicCalendarModule,
   ],
   controllers: [HealthController],
   providers: [

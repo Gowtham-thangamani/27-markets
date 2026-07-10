@@ -39,10 +39,11 @@ describe('AdminSidebarContent', () => {
     expect(screen.queryByRole('link', { name: /Transactions/ })).not.toBeInTheDocument()
   })
 
-  it('shows a "soon" badge on placeholder links', () => {
+  it('shows live (non-placeholder) links without a "soon" badge', () => {
     renderAt('/admin/dashboard')
     fireEvent.click(screen.getByRole('button', { name: /Trading/ }))
-    expect(screen.getByRole('link', { name: /Economic Calendar/ })).toHaveTextContent(/soon/i)
+    // Economic Calendar is a built feature now — no "soon" badge.
+    expect(screen.getByRole('link', { name: /Economic Calendar/ })).not.toHaveTextContent(/soon/i)
   })
 
   it('auto-expands and highlights the parent group on a nested sub-route (e.g. blog editor)', () => {

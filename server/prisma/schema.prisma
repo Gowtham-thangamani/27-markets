@@ -134,6 +134,30 @@ model DownloadItem {
   @@index([enabled, sortOrder])
 }
 
+enum EconomicImpact {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// Economic-calendar events, managed from the admin CRM and shown to clients.
+model EconomicEvent {
+  id        String         @id @default(cuid())
+  title     String
+  country   String // ISO-ish label, e.g. "US", "EU", "GB"
+  currency  String // affected currency, e.g. "USD"
+  impact    EconomicImpact @default(MEDIUM)
+  eventAt   DateTime // scheduled release time (UTC)
+  actual    String? // filled in after release
+  forecast  String?
+  previous  String?
+  enabled   Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([enabled, eventAt])
+}
+
 enum Mt5ConnectionStatus {
   PENDING
   CONNECTED

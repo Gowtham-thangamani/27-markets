@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   Wallet,
   HelpCircle,
+  CalendarClock,
   type LucideIcon,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -80,6 +81,7 @@ const navItems: NavItem[] = [
       { label: 'Commodities', labelKey: 'nav.commodities', to: '/markets?category=Commodities', desc: 'Energy & agriculture', icon: Boxes },
       { label: 'Stocks', labelKey: 'nav.stocks', to: '/markets?category=Stocks', desc: 'Global share CFDs', icon: CandlestickChart },
       { label: 'Crypto', labelKey: 'nav.crypto', to: '/markets?category=Crypto', desc: 'Top cryptocurrencies', icon: Bitcoin },
+      { label: 'Economic Calendar', labelKey: 'nav.calendar', to: '/economic-calendar', desc: 'Key events & data releases', icon: CalendarClock },
     ],
   },
   {

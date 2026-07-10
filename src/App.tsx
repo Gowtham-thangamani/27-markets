@@ -42,6 +42,7 @@ const AdminPaymentGatewaysPage = lazy(() => import('./pages/admin/AdminPaymentGa
 const AdminNotificationTemplatesPage = lazy(() => import('./pages/admin/AdminNotificationTemplatesPage'))
 const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'))
 const AdminServersPage = lazy(() => import('./pages/admin/AdminServersPage'))
+const AdminEconomicCalendarPage = lazy(() => import('./pages/admin/AdminEconomicCalendarPage'))
 const AdminPaymentMethodTypesPage = lazy(() => import('./pages/admin/AdminPaymentMethodTypesPage'))
 const AdminExchangeRatesPage = lazy(() => import('./pages/admin/AdminExchangeRatesPage'))
 const AdminKycFieldsPage = lazy(() => import('./pages/admin/AdminKycFieldsPage'))
@@ -60,6 +61,7 @@ const AdminBlogEditorPage = lazy(() => import('./pages/admin/AdminBlogEditorPage
 const AdminDownloadsPage = lazy(() => import('./pages/admin/AdminDownloadsPage'))
 const AdminPlaceholderPage = lazy(() => import('./pages/admin/AdminPlaceholderPage'))
 
+const EconomicCalendarPage = lazy(() => import('./pages/EconomicCalendarPage'))
 const HomePage = lazy(() => import('./pages/HomePage'))
 const AboutPage = lazy(() => import('./pages/AboutPage'))
 const MarketsPage = lazy(() => import('./pages/MarketsPage'))
@@ -110,6 +112,7 @@ export default function App() {
         <Route path="/funding" element={<FundingPage />} />
         <Route path="/trust" element={<TrustPage />} />
         <Route path="/faq" element={<FaqPage />} />
+        <Route path="/economic-calendar" element={<EconomicCalendarPage />} />
         <Route path="/partnership" element={<PartnershipPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/blog" element={<BlogListPage />} />
@@ -177,6 +180,7 @@ export default function App() {
         <Route path="notification-templates" element={<AdminNotificationTemplatesPage />} />
         <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="servers" element={<AdminServersPage />} />
+        <Route path="economic-calendar" element={<AdminEconomicCalendarPage />} />
         <Route path="credit-card-types" element={<AdminPaymentMethodTypesPage category="CARD" title="Credit Card Types" subtitle="Card brands accepted for deposits." />} />
         <Route path="ewallet-types" element={<AdminPaymentMethodTypesPage category="EWALLET" title="E-Wallet Types" subtitle="E-wallet providers accepted for deposits." />} />
         <Route path="exchange-rates" element={<AdminExchangeRatesPage />} />
