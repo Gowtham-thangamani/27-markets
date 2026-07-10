@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Handshake } from 'lucide-react'
+import { Handshake, Check, X } from 'lucide-react'
 import { Badge, Modal, SkeletonRows } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
-import { formatCurrency, formatDate, formatDateTime } from '@/lib/format'
+import { useToast } from '@/context/ToastContext'
+import { formatCurrency, formatDate, formatDateTime, relativeTime } from '@/lib/format'
 import { ApiError } from '@/lib/api'
-import { adminApi, type PartnerItem, type PartnerCommission } from '@/lib/adminApi'
+import { adminApi, type PartnerItem, type PartnerCommission, type PartnerPayout } from '@/lib/adminApi'
 import { DataTable, type Column } from '@/components/admin/table'
 
 const columns: Column<PartnerItem>[] = [
@@ -37,6 +38,8 @@ export default function AdminPartnersPage() {
     <>
       <PageTitle title="Partners / IB" subtitle="Introducing brokers, their referrals, and commissions." />
 
+      <PendingPayoutsPanel />
+
       <DataTable
         columns={columns}
         rows={partners ?? []}
@@ -52,6 +55,59 @@ export default function AdminPartnersPage() {
 
       <CommissionsModal partner={active} onClose={() => setActive(null)} />
     </>
+  )
+}
+
+function PendingPayoutsPanel() {
+  const toast = useToast()
+  const [payouts, setPayouts] = useState<PartnerPayout[] | null>(null)
+  const [busy, setBusy] = useState<string | null>(null)
+
+  const load = useCallback(() => {
+    adminApi.listPartnerPayouts().then(setPayouts).catch(() => setPayouts([]))
+  }, [])
+  useEffect(() => { load() }, [load])
+
+  const act = async (p: PartnerPayout, action: 'approve' | 'reject') => {
+    if (action === 'approve' && !window.confirm(`Mark ${formatCurrency(p.amount)} to ${p.partner?.name ?? 'partner'} as paid? This cannot be undone.`)) return
+    setBusy(p.id)
+    try {
+      await (action === 'approve' ? adminApi.approvePartnerPayout(p.id) : adminApi.rejectPartnerPayout(p.id))
+      toast.success(action === 'approve' ? 'Payout marked paid' : 'Payout rejected', `${p.partner?.name ?? 'Partner'} · ${formatCurrency(p.amount)}`)
+      load()
+    } catch (e) {
+      toast.error('Action failed', e instanceof ApiError ? e.message : 'Please try again.')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  if (payouts && payouts.length === 0) return null
+
+  return (
+    <div className="mb-4 glass-panel p-5">
+      <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-white">
+        Pending partner payouts {payouts && <Badge tone="warning">{payouts.length}</Badge>}
+      </h3>
+      {!payouts ? (
+        <SkeletonRows rows={2} />
+      ) : (
+        <div className="space-y-2">
+          {payouts.map((p) => (
+            <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/[0.06] bg-ink-800/50 p-3">
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-white">{p.partner?.name ?? '—'} · {formatCurrency(p.amount)}</div>
+                <div className="text-xs text-gray-500">{p.partner?.email} · {p.reference} · {relativeTime(p.createdAt)}</div>
+              </div>
+              <div className="flex gap-2">
+                <button disabled={busy === p.id} onClick={() => act(p, 'approve')} className="inline-flex items-center gap-1 rounded-lg border border-success/40 px-3 py-1.5 text-xs font-medium text-success hover:bg-success/10 disabled:opacity-40"><Check className="h-3.5 w-3.5" /> Mark paid</button>
+                <button disabled={busy === p.id} onClick={() => act(p, 'reject')} className="inline-flex items-center gap-1 rounded-lg border border-danger/40 px-3 py-1.5 text-xs font-medium text-danger hover:bg-danger/10 disabled:opacity-40"><X className="h-3.5 w-3.5" /> Reject</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 

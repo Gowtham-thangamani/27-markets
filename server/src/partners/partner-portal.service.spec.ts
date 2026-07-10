@@ -80,6 +80,46 @@ describe('PartnerPortalService.commissions', () => {
   })
 })
 
+describe('PartnerPortalService.requestPayout', () => {
+  const svcWith = (commissions: any[], profile: any = { referralCode: 'ABC' }) => {
+    const available = commissions.filter((c) => !c.payoutId)
+    const tx = {
+      ibCommission: {
+        findMany: jest.fn().mockResolvedValue(available.map((c) => ({ id: c.id, amount: c.amount }))),
+        updateMany: jest.fn().mockResolvedValue({ count: available.length }),
+      },
+      partnerPayout: { create: jest.fn().mockImplementation(({ data }: any) => ({ id: 'po1', reference: data.reference, amount: data.amount, status: 'PENDING' })) },
+    }
+    const prisma = {
+      partnerProfile: { findUnique: jest.fn().mockResolvedValue(profile) },
+      $transaction: jest.fn().mockImplementation((fn: any) => fn(tx)),
+    } as any
+    return { svc: new PartnerPortalService(prisma, { get: jest.fn() } as any), tx }
+  }
+
+  it('creates a PENDING payout for the available commission and reserves it', async () => {
+    const { svc, tx } = svcWith([
+      { id: 'k1', amount: 100, payoutId: null },
+      { id: 'k2', amount: 50, payoutId: null },
+      { id: 'k3', amount: 30, payoutId: 'old' },
+    ])
+    const r = await svc.requestPayout('p1')
+    expect(r).toMatchObject({ amount: 150, status: 'PENDING' })
+    expect(tx.partnerPayout.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ partnerId: 'p1', amount: '150.00' }) }))
+    expect(tx.ibCommission.updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: { in: ['k1', 'k2'] } }, data: { payoutId: 'po1' } }))
+  })
+
+  it('rejects when no commission is available', async () => {
+    const { svc } = svcWith([{ id: 'k1', amount: 30, payoutId: 'old' }])
+    await expect(svc.requestPayout('p1')).rejects.toThrow(/no commission/i)
+  })
+
+  it('throws 404 when the partner has no profile', async () => {
+    const { svc } = svcWith([], null)
+    await expect(svc.requestPayout('p1')).rejects.toBeInstanceOf(NotFoundException)
+  })
+})
+
 describe('PartnerPortalService.profile', () => {
   it('returns the referral link from CLIENT_ORIGIN + code', async () => {
     const svc = makeService([], { referralCode: 'CODE9999' })

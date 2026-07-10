@@ -1,8 +1,9 @@
 // server/src/partners/partner-portal.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { computeDelta, dayKey, emptySeries, kycStatusOf, sparkFromSeries } from '../admin/admin-dashboard.util';
+import { generateTxReference } from '../common/reference';
 import type { Env } from '../config/env.validation';
 
 type Kyc = 'NOT_SUBMITTED' | 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -20,7 +21,7 @@ export interface PartnerDashboard {
 }
 
 export interface PartnerCommissionRow { id: string; amount: number; source: string; reference: string | null; client: string; date: string }
-export interface PartnerCommissions { total: number; count: number; rows: PartnerCommissionRow[] }
+export interface PartnerCommissions { total: number; available: number; count: number; rows: PartnerCommissionRow[] }
 
 const DAYS = 90;
 const CLIENT_SELECT = {
@@ -113,8 +114,11 @@ export class PartnerPortalService {
     const nameById = new Map(clients.map((c) => [c.id, `${c.firstName} ${c.lastName}`]));
 
     const total = rows.reduce((s, r) => s + Number(r.amount), 0);
+    // "Available" = commission not yet reserved by a payout request.
+    const available = rows.filter((r) => !r.payoutId).reduce((s, r) => s + Number(r.amount), 0);
     return {
       total: Number(total.toFixed(2)),
+      available: Number(available.toFixed(2)),
       count: rows.length,
       rows: rows.map((r) => ({
         id: r.id,
@@ -125,6 +129,32 @@ export class PartnerPortalService {
         date: r.createdAt.toISOString(),
       })),
     };
+  }
+
+  /** Request a payout of all currently-available (unreserved) commission. */
+  async requestPayout(partnerId: string): Promise<{ reference: string; amount: number; status: 'PENDING' }> {
+    const profile = await this.prisma.partnerProfile.findUnique({ where: { userId: partnerId } });
+    if (!profile) throw new NotFoundException('Partner profile not found');
+
+    return this.prisma.$transaction(async (tx) => {
+      const available = await tx.ibCommission.findMany({
+        where: { partnerId, payoutId: null },
+        select: { id: true, amount: true },
+      });
+      const total = available.reduce((s, c) => s + Number(c.amount), 0);
+      if (total <= 0) {
+        throw new BadRequestException('No commission is available to pay out.');
+      }
+      const payout = await tx.partnerPayout.create({
+        data: { partnerId, amount: total.toFixed(2), reference: generateTxReference() },
+      });
+      // Reserve exactly the commissions we counted (consistent inside the tx).
+      await tx.ibCommission.updateMany({
+        where: { id: { in: available.map((c) => c.id) } },
+        data: { payoutId: payout.id },
+      });
+      return { reference: payout.reference, amount: Number(payout.amount), status: 'PENDING' as const };
+    });
   }
 
   async profile(partnerId: string): Promise<{ referralCode: string; referralLink: string }> {
