@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "mcp__plugin_playwright_playwright__browser_take_screenshot"
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "Read(//c/Users/gowth/AppData/Local/Temp/claude/c--Users-gowth-OneDrive-Desktop-27-trading/98f4477a-8b3a-4184-be8a-fd8bf7788fba/tasks/**)"
     ]
   }
 }

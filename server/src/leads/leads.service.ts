@@ -24,13 +24,17 @@ export class LeadsService {
    */
   async capture(dto: CaptureLeadDto) {
     const email = dto.email.toLowerCase();
-    const existing = await this.prisma.lead.findFirst({
-      where: { email, status: { in: [LeadStatus.NEW, LeadStatus.CONTACTED, LeadStatus.QUALIFIED] } },
-      orderBy: { createdAt: 'desc' },
-    });
-    if (existing) {
-      // Don't pile up duplicates from repeat submissions.
-      return { id: existing.id, deduped: true };
+    const message = dto.message?.trim() || undefined;
+    // De-dupe plain demo requests, but ALWAYS record an enquiry that carries a
+    // message (contact form / support bot) so the message is never lost.
+    if (!message) {
+      const existing = await this.prisma.lead.findFirst({
+        where: { email, status: { in: [LeadStatus.NEW, LeadStatus.CONTACTED, LeadStatus.QUALIFIED] } },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (existing) {
+        return { id: existing.id, deduped: true };
+      }
     }
 
     const lead = await this.prisma.lead.create({
@@ -39,6 +43,8 @@ export class LeadsService {
         email,
         phone: dto.phone,
         country: dto.country,
+        subject: dto.subject?.trim() || undefined,
+        message,
         source: dto.source ?? LeadSource.DEMO,
         status: LeadStatus.NEW,
       },

@@ -28,6 +28,11 @@ export class CaptureLeadDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(160)
+  subject?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(2000)
   message?: string;
 }
