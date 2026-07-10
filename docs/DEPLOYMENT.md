@@ -88,53 +88,60 @@ Verify: `https://api.27markets.com/api/health` returns `200` over HTTPS.
 
 ---
 
-## Part B — Frontend on S3 + CloudFront
+## Part B — Frontend on S3 + CloudFront (provisioned)
 
-### B1. S3 bucket
-1. **S3 → Create bucket** named e.g. `27markets-frontend`, your region.
-2. Keep **Block all public access = ON** (CloudFront reaches it privately via OAC).
-   Do *not* enable S3 static website hosting — CloudFront serves it.
+Already created in account `673588459314`, region `eu-north-1`:
 
-### B2. CloudFront distribution
-1. **CloudFront → Create distribution**. Origin = your S3 bucket; when prompted,
-   **create an Origin Access Control (OAC)** and let CloudFront update the bucket policy.
-2. Viewer protocol policy: **Redirect HTTP to HTTPS**.
-3. Default root object: `index.html`.
-4. **SPA routing** — add a Custom Error Response: HTTP `403` **and** `404` →
-   response page `/index.html`, HTTP response code `200`. (React Router needs this.)
-5. Alternate domain names (CNAMEs): `27markets.com`, `www.27markets.com`.
-6. Custom SSL certificate: request one in **ACM (us-east-1 — required for CloudFront)**
-   for both names, validate via DNS (Part C), then attach it.
+| Resource | Value |
+|----------|-------|
+| S3 bucket (private) | `27markets-frontend` |
+| CloudFront distribution ID | `E19DRXVNFKYHB4` |
+| CloudFront URL | `https://djgougz4a1f0u.cloudfront.net` |
+| Origin Access Control | `E1S9UUY3OQJ0ZM` |
 
-### B3. First deploy
-From your dev machine (Git Bash / WSL / macOS, AWS CLI configured):
+The bucket blocks all public access; only this distribution can read it (OAC +
+bucket policy). SPA deep links work via CloudFront 403/404 → `/index.html` (200).
+
+### Redeploy the frontend (any future change)
 ```bash
-S3_BUCKET=27markets-frontend \
-CF_DISTRIBUTION_ID=<your-distribution-id> \
-VITE_API_URL=https://api.27markets.com/api \
-./scripts/deploy-frontend.sh
+VITE_API_URL=https://api.27markets.com/api npm run build
+aws s3 sync dist/ s3://27markets-frontend --delete \
+  --exclude index.html --cache-control "public,max-age=31536000,immutable"
+aws s3 cp dist/index.html s3://27markets-frontend/index.html \
+  --cache-control "no-cache,no-store,must-revalidate" --content-type text/html
+aws cloudfront create-invalidation --distribution-id E19DRXVNFKYHB4 --paths "/*"
 ```
-Re-run this script for every future frontend release.
+(`scripts/deploy-frontend.sh` does the same — set `S3_BUCKET` + `CF_DISTRIBUTION_ID`.)
+Note: `public/.htaccess` is Apache-only and ignored by S3 — harmless.
+
+### Custom domain (optional, after DNS in Part C)
+To serve the app at `https://27markets.com` instead of the cloudfront.net URL:
+1. Request an ACM cert **in us-east-1** for `27markets.com` + `www.27markets.com`.
+2. Add the ACM validation CNAME(s) in Namecheap; wait for "Issued".
+3. Add both names as CloudFront **Alternate domain names (CNAMEs)** and attach the cert.
+4. Point DNS at CloudFront (Part C).
 
 ---
 
 ## Part C — Namecheap DNS
 
-Namecheap dashboard → **Domain List → Manage → Advanced DNS**. Remove the default
-parking records, then add:
+Namecheap → **Domain List → Manage → Advanced DNS** → add:
 
-| Type  | Host  | Value                                   | Purpose |
-|-------|-------|-----------------------------------------|---------|
-| CNAME | `www` | `<dxxxx>.cloudfront.net`                | frontend |
-| ALIAS/CNAME | `@` | `<dxxxx>.cloudfront.net`            | apex → frontend* |
-| A     | `api` | `<EC2 public IPv4>`                      | backend |
-| CNAME | (ACM validation record shown by ACM)    | | validates SSL cert |
+| Type  | Host  | Value                          | Purpose |
+|-------|-------|--------------------------------|---------|
+| A     | `api` | `<EC2 public IPv4>`            | backend on AWS |
+| CNAME | `www` | `djgougz4a1f0u.cloudfront.net` | frontend (after ACM cert) |
+| ALIAS/CNAME | `@` | `djgougz4a1f0u.cloudfront.net` | apex → frontend (after ACM cert)* |
+| CNAME | (ACM validation record shown by ACM) | | validates the frontend SSL cert |
 
-\* Namecheap supports **ALIAS** on the root (`@`) via "CNAME (ALIAS) Record".
-If it won't accept CloudFront on the apex, use a **URL Redirect** `27markets.com → https://www.27markets.com` and serve the app from `www`.
+\* Namecheap supports **ALIAS** on the root (`@`) via "CNAME (ALIAS) Record". If it
+won't accept it, use a **URL Redirect** `27markets.com → https://www.27markets.com`.
 
-DNS can take 5–60 min to propagate. Validate certs (ACM + certbot) only after the
-relevant records resolve.
+Until the custom domain is wired, the frontend is live at the **cloudfront.net URL**.
+DNS changes take 5–60 min to propagate.
+
+DNS can take 5–60 min to propagate. Run certbot for `api.27markets.com` (Part A6)
+only after the `api` A-record resolves.
 
 ---
 
