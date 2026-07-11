@@ -9,7 +9,6 @@ import { LiveTicker } from '@/components/marketing/LiveTicker'
 import { SignalFlow } from '@/components/marketing/SignalFlow'
 import { FeatureCard } from '@/components/marketing/FeatureCard'
 import { HeroSlider } from '@/components/marketing/HeroSlider'
-import { HeroShowcase } from '@/components/marketing/HeroShowcase'
 import { ChartGridBackdrop } from '@/components/marketing/ChartGridBackdrop'
 import { CandlestickBackdrop } from '@/components/marketing/CandlestickBackdrop'
 import { ChartLineBackdrop } from '@/components/marketing/ChartLineBackdrop'
@@ -65,13 +64,8 @@ export default function HomePage() {
         <div className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[60rem] -translate-x-1/2 bg-radial-red opacity-70 blur-2xl" />
         <SignalFlow className="opacity-60" />
 
-        {/* Two homepage hero designs: GTC-style device showcase on the light theme,
-            the original auto-advancing slider on the dark theme. */}
-        {onLight ? (
-          <HeroShowcase onLight={onLight} />
-        ) : (
-          <HeroSlider onLight={onLight} quotes={heroQuotes} single />
-        )}
+        {/* Dark-only brand: the auto-advancing hero slider. */}
+        <HeroSlider onLight={onLight} quotes={heroQuotes} />
 
         {/* LIVE TICKER (real-time, backend SSE) */}
         <LiveTicker />
