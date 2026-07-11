@@ -34,6 +34,7 @@ import { DownloadsModule } from './downloads/downloads.module';
 import { EconomicCalendarModule } from './economic-calendar/economic-calendar.module';
 import { InstrumentsModule } from './instruments/instruments.module';
 import { SiteContentModule } from './site-content/site-content.module';
+import { AgentModule } from './agent/agent.module';
 import { HealthController } from './health/health.controller';
 
 @Module({
@@ -65,6 +66,7 @@ import { HealthController } from './health/health.controller';
     EconomicCalendarModule,
     InstrumentsModule,
     SiteContentModule,
+    AgentModule,
   ],
   controllers: [HealthController],
   providers: [

@@ -9,6 +9,8 @@ import { RequireAuth } from './components/portal/RequireAuth'
 import { RequireStaff } from './components/admin/RequireStaff'
 import { RequirePartner } from './components/partner/RequirePartner'
 import { PartnerLayout } from './layouts/PartnerLayout'
+import { RequireAgent } from './components/agent/RequireAgent'
+import { AgentLayout } from './layouts/AgentLayout'
 import { placeholderLinks } from './components/admin/adminNav'
 
 // Route components are code-split: each page ships as its own chunk and is
@@ -16,6 +18,9 @@ import { placeholderLinks } from './components/admin/adminNav'
 // partner, and portal bundles up front.
 const LegalPage = lazy(() => import('./pages/LegalPage'))
 const PartnerDashboardPage = lazy(() => import('./pages/partner/PartnerDashboardPage'))
+const AgentDashboardPage = lazy(() => import('./pages/agent/AgentDashboardPage'))
+const AgentLeadsPage = lazy(() => import('./pages/agent/AgentLeadsPage'))
+const AgentTicketsPage = lazy(() => import('./pages/agent/AgentTicketsPage'))
 const PartnerClientsPage = lazy(() => import('./pages/partner/PartnerClientsPage'))
 const PartnerReferralToolsPage = lazy(() => import('./pages/partner/PartnerReferralToolsPage'))
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'))
@@ -227,6 +232,21 @@ export default function App() {
         <Route path="dashboard" element={<PartnerDashboardPage />} />
         <Route path="clients" element={<PartnerClientsPage />} />
         <Route path="tools" element={<PartnerReferralToolsPage />} />
+      </Route>
+
+      {/* Secure agent workspace */}
+      <Route
+        path="/agent"
+        element={
+          <RequireAgent>
+            <AgentLayout />
+          </RequireAgent>
+        }
+      >
+        <Route index element={<Navigate to="/agent/dashboard" replace />} />
+        <Route path="dashboard" element={<AgentDashboardPage />} />
+        <Route path="leads" element={<AgentLeadsPage />} />
+        <Route path="tickets" element={<AgentTicketsPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

@@ -11,5 +11,5 @@ it('landingPathForRole maps each role to its home', () => {
   expect(landingPathForRole('CLIENT')).toBe('/portal/dashboard')
   expect(landingPathForRole('PARTNER')).toBe('/partner/dashboard')
   expect(landingPathForRole('ADMIN')).toBe('/admin/dashboard')
-  expect(landingPathForRole('AGENT')).toBe('/admin/dashboard')
+  expect(landingPathForRole('AGENT')).toBe('/agent/dashboard')
 })
