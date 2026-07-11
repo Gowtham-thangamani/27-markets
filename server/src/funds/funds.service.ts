@@ -10,6 +10,7 @@ import { AuditService } from '../audit/audit.service';
 import { formatMoney, toMoney } from '../ledger/money';
 import { generateTxReference } from '../common/reference';
 import { PAYMENT_PROVIDER, type PaymentProvider } from '../payments/payment-provider';
+import { AmlService } from '../aml/aml.service';
 import type { Env } from '../config/env.validation';
 import { DepositDto, RequestDepositDto, WithdrawDto, TransferDto } from './dto';
 
@@ -22,6 +23,7 @@ export class FundsService {
     private readonly audit: AuditService,
     @Inject(PAYMENT_PROVIDER) private readonly payments: PaymentProvider,
     private readonly config: ConfigService<Env, true>,
+    private readonly aml: AmlService,
   ) {}
 
   /**
@@ -246,6 +248,8 @@ export class FundsService {
   async withdraw(userId: string, dto: WithdrawDto) {
     this.payments.assertAvailable();
     await this.assertKycVerified(userId);
+    // Compliance gate: a confirmed sanctions/PEP HIT blocks money-out.
+    await this.aml.assertNotBlocked(userId);
     const amount = toMoney(dto.amount);
     const clientLedgerId = await this.accounts.ledgerAccountIdFor(userId, dto.accountId);
 

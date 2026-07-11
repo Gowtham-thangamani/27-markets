@@ -2,6 +2,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { KycStepStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { AmlService } from '../aml/aml.service';
 import { STORAGE_PROVIDER, type StorageProvider } from './storage-provider';
 import type { KycStep } from './dto';
 
@@ -24,6 +25,7 @@ export class KycService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     @Inject(STORAGE_PROVIDER) private readonly storage: StorageProvider,
+    private readonly aml: AmlService,
   ) {}
 
   /** True when all three KYC steps are approved (gates LIVE withdrawals). */
@@ -189,6 +191,11 @@ export class KycService {
       data: { [STEP_FIELD[step]]: status } as Prisma.KycProfileUpdateInput,
     });
     await this.audit.record({ userId: reviewerId, action: 'kyc.review', entity: 'KycProfile', entityId: profile.id, metadata: { subjectUserId: userId, step, status } });
+    // On identity approval, run a sanctions/PEP screen (best-effort; never blocks
+    // the review). A HIT then gates the client's withdrawals until cleared.
+    if (step === 'identity' && status === KycStepStatus.APPROVED) {
+      void this.aml.screenSafe(userId, reviewerId);
+    }
     return this.status(userId);
   }
 }

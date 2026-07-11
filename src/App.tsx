@@ -24,6 +24,7 @@ const AdminBlockedUsersPage = lazy(() => import('./pages/admin/AdminBlockedUsers
 const AdminLeadsPage = lazy(() => import('./pages/admin/AdminLeadsPage'))
 const AdminSupportPage = lazy(() => import('./pages/admin/AdminSupportPage'))
 const AdminKycPage = lazy(() => import('./pages/admin/AdminKycPage'))
+const AdminAmlPage = lazy(() => import('./pages/admin/AdminAmlPage'))
 const AdminUsersKycPage = lazy(() => import('./pages/admin/AdminUsersKycPage'))
 const AdminDocumentTrackerPage = lazy(() => import('./pages/admin/AdminDocumentTrackerPage'))
 const AdminReferralsPage = lazy(() => import('./pages/admin/AdminReferralsPage'))
@@ -163,6 +164,7 @@ export default function App() {
         <Route path="leads" element={<AdminLeadsPage />} />
         <Route path="support" element={<AdminSupportPage />} />
         <Route path="kyc" element={<AdminKycPage />} />
+        <Route path="aml" element={<AdminAmlPage />} />
         <Route path="users-kyc-forms" element={<AdminUsersKycPage />} />
         <Route path="document-tracker" element={<AdminDocumentTrackerPage />} />
         <Route path="finance" element={<AdminFinancePage />} />

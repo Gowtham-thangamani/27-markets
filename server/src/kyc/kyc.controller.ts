@@ -15,6 +15,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { UserRole } from '@prisma/client';
 import type { Response } from 'express';
 import { KycService, type UploadedFile as KycFile } from './kyc.service';
+import { KycVerificationService } from './kyc-verification.service';
 import { AcceptConsentsDto, KYC_STEPS, type KycStep, ReviewKycDto, SaveKycAnswersDto } from './dto';
 import { CurrentUser, Roles } from '../common/decorators';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -24,11 +25,21 @@ const ALLOWED_MIME = /^(image\/(png|jpe?g|webp)|application\/pdf)$/;
 
 @Controller('kyc')
 export class KycController {
-  constructor(private readonly kyc: KycService) {}
+  constructor(
+    private readonly kyc: KycService,
+    private readonly verification: KycVerificationService,
+  ) {}
 
   @Get()
   status(@CurrentUser('id') userId: string) {
     return this.kyc.status(userId);
+  }
+
+  /** Start a hosted identity-verification session (null url in manual mode). */
+  @HttpCode(200)
+  @Post('verification-session')
+  verificationSession(@CurrentUser('id') userId: string) {
+    return this.verification.startSession(userId);
   }
 
   /** Configured KYC questions + extended fields the client should complete. */

@@ -83,6 +83,7 @@ model User {
   verificationTokens  VerificationToken[]
   mt5Connection       Mt5Connection?
   notifications       Notification[]
+  amlScreenings       AmlScreening[]
 
   // Payouts (Stripe Connect): the client's connected account for receiving
   // withdrawals, and whether Stripe has enabled payouts on it (set via webhook /
@@ -99,6 +100,27 @@ model User {
   partnerAppResult    PartnerApplication?  @relation("PartnerAppResult")
 
   @@index([email])
+}
+
+enum AmlScreeningStatus {
+  CLEAR // no matches — safe to proceed
+  REVIEW // potential match needs a human decision
+  HIT // confirmed sanctions/PEP match — block
+}
+
+// Result of a sanctions/PEP/adverse-media screen, from the AML provider seam.
+model AmlScreening {
+  id         String             @id @default(cuid())
+  userId     String
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status     AmlScreeningStatus @default(CLEAR)
+  provider   String
+  reference  String?
+  hits       Json? // raw match list from the provider
+  screenedAt DateTime           @default(now())
+
+  @@index([userId, screenedAt])
+  @@index([status])
 }
 
 enum NotificationKind {
@@ -616,6 +638,10 @@ model KycProfile {
   identityStatus KycStepStatus @default(NOT_SUBMITTED)
   addressStatus  KycStepStatus @default(NOT_SUBMITTED)
   selfieStatus   KycStepStatus @default(NOT_SUBMITTED)
+
+  // Automated-IDV correlation: the provider's verification-session id, so an
+  // inbound provider webhook can map its verdict back to this profile.
+  providerRef String?
 
   documents KycDocument[]
   updatedAt DateTime @updatedAt

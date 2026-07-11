@@ -80,6 +80,18 @@ export const envSchema = z
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
 
+    // ── KYC / AML ──
+    // Automated identity verification: 'manual' (default) = staff document review;
+    // 'external' plugs an IDV provider (Onfido/Sumsub/…) behind the KYC seam.
+    KYC_PROVIDER: z.enum(['manual', 'external']).default('manual'),
+    KYC_PROVIDER_API_KEY: z.string().optional(),
+    KYC_PROVIDER_BASE_URL: z.string().optional(),
+    // Sanctions/PEP/adverse-media screening: 'simulation' (default) returns CLEAR
+    // unless a name is on AML_SIM_DENYLIST; 'external' requires an API key.
+    AML_PROVIDER: z.enum(['simulation', 'external']).default('simulation'),
+    AML_PROVIDER_API_KEY: z.string().optional(),
+    AML_SIM_DENYLIST: z.string().optional(), // comma-separated names → HIT (testing only)
+
     // Manual deposit rails (no PSP). When set, the method is offered to clients;
     // funds arrive off-platform and finance confirms receipt before crediting.
     BANK_DEPOSIT_DETAILS: z.string().optional(),
