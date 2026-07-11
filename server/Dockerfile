@@ -21,4 +21,4 @@ EXPOSE 4000
 # Apply migrations, then start. The demo seed is intentionally NOT run here — it
 # creates well-known default credentials and self-aborts in production anyway.
 # Provision the first admin via a one-time script that reads a secret password.
-CMD npx prisma migrate deploy && node dist/main.js
+CMD npx prisma migrate deploy && node dist/src/main.js
