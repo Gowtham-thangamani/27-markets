@@ -2,10 +2,12 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'node:path'
 
-export default defineConfig(({ command }) => ({
-  // GitHub Pages serves this project at /27-markets/. Vercel + local dev serve
-  // at root /. Vercel sets process.env.VERCEL=1 during its build.
-  base: process.env.VERCEL ? '/' : command === 'build' ? '/27-markets/' : '/',
+export default defineConfig(() => ({
+  // Served at the domain root on S3 + CloudFront (production), Vercel, and local
+  // dev — so base is '/'. A sub-path host (e.g. GitHub Pages at /27-markets/)
+  // sets PUBLIC_BASE explicitly; everything else, including `deploy-frontend.sh`,
+  // gets the safe root default.
+  base: process.env.PUBLIC_BASE ?? '/',
   plugins: [react()],
   resolve: {
     alias: {
@@ -27,6 +29,12 @@ export default defineConfig(({ command }) => ({
     },
   },
   build: {
+    // Keep the heavy 3D chunk out of the <link modulepreload> set — it's only
+    // used by lazily-loaded decorative components, so preloading it on the
+    // landing page wastes ~47 KB gz of eager download.
+    modulePreload: {
+      resolveDependencies: (_url, deps) => deps.filter((d) => !/[/]three-/.test(d)),
+    },
     rollupOptions: {
       output: {
         manualChunks: {

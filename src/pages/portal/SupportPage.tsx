@@ -63,23 +63,31 @@ export default function SupportPage() {
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        {[
-          { title: 'Live Chat', desc: 'Chat with an agent now', cta: 'Start chat' },
-          { title: 'Help Center', desc: 'Browse guides & FAQs', cta: 'Open' },
-          { title: 'Call Us', desc: '+971 4 000 0000', cta: 'Call' },
-        ].map((c) => (
-          <div key={c.title} className="glass-panel card-lift p-5">
-            <LifeBuoy className="h-6 w-6 text-brand-400" />
-            <h3 className="mt-3 font-display text-base font-semibold text-white">{c.title}</h3>
-            <p className="mt-1 text-sm text-gray-400">{c.desc}</p>
-            <button
-              onClick={() => toast.info(c.title, 'This is a demo action.')}
-              className="mt-3 text-sm font-medium text-brand-400 hover:text-brand-300"
-            >
-              {c.cta} →
-            </button>
-          </div>
-        ))}
+        {/* Live chat → start a ticket (the portal's real support channel). */}
+        <button
+          type="button"
+          onClick={() => setCreateOpen(true)}
+          className="glass-panel card-lift p-5 text-left"
+        >
+          <LifeBuoy className="h-6 w-6 text-brand-400" />
+          <h3 className="mt-3 font-display text-base font-semibold text-white">Live Chat</h3>
+          <p className="mt-1 text-sm text-gray-400">Start a conversation with our team</p>
+          <span className="mt-3 inline-block text-sm font-medium text-brand-400">Start chat →</span>
+        </button>
+        {/* Help Center → the public FAQ / guides. */}
+        <a href="/faq" target="_blank" rel="noreferrer noopener" className="glass-panel card-lift block p-5">
+          <LifeBuoy className="h-6 w-6 text-brand-400" />
+          <h3 className="mt-3 font-display text-base font-semibold text-white">Help Center</h3>
+          <p className="mt-1 text-sm text-gray-400">Browse guides &amp; FAQs</p>
+          <span className="mt-3 inline-block text-sm font-medium text-brand-400">Open →</span>
+        </a>
+        {/* Call Us → real dial link. */}
+        <a href="tel:+97140000000" className="glass-panel card-lift block p-5">
+          <LifeBuoy className="h-6 w-6 text-brand-400" />
+          <h3 className="mt-3 font-display text-base font-semibold text-white">Call Us</h3>
+          <p className="mt-1 text-sm text-gray-400">+971 4 000 0000</p>
+          <span className="mt-3 inline-block text-sm font-medium text-brand-400">Call →</span>
+        </a>
       </div>
 
       <h2 className="mb-3 font-display text-lg font-semibold text-white">Your tickets</h2>

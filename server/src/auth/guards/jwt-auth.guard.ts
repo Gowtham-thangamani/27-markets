@@ -37,17 +37,19 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Invalid or expired token');
     }
 
-    // Enforce account status on every request so a suspended/closed account is
-    // rejected immediately, not only after the access token expires (M-4).
+    // Enforce account status AND role on every request from the DB, not the
+    // token, so a suspended/closed account is rejected immediately and a
+    // demoted admin/agent loses privileges at once — not only after the access
+    // token expires (M-4 + stale-role hardening).
     const account = await this.prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { status: true },
+      select: { status: true, role: true },
     });
     if (!account || account.status !== 'ACTIVE') {
       throw new UnauthorizedException('Account is not active');
     }
 
-    req.user = { id: payload.sub, email: payload.email, role: payload.role };
+    req.user = { id: payload.sub, email: payload.email, role: account.role };
     return true;
   }
 

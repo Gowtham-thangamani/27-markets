@@ -21,12 +21,18 @@ export VITE_API_URL
 npm run build
 
 echo "==> Syncing dist/ to s3://$S3_BUCKET"
-# Long-cache the hashed assets; never cache index.html so new deploys show up.
-aws s3 sync dist/ "s3://$S3_BUCKET" --delete \
-  --exclude index.html \
+# 1) Hashed, content-addressed files under assets/ never change → cache forever.
+aws s3 sync dist/assets/ "s3://$S3_BUCKET/assets" --delete \
   --cache-control "public,max-age=31536000,immutable"
+# 2) Unhashed files (favicons, images, news.json, …) reuse their names across
+#    deploys, so they must revalidate — a short TTL avoids serving a year-stale
+#    copy after a redeploy (CloudFront invalidation only clears the edge, not
+#    browsers that already cached an immutable copy).
+aws s3 sync dist/ "s3://$S3_BUCKET" --delete --exclude "assets/*" --exclude "index.html" \
+  --cache-control "public,max-age=300,must-revalidate"
+# 3) index.html: never cache, so a new deploy is picked up immediately.
 aws s3 cp dist/index.html "s3://$S3_BUCKET/index.html" \
-  --cache-control "no-cache,no-store,must-revalidate"
+  --cache-control "no-cache,no-store,must-revalidate" --content-type text/html
 
 echo "==> Invalidating CloudFront $CF_DISTRIBUTION_ID"
 aws cloudfront create-invalidation \

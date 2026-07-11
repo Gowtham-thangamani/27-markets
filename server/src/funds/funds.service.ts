@@ -164,7 +164,9 @@ export class FundsService {
     const entry = await this.ledger.post({
       kind: JournalKind.DEPOSIT,
       reference: generateTxReference(),
-      idempotencyKey: dto.idempotencyKey ?? `deposit:${userId}:${randomUUID()}`,
+      // Namespace the (optionally client-supplied) key under the user so it can
+      // never collide with another user's journal entry.
+      idempotencyKey: `deposit:${userId}:${dto.idempotencyKey ?? randomUUID()}`,
       simulated: this.payments.simulated,
       createdById: userId,
       memo: `Deposit via ${dto.method}`,
@@ -216,7 +218,7 @@ export class FundsService {
     const entry = await this.ledger.post({
       kind: JournalKind.WITHDRAWAL,
       reference: generateTxReference(),
-      idempotencyKey: dto.idempotencyKey ?? `withdraw:${userId}:${randomUUID()}`,
+      idempotencyKey: `withdraw:${userId}:${dto.idempotencyKey ?? randomUUID()}`,
       simulated: this.payments.simulated,
       status: JournalStatus.PENDING,
       createdById: userId,
@@ -258,7 +260,7 @@ export class FundsService {
     const entry = await this.ledger.post({
       kind: JournalKind.TRANSFER,
       reference: generateTxReference(),
-      idempotencyKey: dto.idempotencyKey ?? `transfer:${userId}:${randomUUID()}`,
+      idempotencyKey: `transfer:${userId}:${dto.idempotencyKey ?? randomUUID()}`,
       simulated: this.payments.simulated,
       createdById: userId,
       memo: 'Internal transfer',

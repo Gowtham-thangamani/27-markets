@@ -30,6 +30,16 @@ const MAX_FAILED_ATTEMPTS = 5;
 /** …for this long (15 minutes). */
 const LOCKOUT_MS = 15 * 60 * 1000;
 
+/**
+ * Mask an email before it enters the (unauthenticated) audit sink. A value that
+ * doesn't look like an email — e.g. a password accidentally typed into the email
+ * field — is redacted entirely rather than stored verbatim.
+ */
+function maskEmail(value: string): string {
+  const m = /^([^@\s])[^@\s]*(@.+)$/.exec(value);
+  return m ? `${m[1]}***${m[2]}` : '[redacted]';
+}
+
 export interface IssuedTokens {
   accessToken: string;
   refreshToken: string;
@@ -217,7 +227,7 @@ export class AuthService {
             : { failedLoginAttempts: attempts },
         });
       }
-      await this.audit.record({ userId: user?.id, action: 'auth.login.failed', metadata: { email: dto.email }, ...ctx });
+      await this.audit.record({ userId: user?.id, action: 'auth.login.failed', metadata: { email: maskEmail(dto.email) }, ...ctx });
       throw new UnauthorizedException('Invalid credentials');
     }
 
