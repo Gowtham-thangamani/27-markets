@@ -478,10 +478,34 @@ function WithdrawTab() {
   const [walletAddress, setWalletAddress] = useState('')
   const [network, setNetwork] = useState('USDT-TRC20')
   const [busy, setBusy] = useState(false)
+  // Payout onboarding (Stripe Connect) — only surfaced in live mode; in
+  // SIMULATION onboardingRequired is false so the banner never appears.
+  const [payout, setPayout] = useState<{ onboardingRequired: boolean; payoutsEnabled: boolean } | null>(null)
+  const [onboarding, setOnboarding] = useState(false)
 
   useEffect(() => {
     if (!accountId && liveAccounts[0]) setAccountId(liveAccounts[0].id)
   }, [liveAccounts, accountId])
+
+  useEffect(() => {
+    api
+      .get<{ onboardingRequired: boolean; payoutsEnabled: boolean }>('/funds/payout/status')
+      .then(setPayout)
+      .catch(() => setPayout(null))
+  }, [])
+
+  const startOnboarding = async () => {
+    setOnboarding(true)
+    try {
+      const res = await api.post<{ onboardingUrl: string | null }>('/funds/payout/onboarding')
+      if (res?.onboardingUrl) window.location.href = res.onboardingUrl
+      else toast.info('Payouts ready', 'No additional setup is needed.')
+    } catch (e) {
+      toast.error('Could not start payout setup', (e as Error).message)
+    } finally {
+      setOnboarding(false)
+    }
+  }
 
   const submit = async () => {
     if (!accountId || !(Number(amount) > 0)) {
@@ -528,6 +552,17 @@ function WithdrawTab() {
       <p className="mt-1 text-sm text-gray-400">
         Withdrawals are reviewed by our finance team before payout. Funds are held while your request is pending.
       </p>
+      {payout?.onboardingRequired && !payout.payoutsEnabled && (
+        <div className="mt-4 rounded-xl border border-warning/30 bg-warning/5 p-4">
+          <p className="text-sm font-medium text-white">Set up payouts to receive withdrawals</p>
+          <p className="mt-1 text-xs text-gray-400">
+            Connect a payout account so approved withdrawals can be sent to you.
+          </p>
+          <Button onClick={startOnboarding} disabled={onboarding} size="sm" className="mt-3">
+            {onboarding ? 'Starting…' : 'Set up payouts'}
+          </Button>
+        </div>
+      )}
       <div className="mt-5 space-y-4">
         <Select
           label="From account"

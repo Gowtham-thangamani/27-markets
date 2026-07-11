@@ -23,6 +23,7 @@ describe('AdminFinanceService.approveWithdrawal', () => {
     const updateMany = jest.fn().mockResolvedValue({ count: 1 });
     const prisma = {
       journalEntry: { findUnique: jest.fn().mockResolvedValue(pendingEntry()), updateMany },
+      user: { findUnique: jest.fn().mockResolvedValue({ stripeConnectAccountId: null }) },
       appSetting: { findUnique: jest.fn().mockResolvedValue({ value: '0' }) }, // dual-control off
     } as any;
     const pay = payments();
@@ -41,6 +42,7 @@ describe('AdminFinanceService.approveWithdrawal', () => {
     const updateMany = jest.fn().mockResolvedValue({ count: 0 }); // lost the claim
     const prisma = {
       journalEntry: { findUnique: jest.fn().mockResolvedValue(pendingEntry()), updateMany },
+      user: { findUnique: jest.fn().mockResolvedValue({ stripeConnectAccountId: null }) },
       appSetting: { findUnique: jest.fn().mockResolvedValue({ value: '0' }) }, // dual-control off
     } as any;
     const pay = payments();
@@ -54,6 +56,7 @@ describe('AdminFinanceService.approveWithdrawal', () => {
     const updateMany = jest.fn().mockResolvedValue({ count: 1 });
     const prisma = {
       journalEntry: { findUnique: jest.fn().mockResolvedValue(pendingEntry()), updateMany },
+      user: { findUnique: jest.fn().mockResolvedValue({ stripeConnectAccountId: null }) },
       appSetting: { findUnique: jest.fn().mockResolvedValue({ value: '0' }) }, // dual-control off
     } as any;
     const pay = payments();
@@ -72,6 +75,7 @@ describe('AdminFinanceService.approveWithdrawal', () => {
     const detailUpdate = jest.fn().mockResolvedValue({});
     const prisma = {
       journalEntry: { findUnique: jest.fn().mockResolvedValue({ ...pendingEntry(), postings: [{ amount: 20000, currency: 'USD', ledgerAccount: { userId: 'u1' } }] }), updateMany },
+      user: { findUnique: jest.fn().mockResolvedValue({ stripeConnectAccountId: null }) },
       appSetting: { findUnique: jest.fn().mockResolvedValue({ value: '10000' }) }, // threshold $10k
       withdrawalDetail: { findUnique: jest.fn().mockResolvedValue({ firstApproverId: opts.firstApproverId ?? null }), update: detailUpdate },
     } as any;
@@ -105,6 +109,7 @@ describe('AdminFinanceService.approveWithdrawal', () => {
     const notifications = { create: jest.fn() };
     const prisma = {
       journalEntry: { findUnique: jest.fn().mockResolvedValue(pendingEntry()), updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
+      user: { findUnique: jest.fn().mockResolvedValue({ stripeConnectAccountId: null }) },
       appSetting: { findUnique: jest.fn().mockResolvedValue({ value: '0' }) },
     } as any;
     const service = new AdminFinanceService(prisma, {} as any, { record: jest.fn() } as any, payments() as any, cfg(), notifications as any);
@@ -115,6 +120,7 @@ describe('AdminFinanceService.approveWithdrawal', () => {
   it('refuses to approve a non-pending withdrawal', async () => {
     const prisma = {
       journalEntry: { findUnique: jest.fn().mockResolvedValue({ id: 'j1', kind: 'WITHDRAWAL', status: JournalStatus.POSTED }) },
+      user: { findUnique: jest.fn().mockResolvedValue({ stripeConnectAccountId: null }) },
     } as any;
     const service = new AdminFinanceService(prisma, {} as any, {} as any, payments() as any, cfg(), notify());
 
@@ -222,6 +228,7 @@ describe('AdminFinanceService.rejectWithdrawal', () => {
     const record = jest.fn().mockResolvedValue(undefined);
     const prisma = {
       journalEntry: { findUnique: jest.fn().mockResolvedValue({ id: 'j1', kind: 'WITHDRAWAL', status: JournalStatus.PENDING }) },
+      user: { findUnique: jest.fn().mockResolvedValue({ stripeConnectAccountId: null }) },
     } as any;
     const service = new AdminFinanceService(prisma, { reverse } as any, { record } as any, payments() as any, cfg(), notify());
 

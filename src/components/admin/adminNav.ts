@@ -44,6 +44,7 @@ export const adminNav: AdminNavEntry[] = [
   {
     label: 'KYC & Compliance', icon: ShieldCheck, children: [
       { label: 'Pending Documents', to: '/admin/kyc' },
+      { label: 'AML Screening', to: '/admin/aml' },
       { label: 'KYC Forms', to: '/admin/kyc-forms' },
       { label: 'KYC Questions', to: '/admin/kyc-questions' },
       { label: 'Extended Fields', to: '/admin/extended-fields' },

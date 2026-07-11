@@ -30,6 +30,7 @@ import { LeadsModule } from './leads/leads.module';
 import { PartnersModule } from './partners/partners.module';
 import { ChatModule } from './chat/chat.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { AmlModule } from './aml/aml.module';
 import { DownloadsModule } from './downloads/downloads.module';
 import { EconomicCalendarModule } from './economic-calendar/economic-calendar.module';
 import { InstrumentsModule } from './instruments/instruments.module';
@@ -67,6 +68,7 @@ import { HealthController } from './health/health.controller';
     InstrumentsModule,
     SiteContentModule,
     AgentModule,
+    AmlModule,
   ],
   controllers: [HealthController],
   providers: [

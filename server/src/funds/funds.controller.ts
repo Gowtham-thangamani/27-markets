@@ -53,4 +53,17 @@ export class FundsController {
   transfer(@CurrentUser('id') userId: string, @Body() dto: TransferDto) {
     return this.funds.transfer(userId, dto);
   }
+
+  /** Whether the client can receive payouts / needs onboarding. */
+  @Get('payout/status')
+  payoutStatus(@CurrentUser('id') userId: string) {
+    return this.funds.payoutStatus(userId);
+  }
+
+  /** Start (or resume) payout onboarding — returns a hosted URL to redirect to. */
+  @HttpCode(200)
+  @Post('payout/onboarding')
+  payoutOnboarding(@CurrentUser('id') userId: string) {
+    return this.funds.payoutOnboarding(userId);
+  }
 }

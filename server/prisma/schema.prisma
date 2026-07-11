@@ -83,6 +83,13 @@ model User {
   verificationTokens  VerificationToken[]
   mt5Connection       Mt5Connection?
   notifications       Notification[]
+  amlScreenings       AmlScreening[]
+
+  // Payouts (Stripe Connect): the client's connected account for receiving
+  // withdrawals, and whether Stripe has enabled payouts on it (set via webhook /
+  // onboarding refresh). Null/false until the client completes payout onboarding.
+  stripeConnectAccountId String?  @unique
+  payoutsEnabled         Boolean  @default(false)
 
   // Partner / IB
   partnerProfile      PartnerProfile?      @relation("UserPartnerProfile")
@@ -95,6 +102,27 @@ model User {
   // `email` is already @unique (which creates an index) — no separate @@index needed.
   // Partner dashboard + client list filter on referredByPartnerId, so index it.
   @@index([referredByPartnerId])
+}
+
+enum AmlScreeningStatus {
+  CLEAR // no matches — safe to proceed
+  REVIEW // potential match needs a human decision
+  HIT // confirmed sanctions/PEP match — block
+}
+
+// Result of a sanctions/PEP/adverse-media screen, from the AML provider seam.
+model AmlScreening {
+  id         String             @id @default(cuid())
+  userId     String
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status     AmlScreeningStatus @default(CLEAR)
+  provider   String
+  reference  String?
+  hits       Json? // raw match list from the provider
+  screenedAt DateTime           @default(now())
+
+  @@index([userId, screenedAt])
+  @@index([status])
 }
 
 enum NotificationKind {
@@ -681,6 +709,10 @@ model KycProfile {
   identityStatus KycStepStatus @default(NOT_SUBMITTED)
   addressStatus  KycStepStatus @default(NOT_SUBMITTED)
   selfieStatus   KycStepStatus @default(NOT_SUBMITTED)
+
+  // Automated-IDV correlation: the provider's verification-session id, so an
+  // inbound provider webhook can map its verdict back to this profile.
+  providerRef String?
 
   documents KycDocument[]
   updatedAt DateTime @updatedAt

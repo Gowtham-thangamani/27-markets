@@ -10,6 +10,7 @@ import { AuditService } from '../audit/audit.service';
 import { formatMoney, toMoney } from '../ledger/money';
 import { generateTxReference } from '../common/reference';
 import { PAYMENT_PROVIDER, type PaymentProvider } from '../payments/payment-provider';
+import { AmlService } from '../aml/aml.service';
 import type { Env } from '../config/env.validation';
 import { DepositDto, RequestDepositDto, WithdrawDto, TransferDto } from './dto';
 
@@ -22,6 +23,7 @@ export class FundsService {
     private readonly audit: AuditService,
     @Inject(PAYMENT_PROVIDER) private readonly payments: PaymentProvider,
     private readonly config: ConfigService<Env, true>,
+    private readonly aml: AmlService,
   ) {}
 
   /**
@@ -144,6 +146,53 @@ export class FundsService {
     return this.prisma.depositRequest.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 50 });
   }
 
+  /**
+   * Start (or resume) client payout onboarding (Stripe Connect). Returns a hosted
+   * onboarding URL to redirect to — null in SIMULATION, where no onboarding is
+   * needed. Persists the connected account id + payouts-enabled flag.
+   */
+  async payoutOnboarding(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, country: true, stripeConnectAccountId: true, payoutsEnabled: true },
+    });
+    if (!user) throw new BadRequestException('User not found');
+
+    const origin = (this.config.get('CLIENT_ORIGIN', { infer: true }).split(',')[0] || '').trim() || 'http://localhost:5173';
+    const result = await this.payments.createPayoutOnboarding({
+      userId,
+      email: user.email,
+      // Stripe expects an ISO-3166-1 alpha-2 code; skip anything that isn't one.
+      country: user.country && user.country.length === 2 ? user.country.toUpperCase() : undefined,
+      existingAccountId: user.stripeConnectAccountId,
+      refreshUrl: `${origin}/portal/funds?payout=refresh`,
+      returnUrl: `${origin}/portal/funds?payout=done`,
+    });
+
+    // Persist the connected account + capability state (simulation returns null id → no-op).
+    if (result.accountId) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { stripeConnectAccountId: result.accountId, payoutsEnabled: result.payoutsEnabled },
+      });
+    }
+    return { onboardingUrl: result.onboardingUrl, payoutsEnabled: result.payoutsEnabled };
+  }
+
+  /** Whether the client can receive payouts (has completed onboarding). */
+  async payoutStatus(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { payoutsEnabled: true, stripeConnectAccountId: true },
+    });
+    return {
+      payoutsEnabled: user?.payoutsEnabled ?? false,
+      onboarded: !!user?.stripeConnectAccountId,
+      // In simulation no onboarding is required, so payouts are effectively enabled.
+      onboardingRequired: !this.payments.simulated,
+    };
+  }
+
   async deposit(userId: string, dto: DepositDto) {
     // SAFETY RAIL: refuses unless a payment provider can actually move funds.
     this.payments.assertAvailable();
@@ -201,6 +250,8 @@ export class FundsService {
   async withdraw(userId: string, dto: WithdrawDto) {
     this.payments.assertAvailable();
     await this.assertKycVerified(userId);
+    // Compliance gate: a confirmed sanctions/PEP HIT blocks money-out.
+    await this.aml.assertNotBlocked(userId);
     const amount = toMoney(dto.amount);
     const clientLedgerId = await this.accounts.ledgerAccountIdFor(userId, dto.accountId);
 
