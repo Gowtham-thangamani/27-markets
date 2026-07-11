@@ -144,6 +144,53 @@ export class FundsService {
     return this.prisma.depositRequest.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 50 });
   }
 
+  /**
+   * Start (or resume) client payout onboarding (Stripe Connect). Returns a hosted
+   * onboarding URL to redirect to — null in SIMULATION, where no onboarding is
+   * needed. Persists the connected account id + payouts-enabled flag.
+   */
+  async payoutOnboarding(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, country: true, stripeConnectAccountId: true, payoutsEnabled: true },
+    });
+    if (!user) throw new BadRequestException('User not found');
+
+    const origin = (this.config.get('CLIENT_ORIGIN', { infer: true }).split(',')[0] || '').trim() || 'http://localhost:5173';
+    const result = await this.payments.createPayoutOnboarding({
+      userId,
+      email: user.email,
+      // Stripe expects an ISO-3166-1 alpha-2 code; skip anything that isn't one.
+      country: user.country && user.country.length === 2 ? user.country.toUpperCase() : undefined,
+      existingAccountId: user.stripeConnectAccountId,
+      refreshUrl: `${origin}/portal/funds?payout=refresh`,
+      returnUrl: `${origin}/portal/funds?payout=done`,
+    });
+
+    // Persist the connected account + capability state (simulation returns null id → no-op).
+    if (result.accountId) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { stripeConnectAccountId: result.accountId, payoutsEnabled: result.payoutsEnabled },
+      });
+    }
+    return { onboardingUrl: result.onboardingUrl, payoutsEnabled: result.payoutsEnabled };
+  }
+
+  /** Whether the client can receive payouts (has completed onboarding). */
+  async payoutStatus(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { payoutsEnabled: true, stripeConnectAccountId: true },
+    });
+    return {
+      payoutsEnabled: user?.payoutsEnabled ?? false,
+      onboarded: !!user?.stripeConnectAccountId,
+      // In simulation no onboarding is required, so payouts are effectively enabled.
+      onboardingRequired: !this.payments.simulated,
+    };
+  }
+
   async deposit(userId: string, dto: DepositDto) {
     // SAFETY RAIL: refuses unless a payment provider can actually move funds.
     this.payments.assertAvailable();

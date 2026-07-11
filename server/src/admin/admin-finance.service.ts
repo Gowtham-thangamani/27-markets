@@ -341,12 +341,23 @@ export class AdminFinanceService {
       throw new BadRequestException('Withdrawal is not pending (already processed).');
     }
 
+    // Pay the client via their connected payout account (Stripe Connect). In
+    // SIMULATION this is ignored; live providers require it and reject otherwise.
+    const clientUserId = clientLeg?.ledgerAccount.userId ?? null;
+    const client = clientUserId
+      ? await this.prisma.user.findUnique({
+          where: { id: clientUserId },
+          select: { stripeConnectAccountId: true },
+        })
+      : null;
+
     let payout;
     try {
       payout = await this.payments.payout({
         reference: entry.reference,
         amountMinor,
         currency,
+        destinationAccount: client?.stripeConnectAccountId ?? null,
         metadata: { entryId },
       });
     } catch (err) {

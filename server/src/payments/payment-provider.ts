@@ -17,6 +17,9 @@ export interface PayoutRequest {
   reference: string;
   amountMinor: number;
   currency: string;
+  /** The client's connected/destination account (Stripe Connect). Required by
+   * live providers to pay the end client; ignored in simulation. */
+  destinationAccount?: string | null;
   metadata?: Record<string, string>;
 }
 
@@ -24,6 +27,26 @@ export interface PayoutResult {
   payoutId: string;
   status: string;
   simulated: boolean;
+}
+
+export interface PayoutOnboardingRequest {
+  userId: string;
+  email: string;
+  /** ISO-3166-1 alpha-2 country for the connected account (defaults handled by provider). */
+  country?: string;
+  refreshUrl: string;
+  returnUrl: string;
+  /** Reuse an existing connected account if the client started onboarding before. */
+  existingAccountId?: string | null;
+}
+
+export interface PayoutOnboardingResult {
+  /** The connected account id (null in simulation — no onboarding needed). */
+  accountId: string | null;
+  /** Hosted onboarding URL to redirect the client to (null when none needed). */
+  onboardingUrl: string | null;
+  /** Whether the provider can currently pay out to this account. */
+  payoutsEnabled: boolean;
 }
 
 /**
@@ -45,6 +68,12 @@ export interface PaymentProvider {
   createDepositCheckout(req: DepositCheckoutRequest): Promise<{ url: string | null }>;
   /** Send an approved withdrawal payout to the client's destination. */
   payout(req: PayoutRequest): Promise<PayoutResult>;
+  /**
+   * Start (or resume) client payout onboarding — e.g. a Stripe Connect account +
+   * hosted onboarding link. Simulation needs none, so it returns nulls with
+   * payouts already "enabled".
+   */
+  createPayoutOnboarding(req: PayoutOnboardingRequest): Promise<PayoutOnboardingResult>;
 }
 
 /** Default: SIMULATION — no real funds, always available. */
@@ -63,6 +92,11 @@ export class SimulationPaymentProvider implements PaymentProvider {
 
   async payout(req: PayoutRequest): Promise<PayoutResult> {
     return { payoutId: `sim_${req.reference}`, status: 'paid', simulated: true };
+  }
+
+  async createPayoutOnboarding(): Promise<PayoutOnboardingResult> {
+    // No onboarding in simulation — payouts are always "enabled".
+    return { accountId: null, onboardingUrl: null, payoutsEnabled: true };
   }
 }
 
@@ -90,5 +124,10 @@ export class UnavailableLivePaymentProvider implements PaymentProvider {
   async payout(_req: PayoutRequest): Promise<PayoutResult> {
     this.assertAvailable();
     return { payoutId: '', status: 'unavailable', simulated: false };
+  }
+
+  async createPayoutOnboarding(): Promise<PayoutOnboardingResult> {
+    this.assertAvailable();
+    return { accountId: null, onboardingUrl: null, payoutsEnabled: false };
   }
 }

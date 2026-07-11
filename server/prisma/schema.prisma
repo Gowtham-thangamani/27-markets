@@ -84,6 +84,12 @@ model User {
   mt5Connection       Mt5Connection?
   notifications       Notification[]
 
+  // Payouts (Stripe Connect): the client's connected account for receiving
+  // withdrawals, and whether Stripe has enabled payouts on it (set via webhook /
+  // onboarding refresh). Null/false until the client completes payout onboarding.
+  stripeConnectAccountId String?  @unique
+  payoutsEnabled         Boolean  @default(false)
+
   // Partner / IB
   partnerProfile      PartnerProfile?      @relation("UserPartnerProfile")
   referredByPartnerId String?

@@ -2,7 +2,14 @@ import { Injectable, NotImplementedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import type { Env } from '../config/env.validation';
-import type { DepositCheckoutRequest, PaymentProvider, PayoutRequest, PayoutResult } from './payment-provider';
+import type {
+  DepositCheckoutRequest,
+  PaymentProvider,
+  PayoutRequest,
+  PayoutResult,
+  PayoutOnboardingRequest,
+  PayoutOnboardingResult,
+} from './payment-provider';
 
 /**
  * Stripe adapter behind the PaymentProvider seam. SKELETON / sandbox-ready:
@@ -57,25 +64,57 @@ export class StripePaymentProvider implements PaymentProvider {
   }
 
   /**
-   * Pay out an approved withdrawal. Uses Stripe Payouts (platform balance →
-   * platform bank). NOTE: paying the END CLIENT directly requires Stripe Connect
-   * transfers to their connected/bank account — wire that destination here once
-   * onboarding is in place; this is the integration point.
+   * Pay an approved withdrawal to the CLIENT via Stripe Connect: a Transfer moves
+   * platform balance → the client's connected account (which then settles to the
+   * client's bank on its payout schedule). Requires the client to have completed
+   * payout onboarding (see createPayoutOnboarding).
    */
   async payout(req: PayoutRequest): Promise<PayoutResult> {
     this.assertAvailable();
-    const p = await this.stripe.payouts.create(
+    if (!req.destinationAccount) {
+      throw new NotImplementedException(
+        'Cannot pay the client: no connected payout account. The client must complete payout onboarding first.',
+      );
+    }
+    const transfer = await this.stripe.transfers.create(
       {
         amount: req.amountMinor,
         currency: req.currency.toLowerCase(),
+        destination: req.destinationAccount,
         metadata: req.metadata,
-        statement_descriptor: 'Withdrawal',
       },
       // Idempotency key keyed to the withdrawal reference: a retried approval
-      // (e.g. after markPosted fails) reuses the same payout instead of double-paying.
+      // (e.g. after markPosted fails) reuses the same transfer instead of double-paying.
       { idempotencyKey: `payout:${req.reference}` },
     );
-    return { payoutId: p.id, status: p.status, simulated: false };
+    return { payoutId: transfer.id, status: 'paid', simulated: false };
+  }
+
+  /**
+   * Create (or reuse) an Express connected account for the client and return a
+   * hosted onboarding link. Called when the client sets up payouts.
+   */
+  async createPayoutOnboarding(req: PayoutOnboardingRequest): Promise<PayoutOnboardingResult> {
+    this.assertAvailable();
+    let accountId = req.existingAccountId ?? null;
+    if (!accountId) {
+      const account = await this.stripe.accounts.create({
+        type: 'express',
+        email: req.email,
+        ...(req.country ? { country: req.country } : {}),
+        capabilities: { transfers: { requested: true } },
+        metadata: { userId: req.userId },
+      });
+      accountId = account.id;
+    }
+    const link = await this.stripe.accountLinks.create({
+      account: accountId,
+      refresh_url: req.refreshUrl,
+      return_url: req.returnUrl,
+      type: 'account_onboarding',
+    });
+    const acct = await this.stripe.accounts.retrieve(accountId);
+    return { accountId, onboardingUrl: link.url, payoutsEnabled: !!acct.payouts_enabled };
   }
 
   /** Verify + parse an incoming webhook using the signing secret. */

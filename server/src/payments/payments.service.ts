@@ -23,6 +23,16 @@ export class PaymentsService {
   ) {}
 
   async handleStripeEvent(event: Stripe.Event): Promise<{ handled: boolean }> {
+    // Connect onboarding progress: reflect whether the client can receive payouts.
+    if (event.type === 'account.updated') {
+      const account = event.data.object as Stripe.Account;
+      await this.prisma.user.updateMany({
+        where: { stripeConnectAccountId: account.id },
+        data: { payoutsEnabled: !!account.payouts_enabled },
+      });
+      return { handled: true };
+    }
+
     if (event.type !== 'checkout.session.completed') {
       this.logger.debug(`Ignoring Stripe event ${event.type}`);
       return { handled: false };
