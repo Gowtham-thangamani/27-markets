@@ -1,3 +1,6 @@
+import { useEffect, useState } from 'react'
+import { siteContentApi } from '@/lib/siteContentApi'
+
 const DFM_SYMBOLS = [
   { sym: 'EMAAR', name: 'Emaar Properties' },
   { sym: 'DEWA', name: 'Dubai Electricity & Water' },
@@ -11,8 +14,26 @@ const DFM_SYMBOLS = [
  * Real-time DFM data is licensed — it can only be shown via an authorized DFM
  * vendor agreement. Until that feed is connected, this is a clearly-labeled
  * placeholder (no real-time prices are displayed without entitlement).
+ * The symbol list is admin-managed; the static list above is the fallback/seed.
  */
 export function DfmBoard() {
+  const [symbols, setSymbols] = useState(DFM_SYMBOLS)
+
+  useEffect(() => {
+    let active = true
+    siteContentApi
+      .dfmSymbols()
+      .then((rows) => {
+        if (active && rows.length) setSymbols(rows.map((r) => ({ sym: r.symbol, name: r.name })))
+      })
+      .catch(() => {
+        /* keep the static fallback */
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
   return (
     <div className="glass-panel p-5">
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -26,7 +47,7 @@ export function DfmBoard() {
         placeholders until the licensed feed is connected.
       </p>
       <ul className="divide-y divide-white/[0.04] text-sm">
-        {DFM_SYMBOLS.map((r) => (
+        {symbols.map((r) => (
           <li key={r.sym} className="flex items-center justify-between py-2.5">
             <div className="min-w-0">
               <span className="font-medium text-white">{r.sym}</span>

@@ -1,10 +1,13 @@
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { cardReveal, cardStagger } from '@/lib/motion'
+import { siteContentApi } from '@/lib/siteContentApi'
 
 /**
  * IB testimonial cluster — gradient/initial avatars paired with speech-bubble
  * quotes (no stock photos bundled). Reads as a network of partner voices,
  * mirroring the reference "Grow Your Clients Network" panel.
+ * Content is admin-managed; the static list below is the fallback/seed.
  */
 
 interface Voice {
@@ -23,6 +26,24 @@ const VOICES: Voice[] = [
 ]
 
 export function IbVoices() {
+  const [voices, setVoices] = useState<Voice[]>(VOICES)
+
+  useEffect(() => {
+    let active = true
+    siteContentApi
+      .testimonials()
+      .then((rows) => {
+        if (active && rows.length)
+          setVoices(rows.map((r) => ({ initials: r.initials, name: r.name, quote: r.quote })))
+      })
+      .catch(() => {
+        /* keep the static fallback */
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
   return (
     <div className="relative">
       <div
@@ -36,7 +57,7 @@ export function IbVoices() {
         viewport={{ once: true, amount: 0.2 }}
         className="relative grid gap-4 sm:grid-cols-2"
       >
-        {VOICES.map((v, i) => (
+        {voices.map((v, i) => (
           <motion.div
             key={v.name}
             variants={cardReveal}

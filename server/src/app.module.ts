@@ -33,6 +33,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { DownloadsModule } from './downloads/downloads.module';
 import { EconomicCalendarModule } from './economic-calendar/economic-calendar.module';
 import { InstrumentsModule } from './instruments/instruments.module';
+import { SiteContentModule } from './site-content/site-content.module';
 import { HealthController } from './health/health.controller';
 
 @Module({
@@ -63,6 +64,7 @@ import { HealthController } from './health/health.controller';
     DownloadsModule,
     EconomicCalendarModule,
     InstrumentsModule,
+    SiteContentModule,
   ],
   controllers: [HealthController],
   providers: [

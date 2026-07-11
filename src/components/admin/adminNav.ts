@@ -111,6 +111,7 @@ export const adminNav: AdminNavEntry[] = [
     label: 'Contents', icon: Newspaper, children: [
       { label: 'Blog', to: '/admin/blog' },
       { label: 'Downloads', to: '/admin/downloads' },
+      { label: 'Marketing Content', to: '/admin/site-content' },
     ],
   },
   {

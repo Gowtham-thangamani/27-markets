@@ -176,6 +176,33 @@ model TradingInstrument {
   @@index([category])
 }
 
+// Partner/IB testimonial shown on marketing pages, managed from the admin CRM.
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  initials  String
+  quote     String
+  enabled   Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([enabled, sortOrder])
+}
+
+// DFM (Dubai Financial Market) board symbol, managed from the admin CRM.
+model DfmSymbol {
+  id        String   @id @default(cuid())
+  symbol    String   @unique
+  name      String
+  enabled   Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([enabled, sortOrder])
+}
+
 enum Mt5ConnectionStatus {
   PENDING
   CONNECTED
