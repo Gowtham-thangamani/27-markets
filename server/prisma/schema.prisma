@@ -92,7 +92,9 @@ model User {
   partnerAppsReviewed PartnerApplication[] @relation("PartnerAppReviewer")
   partnerAppResult    PartnerApplication?  @relation("PartnerAppResult")
 
-  @@index([email])
+  // `email` is already @unique (which creates an index) — no separate @@index needed.
+  // Partner dashboard + client list filter on referredByPartnerId, so index it.
+  @@index([referredByPartnerId])
 }
 
 enum NotificationKind {

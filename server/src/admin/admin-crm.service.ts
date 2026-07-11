@@ -215,7 +215,7 @@ export class AdminCrmService {
         ...(dto.assignedToId !== undefined ? { assignedToId: dto.assignedToId } : {}),
       },
     });
-    await this.audit.record({ userId: staffId, action: 'crm.lead.update', entity: 'Lead', entityId: id, metadata: { ...dto } });
+    await this.audit.record({ userId: staffId, action: 'crm.lead.update', entity: 'Lead', entityId: id, metadata: { status: dto.status, assignedToId: dto.assignedToId } });
     return this.getLead(id);
   }
 
@@ -264,7 +264,7 @@ export class AdminCrmService {
         ...(dto.assignedToId !== undefined ? { assignedToId: dto.assignedToId } : {}),
       },
     });
-    await this.audit.record({ userId: staffId, action: 'crm.ticket.update', entity: 'Ticket', entityId: id, metadata: { ...dto } });
+    await this.audit.record({ userId: staffId, action: 'crm.ticket.update', entity: 'Ticket', entityId: id, metadata: { status: dto.status, priority: dto.priority, assignedToId: dto.assignedToId } });
     return this.getTicket(id);
   }
 
