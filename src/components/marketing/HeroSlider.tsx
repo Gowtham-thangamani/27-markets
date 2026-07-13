@@ -6,6 +6,7 @@ import { Button } from '@/components/ui'
 import { asset } from '@/lib/asset'
 import { fadeUp, staggerContainer } from '@/lib/motion'
 import { HeroFloatingCards } from '@/components/marketing/HeroFloatingCards'
+import { HeroPartnerCards } from '@/components/marketing/HeroPartnerCards'
 import { useT } from '@/i18n/LanguageContext'
 
 interface Quote {
@@ -269,6 +270,7 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
                     alt="Rising trading performance — steadily climbing returns"
                     className="relative mx-auto w-[82%] select-none drop-shadow-[0_18px_55px_rgba(225,29,46,0.35)]"
                   />
+                  <HeroPartnerCards />
                 </div>
               )}
             </motion.div>
