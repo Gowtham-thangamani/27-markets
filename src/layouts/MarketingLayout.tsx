@@ -4,9 +4,11 @@ import { Navbar } from '@/components/marketing/Navbar'
 import { Footer } from '@/components/marketing/Footer'
 import { MobileCTABar } from '@/components/marketing/MobileCTABar'
 import { ChatWidget } from '@/components/marketing/ChatWidget'
+import { useRouteSeo } from '@/lib/seo'
 
 export function MarketingLayout() {
   const { pathname, hash } = useLocation()
+  useRouteSeo()
   useEffect(() => {
     // When a link carries a #hash, scroll to that section (offset for the fixed
     // navbar); otherwise jump to the top on route change.
