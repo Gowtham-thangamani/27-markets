@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/marketing/PageHeader'
 import { Reveal } from '@/components/Reveal'
 import { CTABand } from '@/components/marketing/CTABand'
 import { Accordion, type AccordionItem } from '@/components/ui/Accordion'
+import { useFaqJsonLd } from '@/lib/seo'
 import { useT } from '@/i18n/LanguageContext'
 
 const GROUPS: { icon: typeof UserPlus; g: string; ids: string[] }[] = [
@@ -15,6 +16,14 @@ const GROUPS: { icon: typeof UserPlus; g: string; ids: string[] }[] = [
 
 export default function FaqPage() {
   const t = useT()
+  useFaqJsonLd(
+    GROUPS.flatMap((group) =>
+      group.ids.map((id, i) => ({
+        question: t(`faqp.${group.g}q${i + 1}`),
+        answer: t(`faqp.${group.g}a${i + 1}`),
+      })),
+    ),
+  )
   return (
     <>
       <PageHeader

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { SectionHeading } from '@/components/SectionHeading'
 import { Reveal } from '@/components/Reveal'
 import { Accordion, type AccordionItem } from '@/components/ui/Accordion'
+import { useFaqJsonLd } from '@/lib/seo'
 import { useT } from '@/i18n/LanguageContext'
 
 const FAQ_IDS = ['start', 'min-deposit', 'withdraw', 'safe', 'markets', 'demo', 'platforms']
@@ -13,6 +14,7 @@ export function FaqSection() {
     question: t(`faqH.q${i + 1}`),
     answer: t(`faqH.a${i + 1}`),
   }))
+  useFaqJsonLd(faqs)
   return (
     <section className="section-alt relative overflow-hidden py-20 sm:py-24">
       <div className="container-x relative z-10">

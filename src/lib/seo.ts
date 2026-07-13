@@ -87,6 +87,35 @@ const SEO_BY_PATH: Record<string, SeoEntry> = {
   },
 }
 
+/**
+ * Injects FAQPage structured data (schema.org) for the given Q&As so Google can
+ * surface them as rich results. Upserts a single <script> and removes it on
+ * unmount, so only the current route's FAQ schema is present.
+ */
+export function useFaqJsonLd(faqs: { question: string; answer: string }[]) {
+  const json = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.question,
+      acceptedAnswer: { '@type': 'Answer', text: f.answer },
+    })),
+  })
+  useEffect(() => {
+    const id = 'faq-jsonld'
+    let el = document.getElementById(id) as HTMLScriptElement | null
+    if (!el) {
+      el = document.createElement('script')
+      el.id = id
+      el.type = 'application/ld+json'
+      document.head.appendChild(el)
+    }
+    el.textContent = json
+    return () => document.getElementById(id)?.remove()
+  }, [json])
+}
+
 function upsertMeta(attr: 'name' | 'property', key: string, content: string) {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`)
   if (!el) {
