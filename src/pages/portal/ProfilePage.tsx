@@ -10,14 +10,24 @@ import { zodResolver } from '@/lib/zodResolver'
 import { profileSchema } from '@/lib/validation'
 import { initials, formatDate } from '@/lib/format'
 import { z } from 'zod'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 type ProfileValues = z.infer<typeof profileSchema>
 
 export default function ProfilePage() {
   const { user, updateProfile } = useAuth()
   const toast = useToast()
-  const [prefs, setPrefs] = useState({ marketing: true, security: true, product: false })
+  const [prefs, setPrefs] = useState({
+    marketing: user?.notifyMarketing ?? true,
+    security: user?.notifySecurity ?? true,
+    product: user?.notifyProduct ?? false,
+  })
+  // Keep the toggles in sync with the persisted user (initial load + after save).
+  useEffect(() => {
+    if (user) {
+      setPrefs({ marketing: user.notifyMarketing, security: user.notifySecurity, product: user.notifyProduct })
+    }
+  }, [user])
   const [cr, setCr] = useState<{ field: 'phone' | 'address' | 'city' | 'postalCode'; value: string }>({ field: 'phone', value: '' })
   const [crBusy, setCrBusy] = useState(false)
 
@@ -58,7 +68,21 @@ export default function ProfilePage() {
     }
   }
 
-  const toggle = (key: keyof typeof prefs) => setPrefs((p) => ({ ...p, [key]: !p[key] }))
+  const toggle = async (key: keyof typeof prefs) => {
+    const next = { ...prefs, [key]: !prefs[key] }
+    const prev = prefs
+    setPrefs(next) // optimistic
+    try {
+      await updateProfile({
+        notifyMarketing: next.marketing,
+        notifySecurity: next.security,
+        notifyProduct: next.product,
+      })
+    } catch (err) {
+      setPrefs(prev) // rollback on failure
+      toast.error('Could not save preference', err instanceof ApiError ? err.message : (err as Error).message)
+    }
+  }
 
   return (
     <>

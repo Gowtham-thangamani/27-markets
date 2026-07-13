@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Monitor, Smartphone, Globe, FileText, Download, type LucideIcon } from 'lucide-react'
+import { Monitor, Smartphone, Globe, FileText, Download, ArrowUpRight, type LucideIcon } from 'lucide-react'
 import { Badge, Button } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
-import { useToast } from '@/context/ToastContext'
 import { downloadsApi, type DownloadItem } from '@/lib/downloadsApi'
 import { fadeUp, staggerContainer } from '@/lib/motion'
 
@@ -15,7 +15,6 @@ const iconMap: Record<string, LucideIcon> = {
 }
 
 export default function DownloadsPage() {
-  const toast = useToast()
   const [items, setItems] = useState<DownloadItem[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -87,23 +86,18 @@ export default function DownloadsPage() {
                     className="mt-4 block"
                   >
                     <Button variant="outline" fullWidth className="gap-1.5">
-                      <Download className="h-4 w-4" /> Download
+                      <Download className="h-4 w-4" /> {isDoc ? 'Download PDF' : 'Download'}
                     </Button>
                   </a>
+                ) : isWeb ? (
+                  <Link to="/portal/trade" className="mt-4 block">
+                    <Button variant="primary" fullWidth className="gap-1.5">
+                      Launch WebTrader <ArrowUpRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
                 ) : (
-                  <Button
-                    variant={isWeb ? 'primary' : 'outline'}
-                    fullWidth
-                    className="mt-4 gap-1.5"
-                    onClick={() =>
-                      toast.info(
-                        isWeb ? 'Launching WebTrader' : 'Download started',
-                        isDoc ? 'Your document is downloading.' : `${d.name} is downloading.`
-                      )
-                    }
-                  >
-                    <Download className="h-4 w-4" />
-                    {isWeb ? 'Launch' : isDoc ? 'Download PDF' : 'Download'}
+                  <Button variant="outline" fullWidth disabled className="mt-4 gap-1.5 opacity-60">
+                    <Download className="h-4 w-4" /> Currently unavailable
                   </Button>
                 )}
               </motion.div>

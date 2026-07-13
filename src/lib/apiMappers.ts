@@ -92,6 +92,9 @@ export interface ApiUser {
   twoFactorEnabled: boolean
   emailVerified?: boolean
   joinedAt: string
+  notifySecurity?: boolean
+  notifyProduct?: boolean
+  notifyMarketing?: boolean
 }
 
 export interface ApiKycStatus {
@@ -148,6 +151,9 @@ export function mapUser(u: ApiUser): UserProfile {
     joinedAt: u.joinedAt,
     emailVerified: u.emailVerified ?? false,
     avatarColor: '#e11d2e',
+    notifySecurity: u.notifySecurity ?? true,
+    notifyProduct: u.notifyProduct ?? false,
+    notifyMarketing: u.notifyMarketing ?? true,
   }
 }
 

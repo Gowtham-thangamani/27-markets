@@ -49,7 +49,7 @@ export default {
       },
       fontFamily: {
         // Ported from the 27 Markets landing page
-        sans: ['Archivo', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['Archivo', 'system-ui', 'sans-serif'],
         display: ['"Archivo Expanded"', 'Archivo', 'sans-serif'],
         mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
       },

@@ -58,6 +58,11 @@ model User {
   postalCode      String?
   acceptedTermsAt DateTime?
 
+  // Email notification preferences (client-managed from the portal profile).
+  notifySecurity  Boolean @default(true)
+  notifyProduct   Boolean @default(false)
+  notifyMarketing Boolean @default(true)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

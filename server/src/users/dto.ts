@@ -1,4 +1,4 @@
-import { IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsBoolean, IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CreateDataChangeRequestDto {
   @IsIn(['phone', 'address', 'city', 'postalCode'])
@@ -32,4 +32,16 @@ export class UpdateProfileDto {
   @IsString()
   @MaxLength(80)
   country?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  notifySecurity?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  notifyProduct?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  notifyMarketing?: boolean;
 }

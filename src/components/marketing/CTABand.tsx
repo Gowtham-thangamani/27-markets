@@ -1,18 +1,50 @@
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useReducedMotion } from 'framer-motion'
 import { Button } from '@/components/ui'
 import { Reveal } from '@/components/Reveal'
-import { MarketWave } from '@/components/three/MarketWave'
 import { SignalFlow } from '@/components/marketing/SignalFlow'
 import { useT } from '@/i18n/LanguageContext'
 
+// three.js is ~144 KB — keep it off the landing critical path. Load the decorative
+// wave only when the CTA scrolls near view, and never under reduced motion.
+const MarketWave = lazy(() =>
+  import('@/components/three/MarketWave').then((m) => ({ default: m.MarketWave })),
+)
+
 export function CTABand() {
   const t = useT()
+  const reduce = useReducedMotion()
+  const waveRef = useRef<HTMLDivElement>(null)
+  const [showWave, setShowWave] = useState(false)
+
+  useEffect(() => {
+    if (reduce) return
+    const el = waveRef.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setShowWave(true)
+          io.disconnect()
+        }
+      },
+      { rootMargin: '250px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [reduce])
+
   return (
     <section className="container-x py-20">
       <Reveal>
         <div className="glass-panel relative overflow-hidden px-6 py-14 text-center sm:px-12">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-full opacity-40">
-            <MarketWave />
+          <div ref={waveRef} className="pointer-events-none absolute inset-x-0 top-0 h-full opacity-40">
+            {showWave && (
+              <Suspense fallback={null}>
+                <MarketWave />
+              </Suspense>
+            )}
           </div>
           <div className="pointer-events-none absolute inset-0 bg-radial-red opacity-60" />
           <SignalFlow className="opacity-40" />

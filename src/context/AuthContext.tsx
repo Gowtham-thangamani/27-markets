@@ -23,6 +23,9 @@ export interface ProfilePatch {
   name?: string
   phone?: string
   country?: string
+  notifySecurity?: boolean
+  notifyProduct?: boolean
+  notifyMarketing?: boolean
 }
 
 interface AuthContextValue {
@@ -95,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const updateProfile = useCallback(async (patch: ProfilePatch) => {
-    const body: Record<string, string> = {}
+    const body: Record<string, string | boolean> = {}
     if (patch.name) {
       const [firstName, ...rest] = patch.name.trim().split(' ')
       body.firstName = firstName
@@ -103,6 +106,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     if (patch.phone !== undefined) body.phone = patch.phone
     if (patch.country !== undefined) body.country = patch.country
+    if (patch.notifySecurity !== undefined) body.notifySecurity = patch.notifySecurity
+    if (patch.notifyProduct !== undefined) body.notifyProduct = patch.notifyProduct
+    if (patch.notifyMarketing !== undefined) body.notifyMarketing = patch.notifyMarketing
     const u = await api.patch<ApiUser>('/users/me', body)
     setUser(mapUser(u))
   }, [])

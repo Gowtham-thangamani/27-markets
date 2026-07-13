@@ -80,10 +80,19 @@ export class AmlService {
     });
   }
 
-  /** Block money-out if the user's latest screening is a confirmed HIT. */
+  /**
+   * Money-out gate — fail-closed. Requires a positive CLEAR screening: blocks on
+   * HIT/REVIEW and on the absence of any screening. When none exists yet, screens
+   * on demand (real provider in LIVE; auto-CLEAR in simulation) and re-checks, so
+   * a user can never withdraw without having been screened clear.
+   */
   async assertNotBlocked(userId: string): Promise<void> {
-    const latest = await this.latest(userId);
-    if (latest?.status === AmlScreeningStatus.HIT) {
+    let latest = await this.latest(userId);
+    if (!latest) {
+      await this.screenSafe(userId);
+      latest = await this.latest(userId);
+    }
+    if (latest?.status !== AmlScreeningStatus.CLEAR) {
       throw new ForbiddenException('Account is under compliance review. Please contact support.');
     }
   }

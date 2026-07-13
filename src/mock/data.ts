@@ -19,6 +19,9 @@ export const demoUser: UserProfile = {
   joinedAt: '2025-02-14T10:00:00Z',
   emailVerified: true,
   avatarColor: '#e11d2e',
+  notifySecurity: true,
+  notifyProduct: false,
+  notifyMarketing: true,
 }
 
 export const seedAccounts: TradingAccount[] = [

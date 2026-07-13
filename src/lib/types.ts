@@ -90,6 +90,9 @@ export interface UserProfile {
   joinedAt: string
   emailVerified: boolean
   avatarColor: string
+  notifySecurity: boolean
+  notifyProduct: boolean
+  notifyMarketing: boolean
 }
 
 export type InstrumentCategory =

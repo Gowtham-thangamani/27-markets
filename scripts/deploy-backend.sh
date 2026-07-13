@@ -22,8 +22,10 @@ set -euo pipefail
 SSH="ssh -i $SSH_KEY -o ConnectTimeout=20 ${EC2_USER}@${EC2_HOST}"
 STAMP="$(date +%F-%H%M%S)"
 
-echo "==> Backing up the production database first"
-$SSH "docker exec apex_postgres sh -c 'PGPASSWORD=\$POSTGRES_PASSWORD pg_dump -U apex -d apex_markets' > ~/db-backup-${STAMP}.sql && echo backed up to ~/db-backup-${STAMP}.sql (\$(du -h ~/db-backup-${STAMP}.sql | cut -f1))"
+echo "==> Backing up the production database first (streamed off-host)"
+BACKUP_FILE="$HOME/27markets-db-backup-${STAMP}.sql"
+$SSH "docker exec apex_postgres sh -c 'PGPASSWORD=\$POSTGRES_PASSWORD pg_dump -U apex -d apex_markets'" > "$BACKUP_FILE"
+echo "==> DB backed up to ${BACKUP_FILE} ($(du -h "$BACKUP_FILE" | cut -f1))"
 
 echo "==> Packaging server/ (excluding node_modules, dist, secrets)"
 tar czf "/tmp/server-${STAMP}.tgz" -C server \

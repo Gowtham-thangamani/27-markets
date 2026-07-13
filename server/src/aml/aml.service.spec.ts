@@ -44,10 +44,34 @@ describe('AmlService', () => {
     await expect(svc.assertNotBlocked('u1')).rejects.toThrow(ForbiddenException);
   });
 
-  it('assertNotBlocked passes when CLEAR or unscreened', async () => {
+  it('assertNotBlocked passes when the latest screening is CLEAR', async () => {
     const provider: AmlProvider = { name: 'test', screen: jest.fn() };
-    const svc = new AmlService(makePrisma() as any, provider, audit);
+    const prisma = makePrisma({ amlScreening: { findFirst: jest.fn().mockResolvedValue({ status: 'CLEAR' }), create: jest.fn(), findMany: jest.fn() } });
+    const svc = new AmlService(prisma as any, provider, audit);
     await expect(svc.assertNotBlocked('u1')).resolves.toBeUndefined();
+    expect(provider.screen).not.toHaveBeenCalled();
+  });
+
+  it('assertNotBlocked screens on demand when unscreened, then passes if CLEAR', async () => {
+    const provider: AmlProvider = { name: 'test', screen: jest.fn().mockResolvedValue({ status: 'CLEAR', provider: 'test', hits: [] }) };
+    const findFirst = jest.fn().mockResolvedValueOnce(null).mockResolvedValue({ status: 'CLEAR' });
+    const prisma = makePrisma({ amlScreening: { findFirst, create: jest.fn(({ data }: any) => Promise.resolve({ id: 's1', ...data, screenedAt: new Date() })), findMany: jest.fn() } });
+    const svc = new AmlService(prisma as any, provider, audit);
+    await expect(svc.assertNotBlocked('u1')).resolves.toBeUndefined();
+    expect(provider.screen).toHaveBeenCalled();
+  });
+
+  it('assertNotBlocked blocks (fail-closed) when unscreened and screening cannot clear', async () => {
+    const provider: AmlProvider = { name: 'test', screen: jest.fn().mockRejectedValue(new Error('provider down')) };
+    const svc = new AmlService(makePrisma() as any, provider, audit); // findFirst stays null
+    await expect(svc.assertNotBlocked('u1')).rejects.toThrow(ForbiddenException);
+  });
+
+  it('assertNotBlocked blocks when the latest screening is REVIEW', async () => {
+    const provider: AmlProvider = { name: 'test', screen: jest.fn() };
+    const prisma = makePrisma({ amlScreening: { findFirst: jest.fn().mockResolvedValue({ status: 'REVIEW' }), create: jest.fn(), findMany: jest.fn() } });
+    const svc = new AmlService(prisma as any, provider, audit);
+    await expect(svc.assertNotBlocked('u1')).rejects.toThrow(ForbiddenException);
   });
 
   it('screenSafe never throws', async () => {

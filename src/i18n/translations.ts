@@ -52,6 +52,26 @@ const en: Dict = {
   'hero.trust1': 'Segregated funds',
   'hero.trust2': 'No dealing desk',
   'hero.trust3': '2-minute setup',
+  // Slide 2 — Partner & Prosper
+  'hero2.pill': 'Introducing Broker program',
+  'hero2.line1': 'Partner',
+  'hero2.line2': '&',
+  'hero2.line3': 'Prosper',
+  'hero2.tagline': 'Rebates · Tools · Dedicated Support',
+  'hero2.desc':
+    'Earn competitive rebates with powerful partner tools and dedicated support to grow your business across global markets.',
+  'hero2.ctaPrimary': 'Become a Partner',
+  'hero2.ctaSecondary': 'Learn More',
+  // Slide 3 — Keep More Per Trade
+  'hero3.pill': 'Low-cost trading',
+  'hero3.line1': 'Keep',
+  'hero3.line2': 'More',
+  'hero3.line3': 'Per Trade',
+  'hero3.tagline': 'Tight Spreads · Fast Execution',
+  'hero3.desc':
+    'Spreads from 0.0 pips and sub-30ms execution mean more of every winning trade stays in your account.',
+  'hero3.ctaPrimary': 'Explore Accounts',
+  'hero3.ctaSecondary': 'Open Account',
 
   // ── Footer ──
   'footer.tagline': 'Trade global financial markets through a broker built for traders, partners, and long-term growth.',
@@ -862,6 +882,26 @@ const ar: Dict = {
   'hero.trust1': 'أموال منفصلة',
   'hero.trust2': 'بدون مكتب تداول',
   'hero.trust3': 'تسجيل في دقيقتين',
+  // الشريحة 2 — شريك وازدهر
+  'hero2.pill': 'برنامج الوسيط المُعرِّف',
+  'hero2.line1': 'شريك',
+  'hero2.line2': 'و',
+  'hero2.line3': 'ازدهر',
+  'hero2.tagline': 'عمولات · أدوات · دعم مخصص',
+  'hero2.desc':
+    'اكسب عمولات تنافسية مع أدوات شراكة قوية ودعم مخصص لتنمية أعمالك عبر الأسواق العالمية.',
+  'hero2.ctaPrimary': 'كن شريكاً',
+  'hero2.ctaSecondary': 'اعرف المزيد',
+  // الشريحة 3 — احتفظ بالمزيد لكل صفقة
+  'hero3.pill': 'تداول منخفض التكلفة',
+  'hero3.line1': 'احتفظ',
+  'hero3.line2': 'بالمزيد',
+  'hero3.line3': 'لكل صفقة',
+  'hero3.tagline': 'فروقات ضيقة · تنفيذ سريع',
+  'hero3.desc':
+    'فروقات تبدأ من 0.0 نقطة وتنفيذ خلال أقل من 30 مللي ثانية يعني بقاء المزيد من كل صفقة رابحة في حسابك.',
+  'hero3.ctaPrimary': 'استكشف الحسابات',
+  'hero3.ctaSecondary': 'افتح حساباً',
 
   // ── Footer ──
   'footer.tagline': 'تداول في الأسواق المالية العالمية عبر وسيط مبني للمتداولين والشركاء والنمو طويل الأمد.',

@@ -23,6 +23,9 @@ export class UsersService {
       twoFactorEnabled: user.twoFactorEnabled,
       emailVerified: user.emailVerified,
       joinedAt: user.createdAt,
+      notifySecurity: user.notifySecurity,
+      notifyProduct: user.notifyProduct,
+      notifyMarketing: user.notifyMarketing,
     };
   }
 
