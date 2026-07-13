@@ -268,7 +268,7 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
                   <img
                     src={asset('hero-analytics.webp')}
                     alt="Rising trading performance — steadily climbing returns"
-                    className="relative mx-auto w-[64%] select-none drop-shadow-[0_18px_55px_rgba(225,29,46,0.35)]"
+                    className="relative mx-auto w-[56%] select-none drop-shadow-[0_18px_55px_rgba(225,29,46,0.35)]"
                   />
                   <HeroPartnerCards />
                 </div>
