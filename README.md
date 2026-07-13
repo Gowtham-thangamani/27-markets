@@ -121,8 +121,10 @@ src/
   and routes `/sitemap.xml` to the live backend endpoint.
 - **Error tracking (optional, dormant):** set `SENTRY_DSN` in the server env and restart —
   the code is already wired (see `server/src/observability/sentry.ts`).
-- **Nightly DB backups (optional, dormant):** `.github/workflows/db-backup.yml` streams a
-  compressed `pg_dump` to S3 once `BACKUP_S3_BUCKET` + `EC2_SSH_KEY` are configured.
+- **Nightly DB backups (active):** `scripts/ec2-backup-db.sh` runs on the EC2 host via cron
+  (03:00 UTC) and streams a compressed `pg_dump` to S3 (`27markets-db-backups`, private +
+  versioned + AES256 + 90-day lifecycle) using the instance's IAM role — no stored keys, no
+  inbound SSH. (GitHub-hosted runners can't reach the firewalled host, so backups run on-box.)
 
 See `server/README.md` for the full "Before going live" checklist (licensing, KYC/AML
 vendor keys, PSP go-live).
