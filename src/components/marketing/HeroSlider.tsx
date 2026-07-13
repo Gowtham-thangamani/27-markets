@@ -259,15 +259,15 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
               )}
               {slide.visual === 'analytics' && (
                 <div className="relative">
-                  {/* Ambient glow so the graphic sits in the scene, not on top of it. */}
+                  {/* Ambient glow so the transparent graphic sits in the scene. */}
                   <div
                     aria-hidden
-                    className="pointer-events-none absolute left-1/2 top-1/2 h-[80%] w-[85%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/25 blur-3xl"
+                    className="pointer-events-none absolute left-1/2 top-1/2 h-[70%] w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/20 blur-3xl"
                   />
                   <img
                     src={asset('hero-analytics.webp')}
                     alt="Rising trading performance — profit, active trades, and win rate"
-                    className={`relative w-full select-none lg:scale-105 ${onLight ? '' : 'hero-media-fade'}`}
+                    className="relative w-full select-none lg:scale-105 drop-shadow-[0_18px_55px_rgba(225,29,46,0.35)]"
                   />
                 </div>
               )}
