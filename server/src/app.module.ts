@@ -23,6 +23,7 @@ import { KycModule } from './kyc/kyc.module';
 import { AdminModule } from './admin/admin.module';
 import { SettingsModule } from './settings/settings.module';
 import { BlogModule } from './blog/blog.module';
+import { SitemapModule } from './sitemap/sitemap.module';
 import { SupportModule } from './support/support.module';
 import { MarketModule } from './market/market.module';
 import { TradingModule } from './trading/trading.module';
@@ -56,6 +57,7 @@ import { HealthController } from './health/health.controller';
     AdminModule,
     SettingsModule,
     BlogModule,
+    SitemapModule,
     SupportModule,
     MarketModule,
     TradingModule,
