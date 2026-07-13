@@ -55,6 +55,10 @@ export function PartnerSection() {
                   <img
                     src={asset('globe.webp')}
                     alt="27 Markets global trading network"
+                    width={1400}
+                    height={554}
+                    loading="lazy"
+                    decoding="async"
                     className="globe-pulse w-full select-none"
                   />
                   <span

@@ -65,7 +65,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={helpers}>
       {children}
-      <div className="pointer-events-none fixed bottom-5 right-5 z-[200] flex w-[calc(100vw-2.5rem)] max-w-sm flex-col gap-2.5">
+      <div
+        role="region"
+        aria-label="Notifications"
+        aria-live="polite"
+        aria-atomic="false"
+        className="pointer-events-none fixed bottom-5 right-5 z-[200] flex w-[calc(100vw-2.5rem)] max-w-sm flex-col gap-2.5"
+      >
         <AnimatePresence>
           {toasts.map((t) => {
             const Icon = icons[t.kind]
@@ -73,6 +79,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <motion.div
                 key={t.id}
                 layout
+                role={t.kind === 'error' || t.kind === 'warning' ? 'alert' : 'status'}
                 initial={{ opacity: 0, x: 40, scale: 0.95 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: 40, scale: 0.95 }}

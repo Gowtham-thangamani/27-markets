@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { Pause, Play } from 'lucide-react'
 import { useLiveQuotes } from '@/lib/useLiveQuotes'
 import { cn } from '@/lib/cn'
 
@@ -117,6 +119,7 @@ const TICKER = [
 /** Slim real-time price strip for the homepage hero. Renders nothing until data arrives. */
 export function LiveTicker() {
   const { list } = useLiveQuotes(TICKER)
+  const [paused, setPaused] = useState(false)
   if (list.length === 0) return null
 
   // One copy of the quote row. It's duplicated inside the marquee track so the
@@ -144,9 +147,18 @@ export function LiveTicker() {
         <span className="z-10 flex shrink-0 items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-brand-400">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" /> Live
         </span>
+        <button
+          type="button"
+          onClick={() => setPaused((p) => !p)}
+          aria-label={paused ? 'Resume the price ticker' : 'Pause the price ticker'}
+          aria-pressed={paused}
+          className="z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/10 text-gray-400 transition hover:border-brand-500/40 hover:text-white"
+        >
+          {paused ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
+        </button>
         {/* Marquee viewport — clips the continuously scrolling track */}
         <div className="relative min-w-0 flex-1 overflow-hidden">
-          <div className="ticker-marquee">
+          <div className={cn('ticker-marquee', paused && '[animation-play-state:paused]')}>
             <div className="flex shrink-0 items-center gap-6 pr-6">{quotes}</div>
             <div className="flex shrink-0 items-center gap-6 pr-6" aria-hidden="true">
               {quotes}

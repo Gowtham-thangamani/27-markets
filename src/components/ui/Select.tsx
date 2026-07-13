@@ -15,6 +15,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
 ) {
   const autoId = useId()
   const selectId = id ?? autoId
+  const errorId = `${selectId}-error`
   return (
     <div className="w-full">
       {label && (
@@ -27,6 +28,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
           ref={ref}
           id={selectId}
           aria-invalid={!!error}
+          aria-describedby={error ? errorId : undefined}
           className={cn(
             'h-11 w-full appearance-none rounded-xl border bg-ink-800/80 px-4 pr-10 text-sm text-white transition-colors',
             'focus:border-brand-500/70 focus:outline-none focus:ring-2 focus:ring-brand-500/30',
@@ -48,7 +50,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
         </select>
         <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
       </div>
-      {error && <p className="mt-1.5 text-xs text-danger">{error}</p>}
+      {error && (
+        <p id={errorId} className="mt-1.5 text-xs text-danger">
+          {error}
+        </p>
+      )}
     </div>
   )
 })

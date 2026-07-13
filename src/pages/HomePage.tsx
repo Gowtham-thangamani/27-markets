@@ -145,6 +145,10 @@ export default function HomePage() {
               <img
                 src={asset('growth-coins.webp')}
                 alt="Growing returns"
+                width={625}
+                height={416}
+                loading="lazy"
+                decoding="async"
                 className="mx-auto w-full max-w-md select-none drop-shadow-[0_24px_70px_rgba(225,29,46,0.3)]"
               />
             </Parallax>

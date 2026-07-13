@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { ArrowRight, ChevronLeft, ChevronRight, ShieldCheck, Zap, Gauge } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play, ShieldCheck, Zap, Gauge } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui'
 import { asset } from '@/lib/asset'
@@ -93,16 +93,19 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
   const t = useT()
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
+  // Explicit user pause (via the pause button) — persists regardless of hover/focus.
+  const [manualPause, setManualPause] = useState(false)
   const slide = SLIDES[index]
 
   const go = (n: number) => setIndex((i) => (n + SLIDES.length) % SLIDES.length)
 
-  // Auto-advance — disabled in single mode, under reduced motion, or while hovered/focused.
+  // Auto-advance — disabled in single mode, under reduced motion, when the user
+  // paused it, or while hovered/focused.
   useEffect(() => {
-    if (single || reduce || paused) return
+    if (single || reduce || paused || manualPause) return
     const t = setTimeout(() => setIndex((i) => (i + 1) % SLIDES.length), AUTO_MS)
     return () => clearTimeout(t)
-  }, [index, paused, reduce, single])
+  }, [index, paused, manualPause, reduce, single])
 
   return (
     <div
@@ -229,6 +232,10 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
                   <img
                     src={asset(onLight ? 'hero-platform-light.webp' : 'hero-platform.webp')}
                     alt="27 Markets trading platform on laptop and mobile"
+                    width={1600}
+                    height={900}
+                    decoding="async"
+                    fetchPriority="high"
                     className={`w-full select-none lg:scale-105 ${onLight ? '' : 'hero-media-fade'}`}
                   />
                   <HeroFloatingCards quotes={quotes} />
@@ -239,6 +246,10 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
                   <img
                     src={asset('globe.webp')}
                     alt="27 Markets global partner network"
+                    width={1400}
+                    height={554}
+                    loading="lazy"
+                    decoding="async"
                     className="globe-pulse w-full select-none"
                   />
                   <span
@@ -255,6 +266,10 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
                 <img
                   src={asset('growth-coins.webp')}
                   alt="Growing trading returns"
+                  width={625}
+                  height={416}
+                  loading="lazy"
+                  decoding="async"
                   className="mx-auto w-full max-w-md select-none drop-shadow-[0_24px_70px_rgba(225,29,46,0.3)]"
                 />
               )}
@@ -268,6 +283,10 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
                   <img
                     src={asset('hero-analytics.webp')}
                     alt="Rising trading performance — steadily climbing returns"
+                    width={648}
+                    height={647}
+                    loading="lazy"
+                    decoding="async"
                     className="relative mx-auto w-[56%] select-none drop-shadow-[0_18px_55px_rgba(225,29,46,0.35)]"
                   />
                   <HeroPartnerCards />
@@ -296,6 +315,15 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
             className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-gray-300 transition hover:border-brand-500/40 hover:text-white"
           >
             <ChevronRight className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setManualPause((p) => !p)}
+            aria-label={manualPause ? 'Play slideshow' : 'Pause slideshow'}
+            aria-pressed={manualPause}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-gray-300 transition hover:border-brand-500/40 hover:text-white"
+          >
+            {manualPause ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
           </button>
           <div className="ml-2 flex items-center gap-2">
             {SLIDES.map((s, i) => (
