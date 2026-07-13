@@ -6,9 +6,13 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
+import { initSentry } from './observability/sentry';
 import type { Env } from './config/env.validation';
 
 async function bootstrap(): Promise<void> {
+  // Error tracking — no-op unless SENTRY_DSN is set. Init before anything else.
+  initSentry();
+
   // rawBody: true exposes req.rawBody so the Stripe webhook can verify signatures.
   const app = await NestFactory.create(AppModule, { bufferLogs: false, rawBody: true });
   const config = app.get(ConfigService<Env, true>);

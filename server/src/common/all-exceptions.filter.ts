@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { captureException } from '../observability/sentry';
 
 /** Uniform error envelope; never leaks stack traces or internals to clients. */
 @Catch()
@@ -42,6 +43,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
         `${req.method} ${req.url} -> ${status}`,
         exception instanceof Error ? exception.stack : String(exception),
       );
+      // Report unexpected server errors to Sentry (no-op unless SENTRY_DSN is set).
+      captureException(exception, { method: req.method, path: req.url, status });
     }
 
     res.status(status).json({

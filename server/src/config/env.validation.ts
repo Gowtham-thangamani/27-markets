@@ -37,6 +37,9 @@ export const envSchema = z
     // Optional: when unset, live market endpoints serve cached/empty and the
     // upstream WebSocket is not opened (app still boots normally).
     FINNHUB_API_KEY: z.string().optional(),
+    // Error tracking (Sentry) — optional; monitoring is off when DSN is absent.
+    SENTRY_DSN: z.string().optional(),
+    SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0),
     REDIS_URL: z.string().default('redis://localhost:6379'),
     MARKET_SYMBOLS: z
       .string()
