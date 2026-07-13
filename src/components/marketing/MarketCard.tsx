@@ -30,7 +30,7 @@ const ICON_SCALE_LIGHT: Record<string, number> = {
   Crypto: 0.89,
 }
 
-export function MarketCard({ category }: { category: MarketCategory }) {
+export function MarketCard({ category, onSelect }: { category: MarketCategory; onSelect?: () => void }) {
   const { icon: Icon, image, imageLight, title, subtitle, examples, key } = category
   const onLight = useThemeSafe() === 'light'
   const t = useT()
@@ -41,6 +41,7 @@ export function MarketCard({ category }: { category: MarketCategory }) {
       <motion.div variants={fadeUp} className="h-full">
       <Link
         to={`/markets?category=${key}`}
+        onClick={onSelect}
         className="glass-panel card-lift group relative flex h-full flex-col p-6"
       >
         <div className="mb-4 flex items-center justify-between">

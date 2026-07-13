@@ -22,8 +22,11 @@ export default function MarketsPage() {
 
   // When a category is chosen (via a market card or a direct link), bring the
   // filtered instruments list into view so the click visibly "goes somewhere".
+  const scrollToExplorer = () =>
+    explorerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  // Direct-link arrivals (?category= already in the URL) scroll on mount/change.
   useEffect(() => {
-    if (category) explorerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (category) scrollToExplorer()
   }, [category])
 
   return (
@@ -43,7 +46,9 @@ export default function MarketsPage() {
           className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
         >
           {marketCategories.map((c) => (
-            <MarketCard key={c.key} category={c} />
+            // Scroll on every click — even re-clicking the current category, where
+            // the URL doesn't change so the effect above wouldn't re-fire.
+            <MarketCard key={c.key} category={c} onSelect={scrollToExplorer} />
           ))}
         </motion.div>
       </section>
