@@ -20,8 +20,9 @@ export interface PartnerDashboard {
   recentReferrals: PartnerClient[];
 }
 
-export interface PartnerCommissionRow { id: string; amount: number; source: string; reference: string | null; client: string; date: string }
-export interface PartnerCommissions { total: number; available: number; count: number; rows: PartnerCommissionRow[] }
+export type CommissionStatus = 'AVAILABLE' | 'IN_REVIEW' | 'PAID'
+export interface PartnerCommissionRow { id: string; amount: number; source: string; reference: string | null; client: string; date: string; status: CommissionStatus }
+export interface PartnerCommissions { total: number; available: number; paid: number; count: number; rows: PartnerCommissionRow[] }
 
 const DAYS = 90;
 const CLIENT_SELECT = {
@@ -105,7 +106,8 @@ export class PartnerPortalService {
     const rows = await this.prisma.ibCommission.findMany({
       where: { partnerId },
       orderBy: { createdAt: 'desc' },
-      take: 200,
+      take: 1000,
+      include: { payout: { select: { status: true } } },
     });
     const clientIds = [...new Set(rows.map((r) => r.clientId))];
     const clients = clientIds.length
@@ -113,12 +115,18 @@ export class PartnerPortalService {
       : [];
     const nameById = new Map(clients.map((c) => [c.id, `${c.firstName} ${c.lastName}`]));
 
-    const total = rows.reduce((s, r) => s + Number(r.amount), 0);
-    // "Available" = commission not yet reserved by a payout request.
-    const available = rows.filter((r) => !r.payoutId).reduce((s, r) => s + Number(r.amount), 0);
+    // Per-commission status: no payout → available; reserved by a paid payout →
+    // paid; reserved by a still-pending payout → in review.
+    const statusOf = (r: (typeof rows)[number]): CommissionStatus =>
+      !r.payoutId ? 'AVAILABLE' : r.payout?.status === 'PAID' ? 'PAID' : 'IN_REVIEW';
+
+    const sumWhere = (pred: (r: (typeof rows)[number]) => boolean) =>
+      Number(rows.filter(pred).reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
+
     return {
-      total: Number(total.toFixed(2)),
-      available: Number(available.toFixed(2)),
+      total: sumWhere(() => true),
+      available: sumWhere((r) => statusOf(r) === 'AVAILABLE'),
+      paid: sumWhere((r) => statusOf(r) === 'PAID'),
       count: rows.length,
       rows: rows.map((r) => ({
         id: r.id,
@@ -127,6 +135,7 @@ export class PartnerPortalService {
         reference: r.reference,
         client: nameById.get(r.clientId) ?? '—',
         date: r.createdAt.toISOString(),
+        status: statusOf(r),
       })),
     };
   }

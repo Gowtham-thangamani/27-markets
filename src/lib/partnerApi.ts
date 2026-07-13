@@ -14,8 +14,9 @@ export interface PartnerDashboard {
   recentReferrals: PartnerClient[]
 }
 export interface PartnerProfile { referralCode: string; referralLink: string }
-export interface PartnerCommissionRow { id: string; amount: number; source: string; reference: string | null; client: string; date: string }
-export interface PartnerCommissions { total: number; available: number; count: number; rows: PartnerCommissionRow[] }
+export type CommissionStatus = 'AVAILABLE' | 'IN_REVIEW' | 'PAID'
+export interface PartnerCommissionRow { id: string; amount: number; source: string; reference: string | null; client: string; date: string; status: CommissionStatus }
+export interface PartnerCommissions { total: number; available: number; paid: number; count: number; rows: PartnerCommissionRow[] }
 export interface PartnerPayoutResult { reference: string; amount: number; status: string }
 
 export const partnerApi = {

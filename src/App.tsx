@@ -22,6 +22,7 @@ const AgentDashboardPage = lazy(() => import('./pages/agent/AgentDashboardPage')
 const AgentLeadsPage = lazy(() => import('./pages/agent/AgentLeadsPage'))
 const AgentTicketsPage = lazy(() => import('./pages/agent/AgentTicketsPage'))
 const PartnerClientsPage = lazy(() => import('./pages/partner/PartnerClientsPage'))
+const PartnerCommissionsPage = lazy(() => import('./pages/partner/PartnerCommissionsPage'))
 const PartnerReferralToolsPage = lazy(() => import('./pages/partner/PartnerReferralToolsPage'))
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'))
 const AdminClientsPage = lazy(() => import('./pages/admin/AdminClientsPage'))
@@ -233,6 +234,7 @@ export default function App() {
         <Route index element={<Navigate to="/partner/dashboard" replace />} />
         <Route path="dashboard" element={<PartnerDashboardPage />} />
         <Route path="clients" element={<PartnerClientsPage />} />
+        <Route path="commissions" element={<PartnerCommissionsPage />} />
         <Route path="tools" element={<PartnerReferralToolsPage />} />
       </Route>
 
