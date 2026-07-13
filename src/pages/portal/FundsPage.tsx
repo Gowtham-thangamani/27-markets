@@ -21,6 +21,7 @@ import { statusTone } from '@/components/portal/statusTone'
 import { usePortalData } from '@/context/PortalDataContext'
 import { useToast } from '@/context/ToastContext'
 import { api } from '@/lib/api'
+import { track } from '@/lib/analytics'
 import { zodResolver } from '@/lib/zodResolver'
 import { transferSchema } from '@/lib/validation'
 import { useAppSettings } from '@/lib/useAppSettings'
@@ -42,6 +43,19 @@ export default function FundsPage() {
   const [tab, setTab] = useState('deposit')
   const { kyc } = usePortalData()
   const kycDone = kyc.length > 0 && kyc.every((k) => k.status === 'Approved')
+
+  // Hosted-PSP (Stripe) deposits redirect back here on success — fire the
+  // deposit conversion once. (Simulation fires inline; see PortalDataContext.)
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search)
+    if (p.get('deposit') === 'success') {
+      track('deposit', { currency: 'USD', method: 'card' })
+      p.delete('deposit')
+      const qs = p.toString()
+      window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''))
+    }
+  }, [])
+
   return (
     <>
       <PageTitle title="Funds" subtitle="Deposit, withdraw, and transfer funds across your accounts." />

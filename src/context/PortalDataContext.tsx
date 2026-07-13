@@ -11,6 +11,7 @@ import {
   type ApiTransaction,
 } from '@/lib/apiMappers'
 import { useAuth } from './AuthContext'
+import { track } from '@/lib/analytics'
 import { useLocalStorage } from '@/lib/hooks'
 import type {
   AccountMode,
@@ -145,6 +146,9 @@ export function PortalDataProvider({ children }: { children: ReactNode }) {
         window.location.href = res.checkoutUrl
         return
       }
+      // Inline-credited (simulation): the deposit is complete now. In live mode
+      // the conversion fires on the post-checkout return (see FundsPage).
+      track('deposit', { value: Number(amount) || undefined, currency: 'USD', method })
       await refresh()
     },
     [refresh],
