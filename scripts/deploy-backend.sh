@@ -14,7 +14,7 @@
 #   EC2_HOST=51.20.251.133 SSH_KEY=~/.ssh/27markets-ec2 ./scripts/deploy-backend.sh
 set -euo pipefail
 
-: "${EC2_HOST:?Set EC2_HOST (the api server's public IP/DNS)}"
+: "${EC2_HOST:?Set EC2_HOST (the api server public IP or DNS)}"
 : "${SSH_KEY:=$HOME/.ssh/27markets-ec2}"
 : "${EC2_USER:=ec2-user}"
 : "${APP_DIR:=~/app}"
