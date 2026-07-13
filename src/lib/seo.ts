@@ -116,6 +116,36 @@ export function useFaqJsonLd(faqs: { question: string; answer: string }[]) {
   }, [json])
 }
 
+/**
+ * Injects BreadcrumbList structured data (schema.org) for the page's breadcrumb
+ * trail, so Google can show a breadcrumb rich result instead of a bare URL.
+ * Items without a known path are emitted name-only (still valid).
+ */
+export function useBreadcrumbJsonLd(crumbs: { name: string; path?: string }[]) {
+  const json = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: crumbs.map((c, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: c.name,
+      ...(c.path ? { item: `${BASE}${c.path === '/' ? '/' : c.path}` } : {}),
+    })),
+  })
+  useEffect(() => {
+    const id = 'breadcrumb-jsonld'
+    let el = document.getElementById(id) as HTMLScriptElement | null
+    if (!el) {
+      el = document.createElement('script')
+      el.id = id
+      el.type = 'application/ld+json'
+      document.head.appendChild(el)
+    }
+    el.textContent = json
+    return () => document.getElementById(id)?.remove()
+  }, [json])
+}
+
 function upsertMeta(attr: 'name' | 'property', key: string, content: string) {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`)
   if (!el) {

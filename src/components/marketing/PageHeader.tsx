@@ -1,8 +1,9 @@
 import { ChevronRight } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { fadeUp } from '@/lib/motion'
 import { SignalFlow } from '@/components/marketing/SignalFlow'
+import { useBreadcrumbJsonLd } from '@/lib/seo'
 import { useT } from '@/i18n/LanguageContext'
 
 interface PageHeaderProps {
@@ -22,6 +23,15 @@ const crumbHref: Record<string, string> = {
 
 export function PageHeader({ breadcrumb, title, description }: PageHeaderProps) {
   const t = useT()
+  const { pathname } = useLocation()
+  // Breadcrumb rich-result schema — the last crumb is the current page; earlier
+  // crumbs use their known route (name-only if unmapped).
+  useBreadcrumbJsonLd(
+    breadcrumb.map((crumb, i) => ({
+      name: crumb,
+      path: i === breadcrumb.length - 1 ? pathname : crumbHref[crumb],
+    })),
+  )
   return (
     <section className="relative overflow-hidden border-b border-white/[0.06]">
       <div className="grid-bg pointer-events-none absolute inset-0 opacity-30" />
