@@ -1,5 +1,7 @@
 # Apex Markets — Trading Brokerage Platform
 
+[![Backend tests](https://github.com/Gowtham-thangamani/27-markets/actions/workflows/test-backend.yml/badge.svg)](https://github.com/Gowtham-thangamani/27-markets/actions/workflows/test-backend.yml)
+
 A production-grade, responsive **black & red** fintech web app: a public marketing
 website **plus** a secure client portal. Built as a single coherent SPA with original
 branding (the reference design's "27MARKETS" was reinterpreted as **Apex Markets**).
@@ -95,3 +97,32 @@ src/
   under `prefers-reduced-motion`.
 - Focus-visible rings, ARIA roles on tabs/menus/dialogs, scroll-locked modals & drawers.
 - Code-split vendor chunk for Three.js via Vite `manualChunks`.
+
+## 🧪 Testing & CI
+
+| Suite | Command | Count |
+| --- | --- | --- |
+| Frontend (Vitest) | `npm test` | 102 |
+| Backend (Jest, mocked Prisma — no DB) | `cd server && npm test` | 310 |
+
+- **`.github/workflows/test-backend.yml`** runs the backend suite (typecheck + tests)
+  on every PR and push that touches `server/` — the merge gate for ledger/finance
+  regressions. Make it a required check in branch protection to block red merges.
+- **`.github/workflows/deploy-s3.yml`** builds and ships the frontend to S3 + CloudFront
+  on push to `main` (skips backend/docs-only changes).
+
+## 🚀 Deployment & Operations
+
+- **Frontend:** `scripts/deploy-frontend.sh` → S3 (`27markets-frontend`) + CloudFront
+  invalidation. A `postbuild` step regenerates `sitemap.xml` from published blog posts.
+- **Backend:** `EC2_HOST=<ip> scripts/deploy-backend.sh` → off-host DB backup, tar `server/`,
+  scp to EC2, `docker compose up -d --build`; Prisma migrations run on container start.
+- **CloudFront** serves a strict Content-Security-Policy (custom response-headers policy)
+  and routes `/sitemap.xml` to the live backend endpoint.
+- **Error tracking (optional, dormant):** set `SENTRY_DSN` in the server env and restart —
+  the code is already wired (see `server/src/observability/sentry.ts`).
+- **Nightly DB backups (optional, dormant):** `.github/workflows/db-backup.yml` streams a
+  compressed `pg_dump` to S3 once `BACKUP_S3_BUCKET` + `EC2_SSH_KEY` are configured.
+
+See `server/README.md` for the full "Before going live" checklist (licensing, KYC/AML
+vendor keys, PSP go-live).
