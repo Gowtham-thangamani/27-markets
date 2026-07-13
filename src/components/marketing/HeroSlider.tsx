@@ -22,7 +22,7 @@ interface HeroSliderProps {
   single?: boolean
 }
 
-type Visual = 'platform' | 'globe' | 'coins'
+type Visual = 'platform' | 'globe' | 'coins' | 'analytics'
 
 interface Slide {
   id: string
@@ -64,7 +64,7 @@ const SLIDES: Slide[] = [
       'Earn competitive rebates with powerful partner tools and dedicated support to grow your business across global markets.',
     primary: { label: 'Become a Partner', to: '/partnership' },
     secondary: { label: 'Learn More', to: '/partnership' },
-    visual: 'globe',
+    visual: 'analytics',
   },
   {
     id: 'growth',
@@ -255,6 +255,13 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
                   src={asset('growth-coins.webp')}
                   alt="Growing trading returns"
                   className="mx-auto w-full max-w-md select-none drop-shadow-[0_24px_70px_rgba(225,29,46,0.3)]"
+                />
+              )}
+              {slide.visual === 'analytics' && (
+                <img
+                  src={asset('hero-analytics.webp')}
+                  alt="Rising trading performance — profit, active trades, and win rate"
+                  className="w-full select-none rounded-2xl drop-shadow-[0_24px_70px_rgba(225,29,46,0.3)]"
                 />
               )}
             </motion.div>
