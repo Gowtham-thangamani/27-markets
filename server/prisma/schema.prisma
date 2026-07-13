@@ -89,6 +89,7 @@ model User {
   mt5Connection       Mt5Connection?
   notifications       Notification[]
   amlScreenings       AmlScreening[]
+  loginOtp            LoginOtp?
 
   // Payouts (Stripe Connect): the client's connected account for receiving
   // withdrawals, and whether Stripe has enabled payouts on it (set via webhook /
@@ -280,6 +281,19 @@ model VerificationToken {
 
   @@index([userId])
   @@index([tokenHash])
+}
+
+// Short-lived email login OTP (second factor at login for users without TOTP,
+// when LOGIN_EMAIL_OTP is enabled). One active code per user; only its hash is
+// stored, with an attempt counter to bound brute force.
+model LoginOtp {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 // Refresh-token sessions. The raw refresh token is NEVER stored — only a hash.

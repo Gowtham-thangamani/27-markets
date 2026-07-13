@@ -107,6 +107,13 @@ export const envSchema = z
       .enum(['true', 'false'])
       .default('false')
       .transform((v) => v === 'true'),
+    // Require a 6-digit email code at login (second factor for users without TOTP).
+    // OFF by default — only enable once real email delivery (EMAIL_PROVIDER=smtp) works,
+    // otherwise users who can't receive the code would be locked out.
+    LOGIN_EMAIL_OTP: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((v) => v === 'true'),
   })
   .superRefine((env, ctx) => {
     // Hard safety rail: LIVE mode is impossible without an explicit override,

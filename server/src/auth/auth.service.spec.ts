@@ -183,7 +183,7 @@ describe('AuthService.login — login-alert email', () => {
       session: { create: jest.fn().mockResolvedValue({ id: 's1' }), update: jest.fn().mockResolvedValue({}) },
     } as any;
     const tokens = { signAccess: jest.fn().mockResolvedValue('at'), signRefresh: jest.fn().mockResolvedValue('rt'), hashToken: jest.fn().mockReturnValue('h') } as any;
-    const config = { get: jest.fn().mockReturnValue(604800) } as any;
+    const config = { get: jest.fn((k: string) => (k === 'LOGIN_EMAIL_OTP' ? false : 604800)) } as any;
     const email = {
       sendLoginAlert: opts.alertRejects ? jest.fn().mockRejectedValue(new Error('smtp down')) : jest.fn().mockResolvedValue(undefined),
     } as any;
@@ -223,7 +223,7 @@ describe('AuthService.login — brute-force lockout (H-7)', () => {
       session: { create: jest.fn().mockResolvedValue({ id: 's1' }), update: jest.fn().mockResolvedValue({}) },
     } as any;
     const tokens = { signAccess: jest.fn().mockResolvedValue('at'), signRefresh: jest.fn().mockResolvedValue('rt'), hashToken: jest.fn().mockReturnValue('h') } as any;
-    const config = { get: jest.fn().mockReturnValue(604800) } as any;
+    const config = { get: jest.fn((k: string) => (k === 'LOGIN_EMAIL_OTP' ? false : 604800)) } as any;
     const email = { sendLoginAlert: jest.fn().mockResolvedValue(undefined) } as any;
     const service = new AuthService(prisma, tokens, { record: jest.fn() } as any, {} as any, config, {} as any, email, {} as any);
     return { service, update };
@@ -244,6 +244,63 @@ describe('AuthService.login — brute-force lockout (H-7)', () => {
     const { service, update } = await build({ failedLoginAttempts: 3 });
     await service.login({ email: 'a@x.com', password: 'secret123' } as any, {});
     expect(update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'u1' }, data: expect.objectContaining({ failedLoginAttempts: 0, lockedUntil: null }) }));
+  });
+});
+
+describe('AuthService.login — email OTP (LOGIN_EMAIL_OTP)', () => {
+  // Mirror AuthService.hashToken (sha256 hex) so stored codeHash matches.
+  const sha256 = (s: string) => require('node:crypto').createHash('sha256').update(s).digest('hex');
+  const build = async (otpRow: any) => {
+    const passwordHash = await argon2.hash('secret123', { type: argon2.argon2id });
+    const user = { id: 'u1', email: 'alice@example.com', firstName: 'Alice', role: 'CLIENT', status: 'ACTIVE', passwordHash, twoFactorEnabled: false };
+    const loginOtp = {
+      findUnique: jest.fn().mockResolvedValue(otpRow),
+      upsert: jest.fn().mockResolvedValue({}),
+      update: jest.fn().mockResolvedValue({}),
+      delete: jest.fn().mockResolvedValue({}),
+    };
+    const prisma = {
+      user: { findUnique: jest.fn().mockResolvedValue(user), update: jest.fn().mockResolvedValue({}) },
+      session: { create: jest.fn().mockResolvedValue({ id: 's1' }), update: jest.fn().mockResolvedValue({}) },
+      loginOtp,
+    } as any;
+    const tokens = { signAccess: jest.fn().mockResolvedValue('at'), signRefresh: jest.fn().mockResolvedValue('rt'), hashToken: jest.fn((s: string) => `h:${s}`) } as any;
+    const config = { get: jest.fn((k: string) => (k === 'LOGIN_EMAIL_OTP' ? true : 604800)) } as any;
+    const email = { sendLoginAlert: jest.fn().mockResolvedValue(undefined), sendLoginCode: jest.fn().mockResolvedValue(undefined) } as any;
+    const service = new AuthService(prisma, tokens, { record: jest.fn() } as any, {} as any, config, {} as any, email, {} as any);
+    return { service, email, loginOtp };
+  };
+
+  it('with no code: emails an OTP and throws EmailOtpRequired (no session)', async () => {
+    const { service, email, loginOtp } = await build(null);
+    await expect(service.login({ email: 'alice@example.com', password: 'secret123' } as any, {})).rejects.toMatchObject({
+      response: expect.objectContaining({ error: 'EmailOtpRequired' }),
+    });
+    expect(loginOtp.upsert).toHaveBeenCalled();
+    expect(email.sendLoginCode).toHaveBeenCalledWith('alice@example.com', expect.stringMatching(/^\d{6}$/));
+  });
+
+  it('with the correct code: succeeds and consumes the OTP', async () => {
+    const { service, loginOtp } = await build({ codeHash: sha256('123456'), attempts: 0, expiresAt: new Date(Date.now() + 60_000) });
+    await expect(
+      service.login({ email: 'alice@example.com', password: 'secret123', emailOtp: '123456' } as any, {}),
+    ).resolves.toMatchObject({ tokens: { accessToken: 'at' } });
+    expect(loginOtp.delete).toHaveBeenCalledWith({ where: { userId: 'u1' } });
+  });
+
+  it('with a wrong code: rejects and increments the attempt counter', async () => {
+    const { service, loginOtp } = await build({ codeHash: sha256('123456'), attempts: 0, expiresAt: new Date(Date.now() + 60_000) });
+    await expect(
+      service.login({ email: 'alice@example.com', password: 'secret123', emailOtp: '000000' } as any, {}),
+    ).rejects.toThrow(/invalid code/i);
+    expect(loginOtp.update).toHaveBeenCalledWith({ where: { userId: 'u1' }, data: { attempts: { increment: 1 } } });
+  });
+
+  it('with an expired code: rejects and asks for a new one', async () => {
+    const { service } = await build({ codeHash: sha256('123456'), attempts: 0, expiresAt: new Date(Date.now() - 1000) });
+    await expect(
+      service.login({ email: 'alice@example.com', password: 'secret123', emailOtp: '123456' } as any, {}),
+    ).rejects.toThrow(/expired/i);
   });
 });
 

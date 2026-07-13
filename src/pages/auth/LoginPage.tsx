@@ -23,21 +23,29 @@ export default function LoginPage() {
   const explicitFrom = (location.state as { from?: string })?.from
 
   const [needTotp, setNeedTotp] = useState(false)
-  const [totp, setTotp] = useState('')
+  const [needEmailOtp, setNeedEmailOtp] = useState(false)
+  const [code, setCode] = useState('')
+  const needCode = needTotp || needEmailOtp
 
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) })
 
   const onSubmit = async (values: LoginValues) => {
-    if (needTotp && !/^\d{6}$/.test(totp)) {
+    if (needCode && !/^\d{6}$/.test(code)) {
       toast.warning(t('auth.login.enterCode'), t('auth.login.enterCodeBody'))
       return
     }
     try {
-      const user = await login(values.email, values.password, needTotp ? totp : undefined)
+      const user = await login(
+        values.email,
+        values.password,
+        needTotp ? code : undefined,
+        needEmailOtp ? code : undefined,
+      )
       const dest = explicitFrom ?? landingPathForRole(user.role)
       toast.success(t('auth.login.welcomeToast'), isStaffRole(user.role) ? t('auth.login.crm') : t('auth.login.portal'))
       navigate(dest, { replace: true })
@@ -46,6 +54,25 @@ export default function LoginPage() {
       if (e.code === 'TwoFactorRequired') {
         setNeedTotp(true)
         toast.info(t('auth.login.twoFa'), t('auth.login.twoFaBody'))
+      } else if (e.code === 'EmailOtpRequired') {
+        setNeedEmailOtp(true)
+        toast.info(t('auth.login.emailOtp'), t('auth.login.emailOtpBody'))
+      } else {
+        toast.error(t('auth.login.failed'), e.message || t('auth.login.failedBody'))
+      }
+    }
+  }
+
+  // Re-submit without a code to have the backend email a fresh one.
+  const resendCode = async () => {
+    const { email, password } = getValues()
+    try {
+      await login(email, password)
+    } catch (err) {
+      const e = err as ApiError
+      if (e.code === 'EmailOtpRequired') {
+        setCode('')
+        toast.info(t('auth.login.emailOtpResent'), t('auth.login.emailOtpBody'))
       } else {
         toast.error(t('auth.login.failed'), e.message || t('auth.login.failedBody'))
       }
@@ -74,17 +101,28 @@ export default function LoginPage() {
           error={errors.password?.message}
           {...register('password')}
         />
-        {needTotp && (
-          <Input
-            label={t('auth.login.authCode')}
-            inputMode="numeric"
-            placeholder="123456"
-            autoFocus
-            icon={<KeyRound className="h-4 w-4" />}
-            value={totp}
-            onChange={(e) => setTotp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-            hint={t('auth.login.authHint')}
-          />
+        {needCode && (
+          <div>
+            <Input
+              label={needEmailOtp ? t('auth.login.emailCode') : t('auth.login.authCode')}
+              inputMode="numeric"
+              placeholder="123456"
+              autoFocus
+              icon={<KeyRound className="h-4 w-4" />}
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              hint={needEmailOtp ? t('auth.login.emailCodeHint') : t('auth.login.authHint')}
+            />
+            {needEmailOtp && (
+              <button
+                type="button"
+                onClick={resendCode}
+                className="mt-1.5 text-xs font-medium text-brand-400 hover:text-brand-300"
+              >
+                {t('auth.login.resend')}
+              </button>
+            )}
+          </div>
         )}
         <div className="flex justify-end">
           <Link to="/forgot-password" className="text-sm font-medium text-brand-400 hover:text-brand-300">
@@ -92,7 +130,7 @@ export default function LoginPage() {
           </Link>
         </div>
         <Button type="submit" fullWidth size="lg" loading={isSubmitting}>
-          {needTotp ? t('auth.login.verifyBtn') : t('auth.login.btn')}
+          {needCode ? t('auth.login.verifyBtn') : t('auth.login.btn')}
         </Button>
       </form>
 

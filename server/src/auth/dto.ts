@@ -107,6 +107,12 @@ export class LoginDto {
   @IsString()
   @Matches(/^\d{6}$/, { message: 'TOTP code must be 6 digits' })
   totp?: string;
+
+  // The 6-digit code emailed at login when LOGIN_EMAIL_OTP is on (and no TOTP).
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{6}$/, { message: 'Email code must be 6 digits' })
+  emailOtp?: string;
 }
 
 export class TotpVerifyDto {

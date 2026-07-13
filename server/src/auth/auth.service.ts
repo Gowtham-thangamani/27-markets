@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, randomBytes, randomInt } from 'node:crypto';
 import * as argon2 from 'argon2';
 import { authenticator } from 'otplib';
 import * as QRCode from 'qrcode';
@@ -29,6 +29,13 @@ export interface RequestContext {
 const MAX_FAILED_ATTEMPTS = 5;
 /** …for this long (15 minutes). */
 const LOCKOUT_MS = 15 * 60 * 1000;
+
+/** Email login OTP: how long a code is valid. */
+const LOGIN_OTP_TTL_MS = 10 * 60 * 1000;
+/** Max wrong guesses before the code is burned and a new one must be requested. */
+const LOGIN_OTP_MAX_ATTEMPTS = 5;
+/** Don't send a fresh code more than once per this window (anti email-spam). */
+const LOGIN_OTP_RESEND_MS = 45 * 1000;
 
 /**
  * Mask an email before it enters the (unauthenticated) audit sink. A value that
@@ -231,6 +238,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    // Second factor. Authenticator TOTP takes precedence; otherwise, when email
+    // OTP is enabled, require a one-time code emailed to the user.
     if (user.twoFactorEnabled) {
       if (!dto.totp) {
         throw new UnauthorizedException({ message: 'Two-factor code required', error: 'TwoFactorRequired' });
@@ -244,6 +253,15 @@ export class AuthService {
         throw new UnauthorizedException('This two-factor code was already used.');
       }
       await this.prisma.user.update({ where: { id: user.id }, data: { lastTotpStep: step } });
+    } else if (this.config.get('LOGIN_EMAIL_OTP', { infer: true })) {
+      if (!dto.emailOtp) {
+        await this.issueLoginOtp(user);
+        throw new UnauthorizedException({
+          message: 'We emailed you a verification code',
+          error: 'EmailOtpRequired',
+        });
+      }
+      await this.verifyLoginOtp(user.id, dto.emailOtp);
     }
 
     // Successful login: clear any accumulated failed-attempt / lockout state.
@@ -381,6 +399,46 @@ export class AuthService {
   }
 
   // ── helpers ──
+
+  /** Generate + email a login OTP; skips regeneration if one was sent very recently. */
+  private async issueLoginOtp(user: User): Promise<void> {
+    const now = Date.now();
+    const existing = await this.prisma.loginOtp.findUnique({ where: { userId: user.id } });
+    // Anti-spam: a still-valid code sent within the resend window is left as-is.
+    if (
+      existing &&
+      existing.expiresAt.getTime() > now &&
+      existing.createdAt.getTime() > now - LOGIN_OTP_RESEND_MS
+    ) {
+      return;
+    }
+    const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
+    const codeHash = this.hashToken(code);
+    const expiresAt = new Date(now + LOGIN_OTP_TTL_MS);
+    await this.prisma.loginOtp.upsert({
+      where: { userId: user.id },
+      create: { userId: user.id, codeHash, expiresAt },
+      update: { codeHash, attempts: 0, expiresAt, createdAt: new Date(now) },
+    });
+    await this.email.sendLoginCode(user.email, code).catch(() => undefined);
+  }
+
+  /** Verify a login OTP, bounding wrong guesses; consumes it on success. */
+  private async verifyLoginOtp(userId: string, code: string): Promise<void> {
+    const otp = await this.prisma.loginOtp.findUnique({ where: { userId } });
+    if (!otp || otp.expiresAt.getTime() < Date.now()) {
+      throw new UnauthorizedException('Your code has expired. Please request a new one.');
+    }
+    if (otp.attempts >= LOGIN_OTP_MAX_ATTEMPTS) {
+      await this.prisma.loginOtp.delete({ where: { userId } });
+      throw new UnauthorizedException('Too many attempts. Please request a new code.');
+    }
+    if (this.hashToken(code) !== otp.codeHash) {
+      await this.prisma.loginOtp.update({ where: { userId }, data: { attempts: { increment: 1 } } });
+      throw new UnauthorizedException('Invalid code.');
+    }
+    await this.prisma.loginOtp.delete({ where: { userId } });
+  }
 
   private async issueSession(user: User, ctx: RequestContext): Promise<IssuedTokens> {
     const ttl = this.config.get('REFRESH_TOKEN_TTL', { infer: true });

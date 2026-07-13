@@ -32,6 +32,13 @@ const DEFAULTS: Record<string, TemplateCopy> = {
       "If this was you, no action is needed. If you don't recognise this activity, " +
       'reset your password immediately and enable two-factor authentication.',
   },
+  login_code: {
+    subject: 'Your 27 Markets login code',
+    body:
+      'Your login verification code is:\n\n{{code}}\n\n' +
+      "It expires in 10 minutes. If you didn't try to sign in, ignore this email and " +
+      'consider changing your password.',
+  },
 };
 
 /** Builds + sends the transactional onboarding emails from editable templates. */
@@ -86,6 +93,12 @@ export class EmailService {
     vars: { firstName: string; time: string; ip: string; device: string },
   ): Promise<void> {
     const { subject, text } = await this.render('login_alert', vars);
+    return this.provider.send({ to, subject, text });
+  }
+
+  /** The 6-digit login verification code (email OTP second factor). */
+  async sendLoginCode(to: string, code: string): Promise<void> {
+    const { subject, text } = await this.render('login_code', { code });
     return this.provider.send({ to, subject, text });
   }
 }

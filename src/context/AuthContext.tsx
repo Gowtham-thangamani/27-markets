@@ -32,7 +32,7 @@ interface AuthContextValue {
   user: UserProfile | null
   isAuthenticated: boolean
   loading: boolean
-  login: (email: string, password: string, totp?: string) => Promise<UserProfile>
+  login: (email: string, password: string, totp?: string, emailOtp?: string) => Promise<UserProfile>
   register: (payload: RegisterPayload) => Promise<void>
   logout: () => Promise<void>
   refreshUser: () => Promise<UserProfile>
@@ -72,8 +72,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = useCallback(
-    async (email: string, password: string, totp?: string) => {
-      await api.post('/auth/login', { email, password, ...(totp ? { totp } : {}) })
+    async (email: string, password: string, totp?: string, emailOtp?: string) => {
+      await api.post('/auth/login', {
+        email,
+        password,
+        ...(totp ? { totp } : {}),
+        ...(emailOtp ? { emailOtp } : {}),
+      })
       track('login', { method: 'email' })
       return refreshUser()
     },
