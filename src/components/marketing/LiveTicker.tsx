@@ -55,7 +55,7 @@ function TickerIcon({ symbol }: { symbol: string }) {
     return (
       <img
         src={`https://assets.coincap.io/assets/icons/${CRYPTO_ID[symbol]}@2x.png`}
-        alt="" aria-hidden onError={hideOnError}
+        alt={`${CRYPTO_ID[symbol]} logo`} onError={hideOnError}
         className="h-4 w-4 shrink-0 rounded-full object-contain"
       />
     )
@@ -64,7 +64,7 @@ function TickerIcon({ symbol }: { symbol: string }) {
     return (
       <img
         src={`https://financialmodelingprep.com/image-stock/${symbol}.png`}
-        alt="" aria-hidden onError={hideOnError}
+        alt={`${symbol} logo`} onError={hideOnError}
         className="h-4 w-4 shrink-0 rounded-full bg-white object-contain"
       />
     )
@@ -77,7 +77,7 @@ function TickerIcon({ symbol }: { symbol: string }) {
           <img
             key={code + i}
             src={`https://flagcdn.com/w40/${code}.png`}
-            alt="" aria-hidden onError={hideOnError}
+            alt={`${code.toUpperCase()} flag`} onError={hideOnError}
             className="h-4 w-4 rounded-full object-cover ring-1 ring-black/40"
           />
         ))}

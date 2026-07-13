@@ -93,7 +93,7 @@ function BrandLogo({ brand, size }: { brand: Brand; size: Bubble['size'] }) {
   const h = `${ICON_H[size]} w-auto`
   const override = LOGO_OVERRIDE[brand]
   if (override) {
-    return <img src={asset(override)} alt="" aria-hidden className={`${ICON_H[size]} w-auto object-contain`} />
+    return <img src={asset(override)} alt={`${brand} payment method`} className={`${ICON_H[size]} w-auto object-contain`} />
   }
   switch (brand) {
     case 'visa':

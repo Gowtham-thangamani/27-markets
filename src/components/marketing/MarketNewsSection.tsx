@@ -23,8 +23,7 @@ function NewsCard({ item }: { item: NewsItem }) {
         {imgOk ? (
           <img
             src={item.image}
-            alt=""
-            aria-hidden
+            alt={item.headline}
             loading="lazy"
             onError={() => setImgOk(false)}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"

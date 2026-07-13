@@ -48,8 +48,7 @@ export function MarketCard({ category, onSelect }: { category: MarketCategory; o
           {iconSrc ? (
             <img
               src={asset(iconSrc)}
-              alt=""
-              aria-hidden
+              alt={`${title} trading`}
               style={{ transform: `scale(${iconScale})` }}
               className="market-card-icon mask-radial-fade h-36 w-36 shrink-0 object-contain brightness-150 saturate-150 drop-shadow-[0_0_14px_rgba(225,29,46,0.85)]"
             />
