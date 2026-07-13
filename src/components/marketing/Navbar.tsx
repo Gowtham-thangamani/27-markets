@@ -32,6 +32,7 @@ import { Button } from '@/components/ui'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { useT } from '@/i18n/LanguageContext'
 import { useBodyScrollLock } from '@/lib/hooks'
+import { track } from '@/lib/analytics'
 import { cn } from '@/lib/cn'
 
 interface SubItem {
@@ -239,7 +240,7 @@ export function Navbar() {
               {t('nav.login')}
             </Button>
           </Link>
-          <Link to="/register">
+          <Link to="/register" onClick={() => track('open_account_click', { location: 'navbar' })}>
             <Button size="sm">{t('nav.openAccount')}</Button>
           </Link>
         </div>

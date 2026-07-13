@@ -6,6 +6,7 @@ import { Button, Input } from '@/components/ui'
 import { useToast } from '@/context/ToastContext'
 import { ApiError } from '@/lib/api'
 import { partnersApi } from '@/lib/partnersApi'
+import { track } from '@/lib/analytics'
 import { useT } from '@/i18n/LanguageContext'
 
 type FormValues = {
@@ -57,6 +58,7 @@ export default function PartnerApplyPage() {
         website: v.website || undefined,
         audience: v.audience || undefined,
       })
+      track('generate_lead', { type: 'partner_application' })
       setDone(true)
     } catch (e) {
       toast.error(t('pap.errTitle'), e instanceof ApiError ? e.message : t('pap.errBody'))

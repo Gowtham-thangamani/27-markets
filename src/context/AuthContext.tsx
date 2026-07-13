@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import { api } from '@/lib/api'
 import { mapUser, type ApiUser } from '@/lib/apiMappers'
+import { track } from '@/lib/analytics'
 import type { UserProfile } from '@/lib/types'
 
 export interface RegisterPayload {
@@ -70,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(
     async (email: string, password: string, totp?: string) => {
       await api.post('/auth/login', { email, password, ...(totp ? { totp } : {}) })
+      track('login', { method: 'email' })
       return refreshUser()
     },
     [refreshUser],
@@ -78,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(
     async (payload: RegisterPayload) => {
       await api.post('/auth/register', payload)
+      track('sign_up', { method: 'email' })
       await refreshUser()
     },
     [refreshUser],
