@@ -267,8 +267,24 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
                   <img
                     src={asset('hero-analytics.webp')}
                     alt="Rising trading performance — profit, active trades, and win rate"
-                    className="relative w-full select-none lg:scale-105 drop-shadow-[0_18px_55px_rgba(225,29,46,0.35)]"
+                    className="relative w-full select-none drop-shadow-[0_18px_55px_rgba(225,29,46,0.35)]"
                   />
+                  {/* Values overlaid on the graphic's (otherwise empty) stat cards.
+                      Positioned as % of the image so they stay aligned as it scales. */}
+                  <div className="pointer-events-none absolute inset-0" aria-hidden>
+                    <div className="absolute" style={{ top: '20%', left: '6%' }}>
+                      <div className="font-display text-base font-bold tabular-nums text-white sm:text-2xl">
+                        +$128,450
+                      </div>
+                      <div className="text-[9px] font-semibold text-success sm:text-xs">▲ 24.6% this month</div>
+                    </div>
+                    <div className="absolute" style={{ top: '80%', left: '3.5%' }}>
+                      <div className="font-display text-sm font-bold tabular-nums text-white sm:text-xl">1,284</div>
+                    </div>
+                    <div className="absolute -translate-x-1/2 text-center" style={{ top: '70.5%', left: '85%' }}>
+                      <div className="font-display text-sm font-bold tabular-nums text-white sm:text-xl">78.4%</div>
+                    </div>
+                  </div>
                 </div>
               )}
             </motion.div>
