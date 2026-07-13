@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Private / authenticated areas — not for indexing.
+Disallow: /portal
+Disallow: /admin
+Disallow: /partner
+Disallow: /agent
+Disallow: /login
+Disallow: /register
+Disallow: /reset-password
+Disallow: /verify-email
+
+Sitemap: https://27markets.com/sitemap.xml
