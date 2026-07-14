@@ -4,7 +4,8 @@ import type Stripe from 'stripe';
 import { PrismaService } from '../prisma/prisma.service';
 import { LedgerService } from '../ledger/ledger.service';
 import { AuditService } from '../audit/audit.service';
-import { toMoney } from '../ledger/money';
+import { NotificationsService } from '../notifications/notifications.service';
+import { formatMoney, toMoney } from '../ledger/money';
 import { generateTxReference } from '../common/reference';
 
 /**
@@ -20,6 +21,7 @@ export class PaymentsService {
     private readonly prisma: PrismaService,
     private readonly ledger: LedgerService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async handleStripeEvent(event: Stripe.Event): Promise<{ handled: boolean }> {
@@ -77,6 +79,12 @@ export class PaymentsService {
       entity: 'JournalEntry',
       entityId: entry.id,
       metadata: { sessionId: session.id, amountMinor, simulated: false },
+    });
+    await this.notifications.create(userId, {
+      title: 'Deposit confirmed',
+      body: `$${formatMoney(amount)} has been credited to your account (ref ${entry.reference}).`,
+      kind: 'SUCCESS',
+      email: true,
     });
     return { handled: true };
   }

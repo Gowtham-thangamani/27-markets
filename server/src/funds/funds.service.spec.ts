@@ -23,7 +23,7 @@ function makeService(overrides: { post?: jest.Mock } = {}) {
   const audit = { record: jest.fn().mockResolvedValue(undefined) } as any;
   const payments = { name: 'simulation', simulated: true, assertAvailable: jest.fn() } as any;
   const config = { get: jest.fn().mockReturnValue('http://localhost:5173') } as any;
-  return { service: new FundsService(prisma, ledger, accounts, audit, payments, config, { assertNotBlocked: jest.fn() } as any), post, audit, payments };
+  return { service: new FundsService(prisma, ledger, accounts, audit, payments, config, { assertNotBlocked: jest.fn() } as any, { create: jest.fn() } as any), post, audit, payments };
 }
 
 describe('FundsService.depositMethods', () => {
@@ -31,7 +31,7 @@ describe('FundsService.depositMethods', () => {
     const prisma = { paymentGateway: { findMany: jest.fn().mockResolvedValue(gateways) } } as any;
     const payments = { name: 'simulation' } as any;
     const config = { get: jest.fn().mockReturnValue('') } as any; // no bank/crypto config
-    return new FundsService(prisma, {} as any, {} as any, {} as any, payments, config, { assertNotBlocked: jest.fn() } as any);
+    return new FundsService(prisma, {} as any, {} as any, {} as any, payments, config, { assertNotBlocked: jest.fn() } as any, { create: jest.fn() } as any);
   };
 
   it('marks a rail unavailable when its gateway is disabled', async () => {
@@ -77,7 +77,7 @@ describe('FundsService.deposit — live gating (H-2)', () => {
     const audit = { record: jest.fn().mockResolvedValue(undefined) } as any;
     const payments = { name: simulated ? 'simulation' : 'stripe', simulated, assertAvailable: jest.fn() } as any;
     const config = { get: jest.fn() } as any;
-    return { service: new FundsService(prisma, ledger, accounts, audit, payments, config, { assertNotBlocked: jest.fn() } as any), post };
+    return { service: new FundsService(prisma, ledger, accounts, audit, payments, config, { assertNotBlocked: jest.fn() } as any, { create: jest.fn() } as any), post };
   };
 
   it('refuses a direct inline deposit when the provider is not simulated (live)', async () => {

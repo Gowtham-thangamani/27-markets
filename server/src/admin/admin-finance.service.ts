@@ -111,6 +111,7 @@ export class AdminFinanceService {
       title: 'Deposit confirmed',
       body: `$${formatMoney(amount)} has been credited to your account.`,
       kind: 'SUCCESS',
+      email: true,
     });
     return { ok: true, status: 'APPROVED', reference: entry.reference };
   }
@@ -381,6 +382,7 @@ export class AdminFinanceService {
         title: 'Withdrawal approved',
         body: `Your withdrawal of $${formatMoney(toMoney(amount))} has been approved and paid out.`,
         kind: 'SUCCESS',
+        email: true,
       });
     }
     return { ok: true, status: JournalStatus.POSTED, payout };
@@ -400,6 +402,7 @@ export class AdminFinanceService {
         title: 'Withdrawal rejected',
         body: `Your withdrawal of $${formatMoney(toMoney(Number(clientLeg.amount)))} was rejected and the funds returned to your balance.${reason ? ` Reason: ${reason}` : ''}`,
         kind: 'WARNING',
+        email: true,
       });
     }
     await this.audit.record({

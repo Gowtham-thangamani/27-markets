@@ -11,6 +11,7 @@ import { formatMoney, toMoney } from '../ledger/money';
 import { generateTxReference } from '../common/reference';
 import { PAYMENT_PROVIDER, type PaymentProvider } from '../payments/payment-provider';
 import { AmlService } from '../aml/aml.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import type { Env } from '../config/env.validation';
 import { DepositDto, RequestDepositDto, WithdrawDto, TransferDto } from './dto';
 
@@ -24,6 +25,7 @@ export class FundsService {
     @Inject(PAYMENT_PROVIDER) private readonly payments: PaymentProvider,
     private readonly config: ConfigService<Env, true>,
     private readonly aml: AmlService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /**
@@ -226,6 +228,12 @@ export class FundsService {
     });
 
     await this.audit.record({ userId, action: 'funds.deposit', entity: 'JournalEntry', entityId: entry.id, metadata: { amount: dto.amount, method: dto.method, simulated: true } });
+    await this.notifications.create(userId, {
+      title: 'Deposit confirmed',
+      body: `$${formatMoney(amount)} has been credited to your account (ref ${entry.reference}).`,
+      kind: 'SUCCESS',
+      email: true,
+    });
     return { reference: entry.reference, status: entry.status, simulated: true, amount: formatMoney(amount) };
   }
 
@@ -297,6 +305,12 @@ export class FundsService {
     });
 
     await this.audit.record({ userId, action: 'funds.withdraw', entity: 'JournalEntry', entityId: entry.id, metadata: { amount: dto.amount, method: dto.method, destMethod, simulated: true, status: entry.status } });
+    await this.notifications.create(userId, {
+      title: 'Withdrawal requested',
+      body: `We received your withdrawal request for $${formatMoney(amount)} (ref ${entry.reference}). It's pending review — we'll email you once it's processed.`,
+      kind: 'INFO',
+      email: true,
+    });
     return { reference: entry.reference, status: entry.status, simulated: true, amount: formatMoney(amount) };
   }
 
@@ -324,6 +338,12 @@ export class FundsService {
     });
 
     await this.audit.record({ userId, action: 'funds.transfer', entity: 'JournalEntry', entityId: entry.id, metadata: { amount: dto.amount } });
+    await this.notifications.create(userId, {
+      title: 'Transfer complete',
+      body: `$${formatMoney(amount)} was transferred between your accounts (ref ${entry.reference}).`,
+      kind: 'SUCCESS',
+      email: true,
+    });
     return { reference: entry.reference, status: entry.status, amount: formatMoney(amount) };
   }
 

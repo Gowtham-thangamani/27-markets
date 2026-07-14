@@ -23,7 +23,7 @@ describe('PaymentsService.handleStripeEvent', () => {
       },
     } as any;
     const ledger = { getSystemAccount: jest.fn().mockResolvedValue({ id: 'clearing' }), post } as any;
-    const service = new PaymentsService(prisma, ledger, { record } as any);
+    const service = new PaymentsService(prisma, ledger, { record } as any, { create: jest.fn() } as any);
 
     const result = await service.handleStripeEvent(completedEvent);
 
@@ -40,13 +40,13 @@ describe('PaymentsService.handleStripeEvent', () => {
   });
 
   it('ignores non-deposit events', async () => {
-    const service = new PaymentsService({} as any, {} as any, {} as any);
+    const service = new PaymentsService({} as any, {} as any, {} as any, { create: jest.fn() } as any);
     const result = await service.handleStripeEvent({ type: 'payment_intent.created', data: { object: {} } } as any);
     expect(result).toEqual({ handled: false });
   });
 
   it('rejects a completed session missing deposit metadata', async () => {
-    const service = new PaymentsService({} as any, {} as any, {} as any);
+    const service = new PaymentsService({} as any, {} as any, {} as any, { create: jest.fn() } as any);
     const bad = { type: 'checkout.session.completed', data: { object: { id: 'cs', amount_total: 0, metadata: {} } } } as any;
     await expect(service.handleStripeEvent(bad)).rejects.toThrow(/metadata/);
   });

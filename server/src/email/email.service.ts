@@ -39,6 +39,12 @@ const DEFAULTS: Record<string, TemplateCopy> = {
       "It expires in 10 minutes. If you didn't try to sign in, ignore this email and " +
       'consider changing your password.',
   },
+  // Generic transactional notification (deposits, withdrawals, KYC, tickets, …).
+  // Subject/body come from the event; admins can override this template per key.
+  notification: {
+    subject: '{{title}} — 27 Markets',
+    body: 'Hi {{firstName}},\n\n{{body}}\n\nYou can review the details anytime in your 27 Markets portal.',
+  },
 };
 
 /** Builds + sends the transactional onboarding emails from editable templates. */
@@ -99,6 +105,15 @@ export class EmailService {
   /** The 6-digit login verification code (email OTP second factor). */
   async sendLoginCode(to: string, code: string): Promise<void> {
     const { subject, text } = await this.render('login_code', { code });
+    return this.provider.send({ to, subject, text });
+  }
+
+  /** Generic transactional notification email (mirrors an in-app notification). */
+  async sendNotification(
+    to: string,
+    vars: { firstName: string; title: string; body: string },
+  ): Promise<void> {
+    const { subject, text } = await this.render('notification', vars);
     return this.provider.send({ to, subject, text });
   }
 }
