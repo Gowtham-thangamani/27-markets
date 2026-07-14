@@ -108,33 +108,61 @@ export class EmailService {
         ? 'Reset password'
         : 'Open 27 Markets';
 
-    const blocks = text
-      .split('\n')
-      .map((raw) => {
-        const line = raw.trim();
-        if (line === '') return '';
-        if (/^https?:\/\/\S+$/.test(line)) {
-          return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:10px 0 16px"><tr><td style="border-radius:8px;background:#e11d2e"><a href="${line}" style="display:inline-block;padding:13px 30px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px">${ctaLabel}</a></td></tr></table>
-<p style="margin:0 0 14px;font-size:12px;line-height:1.5;color:#8a929d">Or paste this link into your browser:<br><a href="${line}" style="color:#e11d2e;word-break:break-all">${line}</a></p>`;
+    // Build content blocks, grouping consecutive "Label: value" lines (e.g. a
+    // login alert's When/IP/Device, or a transaction's amount/reference) into a
+    // clean details card.
+    const lines = text.split('\n');
+    const kv = /^([A-Za-z][\w .()/-]{0,28}):\s+(.+)$/;
+    const parts: string[] = [];
+    let i = 0;
+    let preheader = '';
+    while (i < lines.length) {
+      const line = lines[i].trim();
+      if (line === '') { i++; continue; }
+      if (!preheader && !/^hi\b/i.test(line)) preheader = line;
+      if (kv.test(line)) {
+        const rows: string[] = [];
+        while (i < lines.length && kv.test(lines[i].trim())) {
+          const m = lines[i].trim().match(kv)!;
+          rows.push(`<tr><td style="padding:9px 0;font-size:13px;color:#8a929d;white-space:nowrap;vertical-align:top">${htmlEscape(m[1])}</td><td style="padding:9px 0 9px 18px;font-size:14px;color:#20242c;font-weight:600;text-align:right">${htmlEscape(m[2])}</td></tr>`);
+          i++;
         }
-        if (/^\d{6}$/.test(line)) {
-          return `<div style="margin:8px 0 18px;padding:18px;background:#f2f4f7;border:1px solid #e6e9ee;border-radius:10px;text-align:center;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:32px;font-weight:700;letter-spacing:10px;color:#0d0f12">${line}</div>`;
-        }
-        return `<p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:#2a2f38">${linkify(htmlEscape(line))}</p>`;
-      })
-      .join('');
-
+        parts.push(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 18px;background:#f7f8fa;border:1px solid #ecf0f4;border-radius:12px"><tr><td style="padding:8px 20px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows.join('')}</table></td></tr></table>`);
+        continue;
+      }
+      if (/^https?:\/\/\S+$/.test(line)) {
+        parts.push(`<table role="presentation" cellpadding="0" cellspacing="0" style="margin:14px 0 16px"><tr><td style="border-radius:9px;background:#e11d2e;box-shadow:0 4px 12px -3px rgba(225,29,46,.45)"><a href="${line}" style="display:inline-block;padding:14px 34px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:9px">${ctaLabel}</a></td></tr></table>
+<p style="margin:0 0 14px;font-size:12px;line-height:1.5;color:#98a0ab">Or paste this link into your browser:<br><a href="${line}" style="color:#e11d2e;word-break:break-all">${line}</a></p>`);
+        i++;
+        continue;
+      }
+      if (/^\d{6}$/.test(line)) {
+        parts.push(`<div style="margin:10px 0 20px;padding:20px;background:#0d0f12;border-radius:12px;text-align:center;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:34px;font-weight:700;letter-spacing:12px;color:#ffffff">${line}</div>`);
+        i++;
+        continue;
+      }
+      parts.push(`<p style="margin:0 0 15px;font-size:15px;line-height:1.65;color:#2a2f38">${linkify(htmlEscape(line))}</p>`);
+      i++;
+    }
+    const blocks = parts.join('');
     const year = new Date().getFullYear();
+    const S = 'https://27markets.com';
     return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"></head>
-<body style="margin:0;padding:0;background:#eef1f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f5;padding:28px 12px"><tr><td align="center">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e4e8ee">
-<tr><td align="center" style="background:#0d0f12;padding:28px 24px"><img src="${EMAIL_LOGO_URL}" alt="27 Markets" width="170" style="display:block;border:0;height:auto;width:170px;max-width:58%"></td></tr>
+<body style="margin:0;padding:0;background:#eceff3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0">${htmlEscape(preheader).slice(0, 140)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eceff3;padding:30px 12px"><tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e6ec">
+<tr><td align="center" style="background:linear-gradient(180deg,#171a20 0%,#0b0d10 100%);background-color:#0d0f12;padding:30px 24px 22px">
+<img src="${EMAIL_LOGO_URL}" alt="27 Markets" width="168" style="display:block;border:0;height:auto;width:168px;max-width:56%">
+<div style="margin-top:12px;font-size:10px;letter-spacing:3px;color:#7b8494;text-transform:uppercase">Trade Beyond Limits</div></td></tr>
 <tr><td style="height:4px;background:#e11d2e;font-size:0;line-height:0">&nbsp;</td></tr>
-<tr><td style="padding:34px 36px 6px">${heading ? `<h1 style="margin:0 0 18px;font-size:21px;line-height:1.3;font-weight:700;color:#0d0f12">${heading}</h1>` : ''}${blocks}</td></tr>
-<tr><td style="padding:6px 36px 30px"><hr style="border:none;border-top:1px solid #eceff3;margin:14px 0"><p style="margin:0 0 6px;font-size:12px;line-height:1.6;color:#8a929d">This is an automated message from 27 Markets — please do not reply.</p><p style="margin:0;font-size:12px;line-height:1.6;color:#8a929d">Need help? Contact <a href="mailto:info@27markets.com" style="color:#e11d2e">info@27markets.com</a>.</p></td></tr>
+<tr><td style="padding:36px 38px 8px">${heading ? `<h1 style="margin:0 0 20px;font-size:22px;line-height:1.3;font-weight:700;color:#0d0f12;letter-spacing:-.01em">${heading}</h1>` : ''}${blocks}</td></tr>
+<tr><td style="padding:8px 38px 30px">
+<hr style="border:none;border-top:1px solid #edf0f4;margin:12px 0 18px">
+<p style="margin:0 0 12px;font-size:12px;line-height:1.6;color:#98a0ab">This is an automated message from 27 Markets — please do not reply. Need help? Contact <a href="mailto:info@27markets.com" style="color:#e11d2e;text-decoration:none">info@27markets.com</a>.</p>
+<p style="margin:0;font-size:12px"><a href="${S}/faq" style="color:#7b8494;text-decoration:none">Help Center</a> &nbsp;·&nbsp; <a href="${S}/legal/privacy" style="color:#7b8494;text-decoration:none">Privacy</a> &nbsp;·&nbsp; <a href="${S}/legal/client-agreement" style="color:#7b8494;text-decoration:none">Terms</a></p></td></tr>
 </table>
-<p style="margin:18px 0 0;font-size:11px;line-height:1.6;color:#9aa2ad">© ${year} 27 Markets. All rights reserved.<br>Trading involves significant risk and may not be suitable for all investors.</p>
+<p style="margin:20px 0 0;font-size:11px;line-height:1.6;color:#9aa2ad;max-width:520px">© ${year} 27 Markets. All rights reserved.<br>Trading involves significant risk of loss and may not be suitable for all investors.</p>
 </td></tr></table></body></html>`;
   }
 
