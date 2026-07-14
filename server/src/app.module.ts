@@ -1,5 +1,6 @@
 import { MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 import { RequestContextMiddleware } from './common/request-context.middleware';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -42,6 +43,7 @@ import { HealthController } from './health/health.controller';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
     CryptoModule,
     EmailModule,

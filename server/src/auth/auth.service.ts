@@ -182,6 +182,33 @@ export class AuthService {
     return { ok: true };
   }
 
+  /**
+   * Nudge users who registered ~24h ago and still haven't verified their email.
+   * Windowed (created 24–25h ago) so each user is reminded exactly once when the
+   * hourly job runs — no "reminded" flag needed. Best-effort per user.
+   */
+  async remindUnverified(): Promise<number> {
+    const now = Date.now();
+    const users = await this.prisma.user.findMany({
+      where: {
+        emailVerified: false,
+        createdAt: { gte: new Date(now - 25 * 60 * 60 * 1000), lt: new Date(now - 24 * 60 * 60 * 1000) },
+      },
+      select: { id: true, email: true },
+    });
+    let sent = 0;
+    for (const u of users) {
+      try {
+        const token = await this.issueVerificationToken(u.id, VerificationTokenType.EMAIL_VERIFY, 24 * 60 * 60 * 1000);
+        await this.email.sendVerifyReminder(u.email, token);
+        sent++;
+      } catch {
+        // One user's failure must not stop the batch.
+      }
+    }
+    return sent;
+  }
+
   /** Start a password reset. Always resolves (no account enumeration). */
   async forgotPassword(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email: email.toLowerCase() } });

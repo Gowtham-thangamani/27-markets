@@ -20,6 +20,10 @@ const DEFAULTS: Record<string, TemplateCopy> = {
     subject: 'Reset your 27 Markets password',
     body: "We received a request to reset your password.\n\nSet a new password:\n{{link}}\n\nThis link expires in 1 hour. If you didn't request this, ignore this email.",
   },
+  verify_reminder: {
+    subject: 'Reminder: verify your 27 Markets email',
+    body: "You signed up but haven't confirmed your email address yet.\n\nVerify now to fully secure your account:\n{{link}}\n\nThis link expires in 24 hours. If you didn't create this account, ignore this email.",
+  },
   welcome: {
     subject: 'Welcome to 27 Markets',
     body: 'Hi {{firstName}},\n\nYour account is ready. A demo account has been created so you can start trading right away.',
@@ -79,6 +83,13 @@ export class EmailService {
   async sendVerifyEmail(to: string, token: string): Promise<void> {
     const link = `${this.origin()}/verify-email?token=${token}`;
     const { subject, text } = await this.render('verify_email', { link });
+    return this.provider.send({ to, subject, text });
+  }
+
+  /** Nudge for users who registered but haven't verified their email yet. */
+  async sendVerifyReminder(to: string, token: string): Promise<void> {
+    const link = `${this.origin()}/verify-email?token=${token}`;
+    const { subject, text } = await this.render('verify_reminder', { link });
     return this.provider.send({ to, subject, text });
   }
 
