@@ -94,25 +94,47 @@ export class EmailService {
     return { subject: this.subst(copy.subject, vars), text: this.subst(copy.body, vars) };
   }
 
-  /** Wrap a plain-text body in the branded HTML shell (logo header + footer). */
-  private wrapHtml(text: string): string {
-    const body = htmlEscape(text)
+  /**
+   * Render a plain-text body into a polished, branded HTML email: logo header ·
+   * a heading (from the subject) · styled paragraphs, with standalone links turned
+   * into action buttons and 6-digit codes into a highlighted box · footer.
+   * Table-based + inline styles for email-client compatibility.
+   */
+  private wrapHtml(subject: string, text: string): string {
+    const heading = htmlEscape(subject.replace(/\s*[—–-]\s*27 Markets\s*$/i, '').trim());
+    const ctaLabel = /verif/i.test(subject)
+      ? 'Verify email'
+      : /reset|password/i.test(subject)
+        ? 'Reset password'
+        : 'Open 27 Markets';
+
+    const blocks = text
       .split('\n')
-      .map((line) =>
-        line.trim() === ''
-          ? ''
-          : `<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:#20242c">${linkify(line)}</p>`,
-      )
+      .map((raw) => {
+        const line = raw.trim();
+        if (line === '') return '';
+        if (/^https?:\/\/\S+$/.test(line)) {
+          return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:10px 0 16px"><tr><td style="border-radius:8px;background:#e11d2e"><a href="${line}" style="display:inline-block;padding:13px 30px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px">${ctaLabel}</a></td></tr></table>
+<p style="margin:0 0 14px;font-size:12px;line-height:1.5;color:#8a929d">Or paste this link into your browser:<br><a href="${line}" style="color:#e11d2e;word-break:break-all">${line}</a></p>`;
+        }
+        if (/^\d{6}$/.test(line)) {
+          return `<div style="margin:8px 0 18px;padding:18px;background:#f2f4f7;border:1px solid #e6e9ee;border-radius:10px;text-align:center;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:32px;font-weight:700;letter-spacing:10px;color:#0d0f12">${line}</div>`;
+        }
+        return `<p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:#2a2f38">${linkify(htmlEscape(line))}</p>`;
+      })
       .join('');
-    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
-<body style="margin:0;background:#f2f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f4f7;padding:24px 12px"><tr><td align="center">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e9ee">
-<tr><td align="center" style="background:#0d0f12;padding:26px 24px"><img src="${EMAIL_LOGO_URL}" alt="27 Markets" width="180" style="display:block;border:0;height:auto;width:180px;max-width:60%"></td></tr>
-<tr><td style="padding:30px 32px 10px">${body}</td></tr>
-<tr><td style="padding:0 32px 28px"><p style="margin:0;font-size:12px;line-height:1.6;color:#8a929d">This is an automated message from 27 Markets. Please do not reply to this email.</p></td></tr>
+
+    const year = new Date().getFullYear();
+    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"></head>
+<body style="margin:0;padding:0;background:#eef1f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f5;padding:28px 12px"><tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e4e8ee">
+<tr><td align="center" style="background:#0d0f12;padding:28px 24px"><img src="${EMAIL_LOGO_URL}" alt="27 Markets" width="170" style="display:block;border:0;height:auto;width:170px;max-width:58%"></td></tr>
+<tr><td style="height:4px;background:#e11d2e;font-size:0;line-height:0">&nbsp;</td></tr>
+<tr><td style="padding:34px 36px 6px">${heading ? `<h1 style="margin:0 0 18px;font-size:21px;line-height:1.3;font-weight:700;color:#0d0f12">${heading}</h1>` : ''}${blocks}</td></tr>
+<tr><td style="padding:6px 36px 30px"><hr style="border:none;border-top:1px solid #eceff3;margin:14px 0"><p style="margin:0 0 6px;font-size:12px;line-height:1.6;color:#8a929d">This is an automated message from 27 Markets — please do not reply.</p><p style="margin:0;font-size:12px;line-height:1.6;color:#8a929d">Need help? Contact <a href="mailto:info@27markets.com" style="color:#e11d2e">info@27markets.com</a>.</p></td></tr>
 </table>
-<p style="margin:16px 0 0;font-size:11px;color:#98a0ab">© 27 Markets · Trading involves risk.</p>
+<p style="margin:18px 0 0;font-size:11px;line-height:1.6;color:#9aa2ad">© ${year} 27 Markets. All rights reserved.<br>Trading involves significant risk and may not be suitable for all investors.</p>
 </td></tr></table></body></html>`;
   }
 
@@ -123,7 +145,7 @@ export class EmailService {
    */
   private async deliver(to: string, subject: string, text: string): Promise<void> {
     try {
-      await this.provider.send({ to, subject, text, html: this.wrapHtml(text) });
+      await this.provider.send({ to, subject, text, html: this.wrapHtml(subject, text) });
       this.logger.log(`email sent — to=${to} · "${subject}"`);
     } catch (err) {
       this.logger.error(`email FAILED — to=${to} · "${subject}": ${(err as Error).message}`);
