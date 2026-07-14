@@ -51,6 +51,18 @@ const DEFAULTS: Record<string, TemplateCopy> = {
   },
 };
 
+// Hosted on the frontend CDN (PNG for email-client compatibility). White logo on
+// the dark header band, so it reads well in both light and dark email clients.
+const EMAIL_LOGO_URL = 'https://27markets.com/email-logo.png';
+
+const htmlEscape = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const linkify = (s: string) =>
+  s.replace(
+    /(https?:\/\/[^\s]+)/g,
+    (u) => `<a href="${u}" style="color:#e11d2e;word-break:break-all">${u}</a>`,
+  );
+
 /** Builds + sends the transactional onboarding emails from editable templates. */
 @Injectable()
 export class EmailService {
@@ -80,28 +92,55 @@ export class EmailService {
     return { subject: this.subst(copy.subject, vars), text: this.subst(copy.body, vars) };
   }
 
+  /** Wrap a plain-text body in the branded HTML shell (logo header + footer). */
+  private wrapHtml(text: string): string {
+    const body = htmlEscape(text)
+      .split('\n')
+      .map((line) =>
+        line.trim() === ''
+          ? ''
+          : `<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:#20242c">${linkify(line)}</p>`,
+      )
+      .join('');
+    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
+<body style="margin:0;background:#f2f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f4f7;padding:24px 12px"><tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e9ee">
+<tr><td align="center" style="background:#0d0f12;padding:26px 24px"><img src="${EMAIL_LOGO_URL}" alt="27 Markets" width="180" style="display:block;border:0;height:auto;width:180px;max-width:60%"></td></tr>
+<tr><td style="padding:30px 32px 10px">${body}</td></tr>
+<tr><td style="padding:0 32px 28px"><p style="margin:0;font-size:12px;line-height:1.6;color:#8a929d">This is an automated message from 27 Markets. Please do not reply to this email.</p></td></tr>
+</table>
+<p style="margin:16px 0 0;font-size:11px;color:#98a0ab">© 27 Markets · Trading involves risk.</p>
+</td></tr></table></body></html>`;
+  }
+
+  /** Deliver text + branded HTML together (HTML shown where supported). */
+  private deliver(to: string, subject: string, text: string): Promise<void> {
+    return this.provider.send({ to, subject, text, html: this.wrapHtml(text) });
+  }
+
   async sendVerifyEmail(to: string, token: string): Promise<void> {
     const link = `${this.origin()}/verify-email?token=${token}`;
     const { subject, text } = await this.render('verify_email', { link });
-    return this.provider.send({ to, subject, text });
+    return this.deliver(to, subject, text);
   }
 
   /** Nudge for users who registered but haven't verified their email yet. */
   async sendVerifyReminder(to: string, token: string): Promise<void> {
     const link = `${this.origin()}/verify-email?token=${token}`;
     const { subject, text } = await this.render('verify_reminder', { link });
-    return this.provider.send({ to, subject, text });
+    return this.deliver(to, subject, text);
   }
 
   async sendPasswordReset(to: string, token: string): Promise<void> {
     const link = `${this.origin()}/reset-password?token=${token}`;
     const { subject, text } = await this.render('password_reset', { link });
-    return this.provider.send({ to, subject, text });
+    return this.deliver(to, subject, text);
   }
 
   async sendWelcome(to: string, firstName: string): Promise<void> {
     const { subject, text } = await this.render('welcome', { firstName });
-    return this.provider.send({ to, subject, text });
+    return this.deliver(to, subject, text);
   }
 
   /** Security notification sent after a successful sign-in. */
@@ -110,13 +149,13 @@ export class EmailService {
     vars: { firstName: string; time: string; ip: string; device: string },
   ): Promise<void> {
     const { subject, text } = await this.render('login_alert', vars);
-    return this.provider.send({ to, subject, text });
+    return this.deliver(to, subject, text);
   }
 
   /** The 6-digit login verification code (email OTP second factor). */
   async sendLoginCode(to: string, code: string): Promise<void> {
     const { subject, text } = await this.render('login_code', { code });
-    return this.provider.send({ to, subject, text });
+    return this.deliver(to, subject, text);
   }
 
   /** Generic transactional notification email (mirrors an in-app notification). */
@@ -125,6 +164,6 @@ export class EmailService {
     vars: { firstName: string; title: string; body: string },
   ): Promise<void> {
     const { subject, text } = await this.render('notification', vars);
-    return this.provider.send({ to, subject, text });
+    return this.deliver(to, subject, text);
   }
 }

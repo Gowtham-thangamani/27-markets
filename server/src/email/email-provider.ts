@@ -10,6 +10,8 @@ export interface EmailMessage {
   to: string;
   subject: string;
   text: string;
+  /** Optional branded HTML body; the text stays as the plain-text fallback. */
+  html?: string;
 }
 
 /**
@@ -64,7 +66,7 @@ export class SmtpEmailProvider implements EmailProvider {
 
   async send(msg: EmailMessage): Promise<void> {
     const from = this.config.get('EMAIL_FROM', { infer: true });
-    await this.transport().sendMail({ from, to: msg.to, subject: msg.subject, text: msg.text });
+    await this.transport().sendMail({ from, to: msg.to, subject: msg.subject, text: msg.text, html: msg.html });
     this.log.log(`✉️  sent to=${msg.to} · ${msg.subject}`);
   }
 }
