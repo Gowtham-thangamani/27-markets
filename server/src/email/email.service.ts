@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Env } from '../config/env.validation';
 import { PrismaService } from '../prisma/prisma.service';
@@ -66,6 +66,8 @@ const linkify = (s: string) =>
 /** Builds + sends the transactional onboarding emails from editable templates. */
 @Injectable()
 export class EmailService {
+  private readonly logger = new Logger('Email');
+
   constructor(
     @Inject(EMAIL_PROVIDER) private readonly provider: EmailProvider,
     private readonly config: ConfigService<Env, true>,
@@ -114,9 +116,19 @@ export class EmailService {
 </td></tr></table></body></html>`;
   }
 
-  /** Deliver text + branded HTML together (HTML shown where supported). */
-  private deliver(to: string, subject: string, text: string): Promise<void> {
-    return this.provider.send({ to, subject, text, html: this.wrapHtml(text) });
+  /**
+   * Deliver text + branded HTML together, logging the outcome of every attempt.
+   * Failures are logged with the reason (e.g. an SES sandbox rejection) and then
+   * re-thrown so callers keep their existing best-effort handling.
+   */
+  private async deliver(to: string, subject: string, text: string): Promise<void> {
+    try {
+      await this.provider.send({ to, subject, text, html: this.wrapHtml(text) });
+      this.logger.log(`email sent — to=${to} · "${subject}"`);
+    } catch (err) {
+      this.logger.error(`email FAILED — to=${to} · "${subject}": ${(err as Error).message}`);
+      throw err;
+    }
   }
 
   async sendVerifyEmail(to: string, token: string): Promise<void> {
