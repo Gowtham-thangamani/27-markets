@@ -3,6 +3,7 @@ import { LeadStatus, Prisma, TicketStatus, UserRole, UserStatus } from '@prisma/
 import { PrismaService } from '../prisma/prisma.service';
 import { LedgerService } from '../ledger/ledger.service';
 import { AuditService } from '../audit/audit.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { formatMoney, toMoney } from '../ledger/money';
 import type { NoteDto, ReplyTicketDto, UpdateLeadDto, UpdateTicketDto } from './crm-dto';
 
@@ -12,6 +13,7 @@ export class AdminCrmService {
     private readonly prisma: PrismaService,
     private readonly ledger: LedgerService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ───────────── Clients ─────────────
@@ -265,6 +267,17 @@ export class AdminCrmService {
       },
     });
     await this.audit.record({ userId: staffId, action: 'crm.ticket.update', entity: 'Ticket', entityId: id, metadata: { status: dto.status, priority: dto.priority, assignedToId: dto.assignedToId } });
+    if (dto.status === TicketStatus.RESOLVED) {
+      const t = await this.prisma.ticket.findUnique({ where: { id }, select: { userId: true, subject: true } });
+      if (t) {
+        await this.notifications.create(t.userId, {
+          title: 'Support ticket resolved',
+          body: `Your support ticket "${t.subject}" has been marked resolved. If you still need help, reply to re-open it.`,
+          kind: 'SUCCESS',
+          email: true,
+        });
+      }
+    }
     return this.getTicket(id);
   }
 
@@ -276,6 +289,18 @@ export class AdminCrmService {
       where: { id },
       data: { status: TicketStatus.IN_PROGRESS, updatedAt: new Date() },
     });
+    // Notify the client of a staff reply — but not for internal staff notes.
+    if (!dto.internal) {
+      const t = await this.prisma.ticket.findUnique({ where: { id }, select: { userId: true, subject: true } });
+      if (t) {
+        await this.notifications.create(t.userId, {
+          title: 'New reply to your support ticket',
+          body: `Our team replied to your ticket "${t.subject}". Sign in to your portal to read and respond.`,
+          kind: 'INFO',
+          email: true,
+        });
+      }
+    }
     return this.getTicket(id);
   }
 

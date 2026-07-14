@@ -6,6 +6,7 @@ import {
 import { TicketStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import type { CreateTicketDto, AddMessageDto } from './dto';
 
 /** Client-facing support tickets. Clients only ever see their own tickets. */
@@ -14,6 +15,7 @@ export class SupportService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   listMine(userId: string) {
@@ -61,6 +63,12 @@ export class SupportService {
       },
     });
     await this.audit.record({ userId, action: 'support.ticket.create', entity: 'Ticket', entityId: ticket.id });
+    await this.notifications.create(userId, {
+      title: 'Support ticket received',
+      body: `We've received your ticket "${ticket.subject}" and our team will get back to you shortly.`,
+      kind: 'SUCCESS',
+      email: true,
+    });
     return ticket;
   }
 

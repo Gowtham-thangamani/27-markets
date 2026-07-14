@@ -3,6 +3,7 @@ import { KycStepStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { AmlService } from '../aml/aml.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { STORAGE_PROVIDER, type StorageProvider } from './storage-provider';
 import type { KycStep } from './dto';
 
@@ -26,6 +27,7 @@ export class KycService {
     private readonly audit: AuditService,
     @Inject(STORAGE_PROVIDER) private readonly storage: StorageProvider,
     private readonly aml: AmlService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /** True when all three KYC steps are approved (gates LIVE withdrawals). */
@@ -195,6 +197,23 @@ export class KycService {
     // the review). A HIT then gates the client's withdrawals until cleared.
     if (step === 'identity' && status === KycStepStatus.APPROVED) {
       void this.aml.screenSafe(userId, reviewerId);
+    }
+    // Notify the client of the review outcome (approved / needs attention).
+    const stepLabel = { identity: 'Identity', address: 'Proof of address', selfie: 'Selfie' }[step] ?? step;
+    if (status === KycStepStatus.APPROVED) {
+      await this.notifications.create(userId, {
+        title: 'Verification approved',
+        body: `Your ${stepLabel} verification has been approved.`,
+        kind: 'SUCCESS',
+        email: true,
+      });
+    } else if (status === KycStepStatus.REJECTED) {
+      await this.notifications.create(userId, {
+        title: 'Verification needs attention',
+        body: `Your ${stepLabel} verification could not be approved. Please re-submit a clear, valid document from your portal.`,
+        kind: 'WARNING',
+        email: true,
+      });
     }
     return this.status(userId);
   }

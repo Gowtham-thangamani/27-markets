@@ -4,7 +4,7 @@ import { KycService } from './kyc.service';
 describe('KycService — fields & answers', () => {
   it('listFields returns only enabled question/extended fields', async () => {
     const findMany = jest.fn().mockResolvedValue([]);
-    const service = new KycService({ kycFieldDefinition: { findMany } } as any, {} as any, {} as any, { screenSafe: jest.fn() } as any);
+    const service = new KycService({ kycFieldDefinition: { findMany } } as any, {} as any, {} as any, { screenSafe: jest.fn() } as any, { create: jest.fn() } as any);
 
     await service.listFields();
 
@@ -13,7 +13,7 @@ describe('KycService — fields & answers', () => {
 
   it('getAnswers maps rows to a fieldId->value object', async () => {
     const findMany = jest.fn().mockResolvedValue([{ fieldId: 'f1', value: 'Yes' }, { fieldId: 'f2', value: 'Trader' }]);
-    const service = new KycService({ kycAnswer: { findMany } } as any, {} as any, {} as any, { screenSafe: jest.fn() } as any);
+    const service = new KycService({ kycAnswer: { findMany } } as any, {} as any, {} as any, { screenSafe: jest.fn() } as any, { create: jest.fn() } as any);
 
     const answers = await service.getAnswers('u1');
 
@@ -25,7 +25,7 @@ describe('KycService — fields & answers', () => {
     const $transaction = jest.fn().mockResolvedValue([]);
     const record = jest.fn().mockResolvedValue(undefined);
     const prisma = { kycAnswer: { upsert, findMany: jest.fn().mockResolvedValue([]) }, $transaction } as any;
-    const service = new KycService(prisma, { record } as any, {} as any, { screenSafe: jest.fn() } as any);
+    const service = new KycService(prisma, { record } as any, {} as any, { screenSafe: jest.fn() } as any, { create: jest.fn() } as any);
 
     await service.saveAnswers('u1', [{ fieldId: 'f1', value: 'Yes' }]);
 
@@ -35,7 +35,7 @@ describe('KycService — fields & answers', () => {
 
   it('listConsents returns only enabled consents', async () => {
     const findMany = jest.fn().mockResolvedValue([]);
-    const service = new KycService({ consent: { findMany } } as any, {} as any, {} as any, { screenSafe: jest.fn() } as any);
+    const service = new KycService({ consent: { findMany } } as any, {} as any, {} as any, { screenSafe: jest.fn() } as any, { create: jest.fn() } as any);
     await service.listConsents();
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { enabled: true } }));
   });
@@ -45,7 +45,7 @@ describe('KycService — fields & answers', () => {
     const $transaction = jest.fn().mockResolvedValue([]);
     const record = jest.fn().mockResolvedValue(undefined);
     const prisma = { consentAcceptance: { upsert, findMany: jest.fn().mockResolvedValue([]) }, $transaction } as any;
-    const service = new KycService(prisma, { record } as any, {} as any, { screenSafe: jest.fn() } as any);
+    const service = new KycService(prisma, { record } as any, {} as any, { screenSafe: jest.fn() } as any, { create: jest.fn() } as any);
 
     await service.acceptConsents('u1', ['c1']);
 

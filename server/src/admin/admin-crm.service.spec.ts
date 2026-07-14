@@ -7,7 +7,7 @@ describe('AdminCrmService — clients', () => {
   it('listClients filters to CLIENT role and adds a case-insensitive OR search', async () => {
     const findMany = jest.fn().mockResolvedValue([]);
     const prisma = { user: { findMany } } as any;
-    const service = new AdminCrmService(prisma, {} as any, {} as any);
+    const service = new AdminCrmService(prisma, {} as any, {} as any, { create: jest.fn() } as any);
 
     await service.listClients('ada');
 
@@ -23,7 +23,7 @@ describe('AdminCrmService — clients', () => {
   it('listClients omits the OR filter when no search is given', async () => {
     const findMany = jest.fn().mockResolvedValue([]);
     const prisma = { user: { findMany } } as any;
-    const service = new AdminCrmService(prisma, {} as any, {} as any);
+    const service = new AdminCrmService(prisma, {} as any, {} as any, { create: jest.fn() } as any);
 
     await service.listClients();
 
@@ -33,7 +33,7 @@ describe('AdminCrmService — clients', () => {
   it('listClients applies a status filter when provided', async () => {
     const findMany = jest.fn().mockResolvedValue([]);
     const prisma = { user: { findMany } } as any;
-    const service = new AdminCrmService(prisma, {} as any, {} as any);
+    const service = new AdminCrmService(prisma, {} as any, {} as any, { create: jest.fn() } as any);
 
     await service.listClients(undefined, 'SUSPENDED' as any);
 
@@ -46,7 +46,7 @@ describe('AdminCrmService — clients', () => {
     const prisma = {
       user: { findUnique: jest.fn().mockResolvedValue({ id: 'c1', role: 'CLIENT' }), update },
     } as any;
-    const service = new AdminCrmService(prisma, {} as any, { record } as any);
+    const service = new AdminCrmService(prisma, {} as any, { record } as any, { create: jest.fn() } as any);
 
     const res = await service.setClientStatus('admin1', 'c1', 'SUSPENDED' as any);
 
@@ -61,7 +61,7 @@ describe('AdminCrmService — clients', () => {
     const prisma = {
       user: { findUnique: jest.fn().mockResolvedValue({ id: 'x', role: 'ADMIN' }) },
     } as any;
-    const service = new AdminCrmService(prisma, {} as any, {} as any);
+    const service = new AdminCrmService(prisma, {} as any, {} as any, { create: jest.fn() } as any);
 
     await expect(service.setClientStatus('admin1', 'x', 'SUSPENDED' as any)).rejects.toThrow('Client not found');
   });
@@ -70,7 +70,7 @@ describe('AdminCrmService — clients', () => {
     const prisma = {
       user: { findUnique: jest.fn().mockResolvedValue({ id: 'x', role: 'ADMIN' }) },
     } as any;
-    const service = new AdminCrmService(prisma, {} as any, {} as any);
+    const service = new AdminCrmService(prisma, {} as any, {} as any, { create: jest.fn() } as any);
 
     await expect(service.getClient('x')).rejects.toThrow('Client not found');
   });
@@ -96,7 +96,7 @@ describe('AdminCrmService — clients', () => {
       consent: { findMany: jest.fn().mockResolvedValue([]) },
       consentAcceptance: { findMany: jest.fn().mockResolvedValue([]) },
     } as any;
-    const service = new AdminCrmService(prisma, {} as any, { record } as any);
+    const service = new AdminCrmService(prisma, {} as any, { record } as any, { create: jest.fn() } as any);
 
     await service.addClientNote('staff1', 'c1', { body: 'hello' });
 

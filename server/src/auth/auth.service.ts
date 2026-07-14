@@ -356,6 +356,13 @@ export class AuthService {
       data: { revokedAt: new Date() },
     });
     await this.audit.record({ userId, action: 'auth.password.change', ...ctx });
+    void this.email
+      .sendNotification(user.email, {
+        firstName: user.firstName,
+        title: 'Your password was changed',
+        body: "Your 27 Markets password was just changed. If this wasn't you, reset your password immediately and contact support.",
+      })
+      .catch(() => undefined);
   }
 
   // ── 2FA ──
@@ -377,6 +384,13 @@ export class AuthService {
     if (!valid) throw new UnauthorizedException('Invalid two-factor code');
     await this.prisma.user.update({ where: { id: userId }, data: { twoFactorEnabled: true } });
     await this.audit.record({ userId, action: 'auth.2fa.enabled', ...ctx });
+    void this.email
+      .sendNotification(user.email, {
+        firstName: user.firstName,
+        title: 'Two-factor authentication enabled',
+        body: "Authenticator-app two-factor authentication was turned on for your account. If this wasn't you, contact support immediately.",
+      })
+      .catch(() => undefined);
   }
 
   async disableTwoFactor(userId: string, dto: DisableTwoFactorDto, ctx: RequestContext): Promise<void> {
@@ -396,6 +410,13 @@ export class AuthService {
       data: { twoFactorEnabled: false, twoFactorSecret: null },
     });
     await this.audit.record({ userId, action: 'auth.2fa.disabled', ...ctx });
+    void this.email
+      .sendNotification(user.email, {
+        firstName: user.firstName,
+        title: 'Two-factor authentication disabled',
+        body: "Two-factor authentication was turned off for your account. If this wasn't you, reset your password and re-enable 2FA immediately.",
+      })
+      .catch(() => undefined);
   }
 
   // ── helpers ──

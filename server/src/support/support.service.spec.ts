@@ -6,20 +6,20 @@ import { SupportService } from './support.service';
 describe('SupportService.getMine', () => {
   it('throws NotFound when the ticket does not exist', async () => {
     const prisma = { ticket: { findUnique: jest.fn().mockResolvedValue(null) } } as any;
-    const service = new SupportService(prisma, {} as any);
+    const service = new SupportService(prisma, {} as any, { create: jest.fn() } as any);
     await expect(service.getMine('u1', 't1')).rejects.toThrow('Ticket not found');
   });
 
   it('forbids viewing another user\'s ticket', async () => {
     const prisma = { ticket: { findUnique: jest.fn().mockResolvedValue({ id: 't1', userId: 'someone-else', messages: [] }) } } as any;
-    const service = new SupportService(prisma, {} as any);
+    const service = new SupportService(prisma, {} as any, { create: jest.fn() } as any);
     await expect(service.getMine('u1', 't1')).rejects.toThrow('Not your ticket');
   });
 
   it('requests only non-internal messages (hides staff notes)', async () => {
     const findUnique = jest.fn().mockResolvedValue({ id: 't1', userId: 'u1', messages: [] });
     const prisma = { ticket: { findUnique } } as any;
-    const service = new SupportService(prisma, {} as any);
+    const service = new SupportService(prisma, {} as any, { create: jest.fn() } as any);
 
     await service.getMine('u1', 't1');
 
@@ -32,7 +32,7 @@ describe('SupportService.create', () => {
     const create = jest.fn().mockResolvedValue({ id: 't1' });
     const record = jest.fn().mockResolvedValue(undefined);
     const prisma = { ticket: { create } } as any;
-    const service = new SupportService(prisma, { record } as any);
+    const service = new SupportService(prisma, { record } as any, { create: jest.fn() } as any);
 
     await service.create('u1', { subject: 'Help', category: 'Account', priority: 'MEDIUM', message: 'hi there' } as any);
 
@@ -50,7 +50,7 @@ describe('SupportService.addMessage', () => {
       ticket: { findUnique: jest.fn().mockResolvedValue({ id: 't1', userId: 'u1', status: TicketStatus.RESOLVED }), update },
       ticketMessage: { create: jest.fn().mockResolvedValue({ id: 'm1' }) },
     } as any;
-    const service = new SupportService(prisma, {} as any);
+    const service = new SupportService(prisma, {} as any, { create: jest.fn() } as any);
 
     await service.addMessage('u1', 't1', { body: 'still broken' } as any);
 
@@ -61,7 +61,7 @@ describe('SupportService.addMessage', () => {
     const prisma = {
       ticket: { findUnique: jest.fn().mockResolvedValue({ id: 't1', userId: 'other', status: TicketStatus.OPEN }) },
     } as any;
-    const service = new SupportService(prisma, {} as any);
+    const service = new SupportService(prisma, {} as any, { create: jest.fn() } as any);
     await expect(service.addMessage('u1', 't1', { body: 'x' } as any)).rejects.toThrow('Not your ticket');
   });
 });

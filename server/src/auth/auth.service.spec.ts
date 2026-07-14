@@ -326,7 +326,7 @@ describe('AuthService.disableTwoFactor — re-auth (M-2)', () => {
     const update = jest.fn().mockResolvedValue({});
     const prisma = { user: { findUnique: jest.fn().mockResolvedValue(user), update } } as any;
     const crypto = { decrypt: jest.fn().mockReturnValue('SECRET') } as any;
-    const service = new AuthService(prisma, {} as any, { record: jest.fn() } as any, {} as any, {} as any, crypto, {} as any, {} as any);
+    const service = new AuthService(prisma, {} as any, { record: jest.fn() } as any, {} as any, {} as any, crypto, { sendNotification: jest.fn().mockResolvedValue(undefined) } as any, {} as any);
     return { service, update };
   };
 
