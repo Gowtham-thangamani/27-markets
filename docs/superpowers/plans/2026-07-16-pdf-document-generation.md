@@ -215,12 +215,17 @@ describe('renderPdf', () => {
     expect(buf.length).toBeGreaterThan(500);
   });
 
-  it('renders without a footer when footerNote is null', async () => {
-    const buf = await renderPdf({ ...input, footerNote: null });
-    expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+  it('omits the footer when footerNote is null', async () => {
+    const withFooter = await renderPdf(input);
+    const without = await renderPdf({ ...input, footerNote: null });
+    expect(without.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+    // Differential assertion: the only difference between these two renders is
+    // the footer, so a shorter buffer is evidence it was actually omitted. A
+    // bare '%PDF-' check would pass even if the footer were still drawn.
+    expect(without.length).toBeLessThan(withFooter.length);
   });
 
-  it('handles a body with no text', async () => {
+  it('renders a body with no text without throwing', async () => {
     const buf = await renderPdf({ ...input, body: '' });
     expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
   });
