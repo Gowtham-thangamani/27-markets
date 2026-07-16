@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import type { Env } from '../config/env.validation';
 import { PrismaService } from '../prisma/prisma.service';
 import { EMAIL_PROVIDER, type EmailProvider } from './email-provider';
+import { substituteTokens } from '../common/tokens';
 
 interface TemplateCopy {
   subject: string;
@@ -78,10 +79,6 @@ export class EmailService {
     return (this.config.get('CLIENT_ORIGIN', { infer: true }).split(',')[0] || '').trim() || 'http://localhost:5173';
   }
 
-  private subst(text: string, vars: Record<string, string>): string {
-    return text.replace(/\{\{(\w+)\}\}/g, (_, k: string) => vars[k] ?? '');
-  }
-
   /** Resolve a template by key (DB → fallback) and interpolate its variables. */
   private async render(key: string, vars: Record<string, string>): Promise<{ subject: string; text: string }> {
     let copy = DEFAULTS[key];
@@ -91,7 +88,7 @@ export class EmailService {
     } catch {
       // DB unreachable — keep the hardcoded fallback so email still sends.
     }
-    return { subject: this.subst(copy.subject, vars), text: this.subst(copy.body, vars) };
+    return { subject: substituteTokens(copy.subject, vars), text: substituteTokens(copy.body, vars) };
   }
 
   /**
