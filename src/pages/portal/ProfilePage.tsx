@@ -75,7 +75,6 @@ export default function ProfilePage() {
     try {
       await updateProfile({
         notifyMarketing: next.marketing,
-        notifySecurity: next.security,
         notifyProduct: next.product,
       })
     } catch (err) {
@@ -127,8 +126,14 @@ export default function ProfilePage() {
               <h3 className="font-display text-base font-semibold text-white">Notifications</h3>
             </div>
             <div className="mt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-300">
+                  Security alerts
+                  <span className="ml-2 text-xs text-gray-500">Always on</span>
+                </span>
+                <span className="text-xs font-medium text-brand-400">Required</span>
+              </div>
               {[
-                { key: 'security' as const, label: 'Security alerts' },
                 { key: 'product' as const, label: 'Product updates' },
                 { key: 'marketing' as const, label: 'Marketing emails' },
               ].map((row) => (

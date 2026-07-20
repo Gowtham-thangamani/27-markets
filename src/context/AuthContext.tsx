@@ -111,7 +111,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     if (patch.phone !== undefined) body.phone = patch.phone
     if (patch.country !== undefined) body.country = patch.country
-    if (patch.notifySecurity !== undefined) body.notifySecurity = patch.notifySecurity
+    // notifySecurity is deliberately not sent — security mail is always on, and
+    // the API rejects the field (forbidNonWhitelisted).
     if (patch.notifyProduct !== undefined) body.notifyProduct = patch.notifyProduct
     if (patch.notifyMarketing !== undefined) body.notifyMarketing = patch.notifyMarketing
     const u = await api.patch<ApiUser>('/users/me', body)

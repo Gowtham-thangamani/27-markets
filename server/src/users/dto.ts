@@ -33,9 +33,9 @@ export class UpdateProfileDto {
   @MaxLength(80)
   country?: string;
 
-  @IsOptional()
-  @IsBoolean()
-  notifySecurity?: boolean;
+  // notifySecurity is intentionally not editable: security mail (new sign-in,
+  // password change, 2FA on/off) always sends. Offering a switch that the send
+  // path ignores would promise users an opt-out we do not honour.
 
   @IsOptional()
   @IsBoolean()
