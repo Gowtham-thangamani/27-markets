@@ -50,6 +50,26 @@ const DEFAULTS: Record<string, TemplateCopy> = {
     subject: '{{title}} — 27 Markets',
     body: 'Hi {{firstName}},\n\n{{body}}\n\nYou can review the details anytime in your 27 Markets portal.',
   },
+  // Internal alert to the team when a public prospect is captured. The
+  // "Label: value" lines render as a details card; {{note}} is a free-text block.
+  lead_alert: {
+    subject: 'New {{sourceLabel}}: {{name}} — 27 Markets',
+    body:
+      'A new {{sourceLabel}} was captured on 27markets.com.\n\n' +
+      'Name: {{name}}\nEmail: {{email}}\nPhone: {{phone}}\nCountry: {{country}}\nSource: {{source}}\n\n' +
+      '{{note}}\n\n' +
+      'Follow up in the admin CRM:\n{{crmLink}}',
+  },
+  // Confirmation to a prospect who joined the pre-launch waitlist.
+  waitlist_welcome: {
+    subject: "You're on the 27 Markets launch list",
+    body:
+      'Hi {{firstName}},\n\n' +
+      "Thanks for joining the 27 Markets launch list — you're in.\n\n" +
+      "We're putting the finishing touches on the platform and will email you the moment " +
+      "we go live, so you'll be among the first to start trading.\n\n" +
+      'Keep an eye on your inbox — we\'ll be in touch soon.',
+  },
 };
 
 // Hosted on the frontend CDN (PNG for email-client compatibility). White logo on
@@ -223,6 +243,47 @@ export class EmailService {
     vars: { firstName: string; title: string; body: string },
   ): Promise<void> {
     const { subject, text } = await this.render('notification', vars);
+    return this.deliver(to, subject, text);
+  }
+
+  /** Internal alert to the team when a public prospect is captured. */
+  async sendLeadAlert(
+    to: string,
+    lead: {
+      name: string;
+      email: string;
+      phone?: string | null;
+      country?: string | null;
+      source: string;
+      subject?: string | null;
+      message?: string | null;
+    },
+  ): Promise<void> {
+    const sourceLabels: Record<string, string> = {
+      WAITLIST: 'waitlist signup',
+      DEMO: 'demo request',
+      MANUAL: 'lead',
+      REGISTER: 'registration',
+    };
+    const note: string[] = [];
+    if (lead.subject) note.push(`Subject: ${lead.subject}`);
+    if (lead.message) note.push(`Note from prospect:\n${lead.message}`);
+    const { subject, text } = await this.render('lead_alert', {
+      sourceLabel: sourceLabels[lead.source] ?? 'lead',
+      name: lead.name,
+      email: lead.email,
+      phone: lead.phone || '—',
+      country: lead.country || '—',
+      source: lead.source,
+      note: note.join('\n\n'),
+      crmLink: `${this.origin()}/admin/leads`,
+    });
+    return this.deliver(to, subject, text);
+  }
+
+  /** Confirmation to a prospect who joined the pre-launch waitlist. */
+  async sendWaitlistWelcome(to: string, firstName: string): Promise<void> {
+    const { subject, text } = await this.render('waitlist_welcome', { firstName });
     return this.deliver(to, subject, text);
   }
 }

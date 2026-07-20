@@ -32,6 +32,8 @@ export const envSchema = z
     SMTP_SECURE: z.coerce.boolean().default(false), // true for port 465
     SMTP_USER: z.string().optional(),
     SMTP_PASS: z.string().optional(),
+    // Internal recipient for new-lead alerts (waitlist/demo/contact captures).
+    LEADS_NOTIFY_EMAIL: z.string().default('info@27markets.com'),
 
     // ── Market data (Finnhub real-time) ──
     // Optional: when unset, live market endpoints serve cached/empty and the

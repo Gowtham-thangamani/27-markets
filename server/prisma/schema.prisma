@@ -777,6 +777,7 @@ enum LeadSource {
   DEMO
   REGISTER
   MANUAL
+  WAITLIST
 }
 
 enum LeadStatus {

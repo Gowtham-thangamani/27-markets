@@ -1,7 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { LeadSource, LeadStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { EmailService } from '../email/email.service';
+import type { Env } from '../config/env.validation';
 import type { CaptureLeadDto } from './dto';
 
 export interface RegisterLeadInput {
@@ -13,9 +16,13 @@ export interface RegisterLeadInput {
 
 @Injectable()
 export class LeadsService {
+  private readonly logger = new Logger('Leads');
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly email: EmailService,
+    private readonly config: ConfigService<Env, true>,
   ) {}
 
   /**
@@ -50,7 +57,38 @@ export class LeadsService {
       },
     });
     await this.audit.record({ action: 'lead.capture', entity: 'Lead', entityId: lead.id, metadata: { source: lead.source } });
+    await this.notify(lead);
     return { id: lead.id, deduped: false };
+  }
+
+  /**
+   * Best-effort emails on a fresh capture: always alert the team, and send a
+   * "you're on the launch list" confirmation to waitlist prospects. Email must
+   * never break lead capture, so every send is independently guarded.
+   */
+  private async notify(lead: {
+    name: string;
+    email: string;
+    phone: string | null;
+    country: string | null;
+    source: LeadSource;
+    subject: string | null;
+    message: string | null;
+  }): Promise<void> {
+    const notifyTo = this.config.get('LEADS_NOTIFY_EMAIL', { infer: true });
+    try {
+      await this.email.sendLeadAlert(notifyTo, lead);
+    } catch (err) {
+      this.logger.error(`lead alert failed for ${lead.email}: ${(err as Error).message}`);
+    }
+    if (lead.source === LeadSource.WAITLIST) {
+      const firstName = lead.name.trim().split(/\s+/)[0] || 'there';
+      try {
+        await this.email.sendWaitlistWelcome(lead.email, firstName);
+      } catch (err) {
+        this.logger.error(`waitlist welcome failed for ${lead.email}: ${(err as Error).message}`);
+      }
+    }
   }
 
   /**

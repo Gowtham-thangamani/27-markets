@@ -47,7 +47,7 @@ export interface KycDocument {
   createdAt: string
 }
 export type LeadStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'CONVERTED' | 'LOST'
-export type LeadSource = 'DEMO' | 'REGISTER' | 'MANUAL'
+export type LeadSource = 'DEMO' | 'REGISTER' | 'MANUAL' | 'WAITLIST'
 
 export interface StaffMember {
   id: string

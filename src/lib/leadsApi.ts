@@ -5,7 +5,7 @@ export interface CaptureLeadInput {
   email: string
   phone?: string
   country?: string
-  source?: 'DEMO' | 'MANUAL'
+  source?: 'DEMO' | 'MANUAL' | 'WAITLIST'
   message?: string
 }
 

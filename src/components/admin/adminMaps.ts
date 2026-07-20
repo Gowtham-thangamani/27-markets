@@ -33,6 +33,7 @@ export const leadSourceLabel: Record<LeadSource, string> = {
   DEMO: 'Demo',
   REGISTER: 'Register',
   MANUAL: 'Manual',
+  WAITLIST: 'Waitlist',
 }
 
 /** Overall KYC verdict for a client from their three step statuses. */
