@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import type { Env } from '../config/env.validation';
 import { KYC_PROVIDER, type KycProvider } from './kyc-provider';
+import { primaryOrigin } from '../common/origin';
 
 /**
  * Starts hosted identity-verification sessions via the KYC provider seam. Kept
@@ -23,7 +24,7 @@ export class KycVerificationService {
     });
     if (!user) throw new NotFoundException('User not found');
 
-    const origin = (this.config.get('CLIENT_ORIGIN', { infer: true }).split(',')[0] || '').trim() || 'http://localhost:5173';
+    const origin = primaryOrigin(this.config.get('CLIENT_ORIGIN', { infer: true }));
     const session = await this.provider.createVerificationSession({
       userId,
       email: user.email,

@@ -6,6 +6,7 @@ import { PartnerApplicationStatus, UserRole, VerificationTokenType } from '@pris
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { generateReferralCode } from './referral-code';
+import { primaryOrigin } from '../common/origin';
 import type { Env } from '../config/env.validation';
 import type { ApplyPartnerDto } from './dto';
 
@@ -100,7 +101,7 @@ export class PartnersService {
     });
 
     await this.audit.record({ userId: adminId, action: 'partner.application.approve', entity: 'PartnerApplication', entityId: id, metadata: { referralCode } });
-    const origin = this.config.get('CLIENT_ORIGIN', { infer: true });
+    const origin = primaryOrigin(this.config.get('CLIENT_ORIGIN', { infer: true }));
     return { ok: true, referralCode, inviteUrl: `${origin}/reset-password?token=${rawToken}` };
   }
 

@@ -4,6 +4,7 @@ import type { Env } from '../config/env.validation';
 import { PrismaService } from '../prisma/prisma.service';
 import { EMAIL_PROVIDER, type EmailProvider } from './email-provider';
 import { substituteTokens } from '../common/tokens';
+import { primaryOrigin } from '../common/origin';
 
 interface TemplateCopy {
   subject: string;
@@ -96,7 +97,7 @@ export class EmailService {
   ) {}
 
   private origin(): string {
-    return (this.config.get('CLIENT_ORIGIN', { infer: true }).split(',')[0] || '').trim() || 'http://localhost:5173';
+    return primaryOrigin(this.config.get('CLIENT_ORIGIN', { infer: true }));
   }
 
   /** Resolve a template by key (DB → fallback) and interpolate its variables. */

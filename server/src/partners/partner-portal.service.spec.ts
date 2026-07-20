@@ -7,12 +7,12 @@ function clientRow(i: number, kyc: Partial<Record<'identityStatus'|'addressStatu
     kycProfile: kyc ? { identityStatus: kyc.identityStatus ?? 'NOT_SUBMITTED', addressStatus: kyc.addressStatus ?? 'NOT_SUBMITTED', selfieStatus: kyc.selfieStatus ?? 'NOT_SUBMITTED' } : null }
 }
 
-function makeService(rows: any[], profile: any = { referralCode: 'ABC12345' }) {
+function makeService(rows: any[], profile: any = { referralCode: 'ABC12345' }, origin = 'https://app.example') {
   const prisma = {
     user: { findMany: jest.fn().mockResolvedValue(rows) },
     partnerProfile: { findUnique: jest.fn().mockResolvedValue(profile) },
   } as any
-  const config = { get: jest.fn().mockReturnValue('https://app.example') } as any
+  const config = { get: jest.fn().mockReturnValue(origin) } as any
   return new PartnerPortalService(prisma, config)
 }
 
@@ -125,5 +125,11 @@ describe('PartnerPortalService.profile', () => {
     const svc = makeService([], { referralCode: 'CODE9999' })
     const p = await svc.profile('p1')
     expect(p).toEqual({ referralCode: 'CODE9999', referralLink: 'https://app.example/register?ref=CODE9999' })
+  })
+
+  it('uses only the first origin when CLIENT_ORIGIN is a comma-separated allow-list', async () => {
+    const svc = makeService([], { referralCode: 'CODE9999' }, 'https://27markets.com,https://www.27markets.com')
+    const p = await svc.profile('p1')
+    expect(p.referralLink).toBe('https://27markets.com/register?ref=CODE9999')
   })
 })

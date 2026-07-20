@@ -9,6 +9,7 @@ import { AccountsService } from '../accounts/accounts.service';
 import { AuditService } from '../audit/audit.service';
 import { formatMoney, toMoney } from '../ledger/money';
 import { generateTxReference } from '../common/reference';
+import { primaryOrigin } from '../common/origin';
 import { PAYMENT_PROVIDER, type PaymentProvider } from '../payments/payment-provider';
 import { AmlService } from '../aml/aml.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -52,7 +53,7 @@ export class FundsService {
     // Validates ownership of the target account.
     await this.accounts.ledgerAccountIdFor(userId, dto.accountId);
 
-    const origin = (this.config.get('CLIENT_ORIGIN', { infer: true }).split(',')[0] || '').trim() || 'http://localhost:5173';
+    const origin = primaryOrigin(this.config.get('CLIENT_ORIGIN', { infer: true }));
     const checkout = await this.payments.createDepositCheckout({
       userId,
       tradingAccountId: dto.accountId,
@@ -160,7 +161,7 @@ export class FundsService {
     });
     if (!user) throw new BadRequestException('User not found');
 
-    const origin = (this.config.get('CLIENT_ORIGIN', { infer: true }).split(',')[0] || '').trim() || 'http://localhost:5173';
+    const origin = primaryOrigin(this.config.get('CLIENT_ORIGIN', { infer: true }));
     const result = await this.payments.createPayoutOnboarding({
       userId,
       email: user.email,

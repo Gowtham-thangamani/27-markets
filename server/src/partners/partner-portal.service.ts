@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { computeDelta, dayKey, emptySeries, kycStatusOf, sparkFromSeries } from '../admin/admin-dashboard.util';
 import { generateTxReference } from '../common/reference';
+import { primaryOrigin } from '../common/origin';
 import type { Env } from '../config/env.validation';
 
 type Kyc = 'NOT_SUBMITTED' | 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -169,7 +170,7 @@ export class PartnerPortalService {
   async profile(partnerId: string): Promise<{ referralCode: string; referralLink: string }> {
     const profile = await this.prisma.partnerProfile.findUnique({ where: { userId: partnerId } });
     if (!profile) throw new NotFoundException('Partner profile not found');
-    const origin = this.config.get('CLIENT_ORIGIN', { infer: true });
+    const origin = primaryOrigin(this.config.get('CLIENT_ORIGIN', { infer: true }));
     return { referralCode: profile.referralCode, referralLink: `${origin}/register?ref=${profile.referralCode}` };
   }
 }
