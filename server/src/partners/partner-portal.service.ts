@@ -22,8 +22,9 @@ export interface PartnerDashboard {
 }
 
 export type CommissionStatus = 'AVAILABLE' | 'IN_REVIEW' | 'PAID'
-export interface PartnerCommissionRow { id: string; amount: number; source: string; reference: string | null; client: string; date: string; status: CommissionStatus }
-export interface PartnerCommissions { total: number; available: number; paid: number; count: number; rows: PartnerCommissionRow[] }
+export interface PartnerCommissionRow { id: string; amount: number; source: string; reference: string | null; client: string; date: string; status: CommissionStatus; level: number }
+/** `direct` is level-1 earnings, `indirect` is everything earned via sub-partners. */
+export interface PartnerCommissions { total: number; available: number; paid: number; count: number; direct: number; indirect: number; rows: PartnerCommissionRow[] }
 
 const DAYS = 90;
 const CLIENT_SELECT = {
@@ -129,6 +130,8 @@ export class PartnerPortalService {
       available: sumWhere((r) => statusOf(r) === 'AVAILABLE'),
       paid: sumWhere((r) => statusOf(r) === 'PAID'),
       count: rows.length,
+      direct: sumWhere((r) => r.level === 1),
+      indirect: sumWhere((r) => r.level > 1),
       rows: rows.map((r) => ({
         id: r.id,
         amount: Number(r.amount),
@@ -137,6 +140,7 @@ export class PartnerPortalService {
         client: nameById.get(r.clientId) ?? '—',
         date: r.createdAt.toISOString(),
         status: statusOf(r),
+        level: r.level,
       })),
     };
   }
@@ -167,10 +171,16 @@ export class PartnerPortalService {
     });
   }
 
-  async profile(partnerId: string): Promise<{ referralCode: string; referralLink: string }> {
+  async profile(partnerId: string): Promise<{ referralCode: string; referralLink: string; partnerLink: string }> {
     const profile = await this.prisma.partnerProfile.findUnique({ where: { userId: partnerId } });
     if (!profile) throw new NotFoundException('Partner profile not found');
     const origin = primaryOrigin(this.config.get('CLIENT_ORIGIN', { infer: true }));
-    return { referralCode: profile.referralCode, referralLink: `${origin}/register?ref=${profile.referralCode}` };
+    return {
+      referralCode: profile.referralCode,
+      // Clients sign up; sub-partners apply and are credited to this partner as
+      // their upline once an admin approves the application.
+      referralLink: `${origin}/register?ref=${profile.referralCode}`,
+      partnerLink: `${origin}/partner/apply?ref=${profile.referralCode}`,
+    };
   }
 }

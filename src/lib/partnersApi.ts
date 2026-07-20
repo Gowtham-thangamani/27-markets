@@ -22,6 +22,8 @@ export interface PartnerApplication {
 export interface ApplyPartnerBody {
   firstName: string; lastName: string; email: string
   phone?: string; country?: string; company?: string; website?: string; audience?: string
+  /** Introducing partner's referral code, from ?ref= — makes the applicant a sub-IB. */
+  ref?: string
 }
 
 export interface ApproveResult { ok: true; referralCode: string; inviteUrl: string }

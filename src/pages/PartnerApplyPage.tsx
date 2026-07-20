@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -46,6 +47,12 @@ export default function PartnerApplyPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
+  // ?ref=<code> marks this application as introduced by an existing partner; on
+  // approval it becomes the new partner's upline. An unknown code is ignored
+  // server-side, so a mistyped link still produces a valid application.
+  const [searchParams] = useSearchParams()
+  const ref = searchParams.get('ref')?.trim() || undefined
+
   const onSubmit = async (v: FormValues) => {
     try {
       await partnersApi.apply({
@@ -57,6 +64,7 @@ export default function PartnerApplyPage() {
         company: v.company || undefined,
         website: v.website || undefined,
         audience: v.audience || undefined,
+        ref,
       })
       track('generate_lead', { type: 'partner_application' })
       setDone(true)

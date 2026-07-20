@@ -124,7 +124,11 @@ describe('PartnerPortalService.profile', () => {
   it('returns the referral link from CLIENT_ORIGIN + code', async () => {
     const svc = makeService([], { referralCode: 'CODE9999' })
     const p = await svc.profile('p1')
-    expect(p).toEqual({ referralCode: 'CODE9999', referralLink: 'https://app.example/register?ref=CODE9999' })
+    expect(p).toEqual({
+      referralCode: 'CODE9999',
+      referralLink: 'https://app.example/register?ref=CODE9999',
+      partnerLink: 'https://app.example/partner/apply?ref=CODE9999',
+    })
   })
 
   it('uses only the first origin when CLIENT_ORIGIN is a comma-separated allow-list', async () => {

@@ -70,3 +70,70 @@ describe('PartnersService.approve', () => {
     await expect(service.approve('admin1', 'app1')).rejects.toBeInstanceOf(ConflictException);
   });
 });
+
+describe('PartnersService sub-IB upline', () => {
+  const applyDeps = (uplineUserId: string | null) => {
+    const prisma = {
+      partnerApplication: { create: jest.fn().mockResolvedValue({ id: 'app1' }) },
+      partnerProfile: {
+        findUnique: jest.fn().mockResolvedValue(uplineUserId ? { userId: uplineUserId } : null),
+      },
+    } as any;
+    const service = new PartnersService(prisma, { record: jest.fn() } as any, { get: jest.fn() } as any);
+    return { service, prisma };
+  };
+
+  it('records the introducing partner when ?ref= matches a referral code', async () => {
+    const { service, prisma } = applyDeps('user1');
+
+    await service.apply({ firstName: 'Sub', lastName: 'IB', email: 'sub@x.io', ref: 'code1' } as any);
+
+    // Codes are stored uppercase; the lookup must normalise before matching.
+    expect(prisma.partnerProfile.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { referralCode: 'CODE1' } }),
+    );
+    expect(prisma.partnerApplication.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ referredByPartnerId: 'user1' }) }),
+    );
+  });
+
+  it('still accepts the application when the ref code is unknown', async () => {
+    const { service, prisma } = applyDeps(null);
+
+    const res = await service.apply({ firstName: 'Sub', lastName: 'IB', email: 'sub@x.io', ref: 'BOGUS' } as any);
+
+    expect(res).toEqual({ id: 'app1' });
+    expect(prisma.partnerApplication.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ referredByPartnerId: null }) }),
+    );
+  });
+
+  it('carries the upline onto the new partner profile on approval', async () => {
+    const prismaTx: any = {
+      partnerApplication: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'app1', status: 'PENDING', email: 'sub@x.io', firstName: 'Sub', lastName: 'IB',
+          phone: null, country: null, referredByPartnerId: 'user1',
+        }),
+        update: jest.fn().mockResolvedValue({}),
+      },
+      user: { findUnique: jest.fn().mockResolvedValue(null), create: jest.fn().mockResolvedValue({ id: 'u2' }) },
+      partnerProfile: { findUnique: jest.fn().mockResolvedValue(null), create: jest.fn().mockResolvedValue({}) },
+      verificationToken: { create: jest.fn().mockResolvedValue({}) },
+    };
+    const prisma: any = { ...prismaTx, $transaction: jest.fn(async (fn: any) => fn(prismaTx)) };
+    const service = new PartnersService(prisma, { record: jest.fn() } as any, {
+      get: jest.fn().mockReturnValue('https://app.example'),
+    } as any);
+
+    await service.approve('admin1', 'app1');
+
+    expect(prismaTx.user.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          partnerProfile: { create: expect.objectContaining({ parentPartnerId: 'user1' }) },
+        }),
+      }),
+    );
+  });
+});

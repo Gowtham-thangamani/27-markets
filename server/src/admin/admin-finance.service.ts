@@ -12,6 +12,13 @@ import { NotificationsService } from '../notifications/notifications.service';
 import type { Env } from '../config/env.validation';
 import type { AdjustmentDto } from './admin-finance.dto';
 
+/**
+ * How many partners deep a single deposit pays: 1 = direct referrer only,
+ * 2 = direct + their upline. Raising this needs a rate per added level in
+ * accrueReferralCommission.
+ */
+const IB_MAX_LEVEL = 2;
+
 @Injectable()
 export class AdminFinanceService {
   constructor(
@@ -117,8 +124,12 @@ export class AdminFinanceService {
   }
 
   /**
-   * If the depositing client was referred by a partner, accrue an IB commission
-   * = deposit × ib_commission_pct. Best-effort: never blocks the deposit.
+   * Accrue IB commission up the referral chain for a confirmed deposit.
+   *
+   * Level 1 is the client's own referrer (ib_commission_pct); level 2 is that
+   * partner's upline (ib_commission_pct_l2). Each level is a separate row to a
+   * different partner, so a payout to one never touches the other's balance.
+   * Best-effort: never blocks the deposit.
    */
   private async accrueReferralCommission(clientUserId: string, depositAmount: string, reference: string) {
     try {
@@ -128,25 +139,62 @@ export class AdminFinanceService {
       });
       if (!client?.referredByPartnerId) return;
 
-      const setting = await this.prisma.appSetting.findUnique({ where: { key: 'ib_commission_pct' } });
-      const pct = Number(setting?.value ?? '0');
-      if (!pct || pct <= 0) return;
+      const chain = await this.resolveUpline(client.referredByPartnerId);
+      const [pctL1, pctL2] = await Promise.all([
+        this.commissionPct('ib_commission_pct'),
+        this.commissionPct('ib_commission_pct_l2'),
+      ]);
+      const pctByLevel = [pctL1, pctL2];
 
-      const commission = (Number(depositAmount) * pct) / 100;
-      if (commission <= 0) return;
+      for (const [index, partnerId] of chain.entries()) {
+        const pct = pctByLevel[index];
+        if (!pct || pct <= 0) continue;
+        const commission = (Number(depositAmount) * pct) / 100;
+        if (commission <= 0) continue;
 
-      await this.prisma.ibCommission.create({
-        data: {
-          partnerId: client.referredByPartnerId,
-          clientId: clientUserId,
-          amount: commission.toFixed(2),
-          source: 'deposit',
-          reference,
-        },
-      });
+        await this.prisma.ibCommission.create({
+          data: {
+            partnerId,
+            clientId: clientUserId,
+            amount: commission.toFixed(2),
+            source: 'deposit',
+            reference,
+            level: index + 1,
+          },
+        });
+      }
     } catch {
       // Commission accrual must never fail the deposit.
     }
+  }
+
+  /** A commission rate from settings, as a percentage. Missing/invalid → 0. */
+  private async commissionPct(key: string): Promise<number> {
+    const setting = await this.prisma.appSetting.findUnique({ where: { key } });
+    const pct = Number(setting?.value ?? '0');
+    return Number.isFinite(pct) && pct > 0 ? pct : 0;
+  }
+
+  /**
+   * The commission chain starting at the client's direct referrer, walking up
+   * at most IB_MAX_LEVEL partners. Stops early at the top of the tree, and
+   * guards against a cycle in the upline so a bad parent link can never spin.
+   */
+  private async resolveUpline(directPartnerId: string): Promise<string[]> {
+    const chain: string[] = [directPartnerId];
+    const seen = new Set<string>([directPartnerId]);
+
+    while (chain.length < IB_MAX_LEVEL) {
+      const profile = await this.prisma.partnerProfile.findUnique({
+        where: { userId: chain[chain.length - 1] },
+        select: { parentPartnerId: true },
+      });
+      const parent = profile?.parentPartnerId;
+      if (!parent || seen.has(parent)) break;
+      seen.add(parent);
+      chain.push(parent);
+    }
+    return chain;
   }
 
   async rejectDepositRequest(adminId: string, requestId: string, reason?: string) {

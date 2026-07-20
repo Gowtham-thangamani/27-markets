@@ -9,6 +9,8 @@ export class ApplyPartnerDto {
   @IsOptional() @IsString() @MaxLength(120) company?: string;
   @IsOptional() @IsString() @MaxLength(200) website?: string;
   @IsOptional() @IsString() @MaxLength(2000) audience?: string;
+  /** Referral code of the introducing partner, from ?ref= on the apply page. */
+  @IsOptional() @IsString() @MaxLength(32) ref?: string;
 }
 
 export class RejectApplicationDto {

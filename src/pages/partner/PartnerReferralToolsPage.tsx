@@ -33,12 +33,20 @@ export default function PartnerReferralToolsPage() {
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         <div className="space-y-4">
           <div className="glass-panel p-5">
-            <h3 className="mb-3 text-sm font-semibold text-white">Referral link</h3>
+            <h3 className="mb-3 text-sm font-semibold text-white">Client referral link</h3>
             <div className="flex items-center gap-2">
               <code className="flex-1 truncate rounded-lg border border-white/10 bg-ink-800/60 px-3 py-2 text-xs text-brand-300">{profile.referralLink}</code>
               <button onClick={() => copy(profile.referralLink, 'Link')} className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white"><Copy className="h-3.5 w-3.5" /> Copy</button>
             </div>
             <p className="mt-2 text-xs text-gray-500">Referral code: <span className="font-mono text-brand-300">{profile.referralCode}</span></p>
+          </div>
+          <div className="glass-panel p-5">
+            <h3 className="mb-3 text-sm font-semibold text-white">Partner invite link</h3>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 truncate rounded-lg border border-white/10 bg-ink-800/60 px-3 py-2 text-xs text-brand-300">{profile.partnerLink}</code>
+              <button onClick={() => copy(profile.partnerLink, 'Partner link')} className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white"><Copy className="h-3.5 w-3.5" /> Copy</button>
+            </div>
+            <p className="mt-2 text-xs text-gray-500">Invite other IBs to join under you. Once approved, you earn on their clients&apos; deposits too.</p>
           </div>
           <div className="glass-panel p-5">
             <h3 className="mb-3 text-sm font-semibold text-white">Share message</h3>

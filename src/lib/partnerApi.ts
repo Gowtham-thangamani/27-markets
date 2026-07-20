@@ -13,10 +13,11 @@ export interface PartnerDashboard {
   kycDistribution: Record<Kyc, number>
   recentReferrals: PartnerClient[]
 }
-export interface PartnerProfile { referralCode: string; referralLink: string }
+export interface PartnerProfile { referralCode: string; referralLink: string; partnerLink: string }
 export type CommissionStatus = 'AVAILABLE' | 'IN_REVIEW' | 'PAID'
-export interface PartnerCommissionRow { id: string; amount: number; source: string; reference: string | null; client: string; date: string; status: CommissionStatus }
-export interface PartnerCommissions { total: number; available: number; paid: number; count: number; rows: PartnerCommissionRow[] }
+export interface PartnerCommissionRow { id: string; amount: number; source: string; reference: string | null; client: string; date: string; status: CommissionStatus; level: number }
+/** `direct` is level-1 earnings; `indirect` is earned through sub-partners. */
+export interface PartnerCommissions { total: number; available: number; paid: number; count: number; direct: number; indirect: number; rows: PartnerCommissionRow[] }
 export interface PartnerPayoutResult { reference: string; amount: number; status: string }
 
 export const partnerApi = {

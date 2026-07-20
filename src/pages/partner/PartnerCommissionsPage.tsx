@@ -28,10 +28,10 @@ function Tile({ label, value, tone = 'default' }: { label: string; value: string
 }
 
 function toCsv(rows: PartnerCommissions['rows']): string {
-  const header = ['Date', 'Client', 'Source', 'Reference', 'Amount (USD)', 'Status']
+  const header = ['Date', 'Client', 'Source', 'Tier', 'Reference', 'Amount (USD)', 'Status']
   const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v)
   const lines = rows.map((r) =>
-    [new Date(r.date).toISOString().slice(0, 10), r.client, r.source, r.reference ?? '', r.amount.toFixed(2), statusLabel[r.status]]
+    [new Date(r.date).toISOString().slice(0, 10), r.client, r.source, r.level === 1 ? 'Direct' : `Level ${r.level}`, r.reference ?? '', r.amount.toFixed(2), statusLabel[r.status]]
       .map((c) => esc(String(c)))
       .join(','),
   )
@@ -104,6 +104,11 @@ export default function PartnerCommissionsPage() {
             <Tile label="Paid out" value={formatCurrency(data.paid)} tone="info" />
           </div>
 
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Tile label="Direct (your clients)" value={formatCurrency(data.direct)} />
+            <Tile label="Indirect (sub-partners)" value={formatCurrency(data.indirect)} />
+          </div>
+
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <div className="w-44">
               <Select
@@ -142,6 +147,7 @@ export default function PartnerCommissionsPage() {
                     <th className="px-4 py-3 font-medium">Date</th>
                     <th className="px-4 py-3 font-medium">Client</th>
                     <th className="px-4 py-3 font-medium">Source</th>
+                    <th className="px-4 py-3 font-medium">Tier</th>
                     <th className="px-4 py-3 font-medium text-right">Amount</th>
                     <th className="px-4 py-3 font-medium">Status</th>
                   </tr>
@@ -152,6 +158,9 @@ export default function PartnerCommissionsPage() {
                       <td className="whitespace-nowrap px-4 py-3.5 text-gray-400">{formatDate(r.date)}</td>
                       <td className="px-4 py-3.5 text-white">{r.client}</td>
                       <td className="px-4 py-3.5 capitalize text-gray-400">{r.source}</td>
+                      <td className="px-4 py-3.5">
+                        <Badge tone={r.level === 1 ? 'info' : 'warning'}>{r.level === 1 ? 'Direct' : `Level ${r.level}`}</Badge>
+                      </td>
                       <td className="px-4 py-3.5 text-right font-mono tabular-nums text-white">{formatCurrency(r.amount)}</td>
                       <td className="px-4 py-3.5">
                         <Badge tone={statusTone[r.status]}>{statusLabel[r.status]}</Badge>

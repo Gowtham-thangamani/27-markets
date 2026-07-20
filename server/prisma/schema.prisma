@@ -104,6 +104,9 @@ model User {
   referredClients     User[]               @relation("PartnerReferrals")
   partnerAppsReviewed PartnerApplication[] @relation("PartnerAppReviewer")
   partnerAppResult    PartnerApplication?  @relation("PartnerAppResult")
+  // Sub-IBs introduced by this partner (back-relation of PartnerProfile.parentPartner).
+  downlinePartners    PartnerProfile[]     @relation("PartnerUpline")
+  partnerAppsReferred PartnerApplication[] @relation("PartnerAppUpline")
 
   // `email` is already @unique (which creates an index) — no separate @@index needed.
   // Partner dashboard + client list filter on referredByPartnerId, so index it.
@@ -376,6 +379,10 @@ model IbCommission {
   source    String   @default("deposit")
   reference String?
   createdAt DateTime @default(now())
+
+  // 1 = direct (the client's own referrer), 2 = indirect (that partner's upline).
+  // One deposit can produce one row per level, each to a different partner.
+  level Int @default(1)
 
   // When set, this commission has been reserved by / settled in a payout.
   payoutId String?
@@ -1072,6 +1079,11 @@ model PartnerApplication {
   resultingUser   User?                    @relation("PartnerAppResult", fields: [resultingUserId], references: [id])
   createdAt       DateTime                 @default(now())
 
+  // Upline captured at apply time from ?ref=<referralCode>; on approval this
+  // becomes the new partner's PartnerProfile.parentPartnerId.
+  referredByPartnerId String?
+  referredByPartner   User?  @relation("PartnerAppUpline", fields: [referredByPartnerId], references: [id])
+
   @@index([status])
 }
 
@@ -1081,4 +1093,13 @@ model PartnerProfile {
   user         User     @relation("UserPartnerProfile", fields: [userId], references: [id], onDelete: Cascade)
   referralCode String   @unique
   createdAt    DateTime @default(now())
+
+  // Upline: the partner who introduced this partner (sub-IB network). Null for
+  // a top-level partner. Points at the upline's User id, matching
+  // User.referredByPartnerId and IbCommission.partnerId. Commission credit walks
+  // this chain — see IB_MAX_LEVEL in admin-finance.service.
+  parentPartnerId String?
+  parentPartner   User?   @relation("PartnerUpline", fields: [parentPartnerId], references: [id])
+
+  @@index([parentPartnerId])
 }

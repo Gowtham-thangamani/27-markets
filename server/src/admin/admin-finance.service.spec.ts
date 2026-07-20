@@ -298,3 +298,93 @@ describe('AdminFinanceService deposit requests', () => {
     expect(res.status).toBe('REJECTED');
   });
 });
+
+describe('AdminFinanceService.accrueReferralCommission (multi-level IB)', () => {
+  /**
+   * @param referrer  the depositing client's direct referrer (null = no referrer)
+   * @param uplineOf  partner userId -> their upline userId
+   * @param rates     setting key -> percentage string
+   */
+  const setup = (
+    referrer: string | null,
+    uplineOf: Record<string, string | null> = {},
+    rates: Record<string, string> = { ib_commission_pct: '10', ib_commission_pct_l2: '3' },
+  ) => {
+    const create = jest.fn().mockResolvedValue({});
+    const prisma = {
+      user: { findUnique: jest.fn().mockResolvedValue({ referredByPartnerId: referrer }) },
+      appSetting: {
+        findUnique: jest.fn(({ where: { key } }: any) =>
+          Promise.resolve(rates[key] === undefined ? null : { value: rates[key] }),
+        ),
+      },
+      partnerProfile: {
+        findUnique: jest.fn(({ where: { userId } }: any) =>
+          Promise.resolve({ parentPartnerId: uplineOf[userId] ?? null }),
+        ),
+      },
+      ibCommission: { create },
+    } as any;
+    const service = new AdminFinanceService(prisma, {} as any, { record: jest.fn() } as any, payments() as any, cfg(), notify());
+    return { service, create };
+  };
+
+  const accrue = (service: AdminFinanceService, amount = '1000') =>
+    (service as any).accrueReferralCommission('client1', amount, 'TX-9');
+
+  it('pays the direct referrer and their upline from one deposit', async () => {
+    // user3 (client) -> referred by user2 -> whose upline is user1
+    const { service, create } = setup('user2', { user2: 'user1' });
+
+    await accrue(service);
+
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(create).toHaveBeenNthCalledWith(1, {
+      data: expect.objectContaining({ partnerId: 'user2', amount: '100.00', level: 1, clientId: 'client1' }),
+    });
+    expect(create).toHaveBeenNthCalledWith(2, {
+      data: expect.objectContaining({ partnerId: 'user1', amount: '30.00', level: 2, clientId: 'client1' }),
+    });
+  });
+
+  it('pays only level 1 when the referrer has no upline', async () => {
+    const { service, create } = setup('user2', { user2: null });
+
+    await accrue(service);
+
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(create).toHaveBeenCalledWith({ data: expect.objectContaining({ partnerId: 'user2', level: 1 }) });
+  });
+
+  it('accrues nothing when the client was never referred', async () => {
+    const { service, create } = setup(null);
+    await accrue(service);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('skips level 2 when its rate is unset or zero', async () => {
+    const { service, create } = setup('user2', { user2: 'user1' }, { ib_commission_pct: '10' });
+
+    await accrue(service);
+
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(create).toHaveBeenCalledWith({ data: expect.objectContaining({ partnerId: 'user2', level: 1 }) });
+  });
+
+  it('does not pay a partner twice when the upline chain loops back', async () => {
+    // Corrupt data: user2's upline is user2. Must not self-credit at level 2.
+    const { service, create } = setup('user2', { user2: 'user2' });
+
+    await accrue(service);
+
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(create).toHaveBeenCalledWith({ data: expect.objectContaining({ partnerId: 'user2', level: 1 }) });
+  });
+
+  it('never lets a commission failure break the deposit', async () => {
+    const { service, create } = setup('user2', { user2: 'user1' });
+    create.mockRejectedValueOnce(new Error('db down'));
+
+    await expect(accrue(service)).resolves.toBeUndefined();
+  });
+});

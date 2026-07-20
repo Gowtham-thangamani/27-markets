@@ -19,6 +19,15 @@ export class PartnersService {
   ) {}
 
   async apply(dto: ApplyPartnerDto): Promise<{ id: string }> {
+    // An unknown/absent code is not an error — the application is still valid,
+    // it just has no upline and becomes a top-level partner on approval.
+    const upline = dto.ref
+      ? await this.prisma.partnerProfile.findUnique({
+          where: { referralCode: dto.ref.trim().toUpperCase() },
+          select: { userId: true },
+        })
+      : null;
+
     const app = await this.prisma.partnerApplication.create({
       data: {
         firstName: dto.firstName,
@@ -30,6 +39,7 @@ export class PartnersService {
         website: dto.website,
         audience: dto.audience,
         status: 'PENDING',
+        referredByPartnerId: upline?.userId ?? null,
       },
     });
     await this.audit.record({ action: 'partner.application.create', entity: 'PartnerApplication', entityId: app.id });
@@ -83,7 +93,9 @@ export class PartnersService {
           role: UserRole.PARTNER,
           emailVerified: true,
           acceptedTermsAt: new Date(),
-          partnerProfile: { create: { referralCode } },
+          // Upline captured at apply time — this is what makes the new partner
+          // a sub-IB and lets deposits pay level 2 up the chain.
+          partnerProfile: { create: { referralCode, parentPartnerId: app.referredByPartnerId } },
         },
       });
       await tx.verificationToken.create({
