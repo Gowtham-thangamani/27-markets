@@ -123,10 +123,49 @@ function tryRefresh(): Promise<boolean> {
   return refreshInFlight
 }
 
+/**
+ * POST that returns binary (e.g. a generated PDF). Kept separate from
+ * `request` because that path runs every response through res.text() +
+ * JSON.parse, which corrupts binary payloads.
+ */
+async function requestBlob(path: string, body: unknown, _retried = false): Promise<Blob> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  let res: Response
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body ?? {}),
+      signal: controller.signal,
+    })
+  } catch (err) {
+    if ((err as Error)?.name === 'AbortError') {
+      throw new ApiError(408, 'The server took too long to respond. Please try again.')
+    }
+    throw new ApiError(0, 'Could not reach the server. Check your connection and try again.')
+  } finally {
+    clearTimeout(timer)
+  }
+
+  if (res.ok) return await res.blob()
+
+  if (res.status === 401 && !_retried && (await tryRefresh())) {
+    return requestBlob(path, body, true)
+  }
+
+  // Errors are still JSON, so the normal parser applies.
+  const parsed = await parseBody(res)
+  const { message, code } = messageFrom(parsed, res.statusText || 'Request failed')
+  throw new ApiError(res.status, message, code)
+}
+
 export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body?: unknown, opts?: RequestOptions) =>
     request<T>(path, { ...opts, method: 'POST', body }),
+  postBlob: (path: string, body?: unknown) => requestBlob(path, body),
   upload: <T>(path: string, formData: FormData, opts?: RequestOptions) =>
     request<T>(path, { ...opts, method: 'POST', body: formData }),
   patch: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PATCH', body }),

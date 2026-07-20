@@ -261,6 +261,12 @@ export interface TextTemplate {
   updatedAt: string
 }
 
+export interface DocumentPrepare {
+  autoVars: Record<string, string>
+  manualTokens: string[]
+  needsAccount: boolean
+}
+
 export interface StaffFormAssignment {
   id: string
   kycFormId: string
@@ -519,6 +525,14 @@ export const adminApi = {
   createTextTemplate: (body: { kind: TextTemplateKind; name: string; body: string; enabled?: boolean }) => api.post<TextTemplate>('/admin/text-templates', body),
   updateTextTemplate: (id: string, patch: { name?: string; body?: string; enabled?: boolean }) => api.patch<TextTemplate>(`/admin/text-templates/${id}`, patch),
   deleteTextTemplate: (id: string) => api.del<{ ok: boolean }>(`/admin/text-templates/${id}`),
+
+  // Document generation (PDF templates -> rendered PDF)
+  prepareDocument: (templateId: string, clientId: string, accountId?: string) =>
+    api.get<DocumentPrepare>(
+      `/admin/documents/prepare?templateId=${encodeURIComponent(templateId)}&clientId=${encodeURIComponent(clientId)}${accountId ? `&accountId=${encodeURIComponent(accountId)}` : ''}`,
+    ),
+  generateDocument: (body: { templateId: string; clientId: string; accountId?: string; vars: Record<string, string> }) =>
+    api.postBlob('/admin/documents/generate', body),
 
   // Staff form assignments (KYC form -> staff)
   listStaffFormAssignments: () => api.get<StaffFormAssignment[]>('/admin/staff-form-assignments'),
