@@ -23,7 +23,10 @@ function makeService(overrides: { post?: jest.Mock } = {}) {
   const audit = { record: jest.fn().mockResolvedValue(undefined) } as any;
   const payments = { name: 'simulation', simulated: true, assertAvailable: jest.fn() } as any;
   const config = { get: jest.fn().mockReturnValue('http://localhost:5173') } as any;
-  return { service: new FundsService(prisma, ledger, accounts, audit, payments, config, { assertNotBlocked: jest.fn() } as any, { create: jest.fn() } as any), post, audit, payments };
+  // No withdrawal limits configured by default (0 = off) and no prior-24h volume.
+  prisma.appSetting = { findUnique: jest.fn().mockResolvedValue({ value: '0' }) };
+  prisma.posting = { aggregate: jest.fn().mockResolvedValue({ _sum: { amount: 0 } }) };
+  return { service: new FundsService(prisma, ledger, accounts, audit, payments, config, { assertNotBlocked: jest.fn() } as any, { create: jest.fn() } as any), post, audit, payments, prisma };
 }
 
 describe('FundsService.depositMethods', () => {
@@ -65,6 +68,43 @@ describe('FundsService.withdraw', () => {
     const arg = post.mock.calls[0][0];
     expect(arg.guardBalance).toEqual(expect.objectContaining({ ledgerAccountId: 'client-ledger' }));
     expect(Number(arg.guardBalance.atLeast)).toBe(100);
+  });
+
+  it('rejects a withdrawal above the per-transaction ceiling', async () => {
+    const { service, prisma } = makeService();
+    prisma.appSetting.findUnique = jest.fn(({ where: { key } }: any) =>
+      Promise.resolve({ value: key === 'withdrawal_max_single_usd' ? '50000' : '0' }),
+    );
+    await expect(
+      service.withdraw('user1', { accountId: 'acc1', amount: '60000', method: 'bank', accountName: 'J A', accountNumber: 'AE07' } as any),
+    ).rejects.toThrow(/maximum single withdrawal/i);
+  });
+
+  it('rejects when the rolling-24h total would exceed the daily limit', async () => {
+    const { service, prisma } = makeService();
+    prisma.appSetting.findUnique = jest.fn(({ where: { key } }: any) =>
+      Promise.resolve({ value: key === 'withdrawal_daily_limit_usd' ? '100000' : '0' }),
+    );
+    prisma.posting.aggregate = jest.fn().mockResolvedValue({ _sum: { amount: 95000 } }); // already out
+    await expect(
+      service.withdraw('user1', { accountId: 'acc1', amount: '10000', method: 'bank', accountName: 'J A', accountNumber: 'AE07' } as any),
+    ).rejects.toThrow(/24-hour withdrawal limit/i);
+  });
+
+  it('allows a withdrawal within both limits', async () => {
+    const { service, post, prisma } = makeService();
+    prisma.appSetting.findUnique = jest.fn(({ where: { key } }: any) =>
+      Promise.resolve({ value: key === 'withdrawal_max_single_usd' ? '50000' : '100000' }),
+    );
+    prisma.posting.aggregate = jest.fn().mockResolvedValue({ _sum: { amount: 5000 } });
+    await service.withdraw('user1', { accountId: 'acc1', amount: '1000', method: 'bank', accountName: 'J A', accountNumber: 'AE07' } as any);
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats a 0 / unset limit as no limit', async () => {
+    const { service, post } = makeService(); // defaults: appSetting value '0'
+    await service.withdraw('user1', { accountId: 'acc1', amount: '999999', method: 'bank', accountName: 'J A', accountNumber: 'AE07' } as any);
+    expect(post).toHaveBeenCalledTimes(1);
   });
 
   it('reflects the real provider mode in the response + audit (not hardcoded simulated)', async () => {

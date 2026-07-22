@@ -256,11 +256,62 @@ export class FundsService {
     }
   }
 
+  /** A withdrawal risk limit from settings, in USD. 0 / missing / invalid = no limit. */
+  private async withdrawalLimit(key: string): Promise<number> {
+    const s = await this.prisma.appSetting.findUnique({ where: { key } });
+    const n = Number(s?.value ?? '0');
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
+
+  /**
+   * Risk caps on money-out: a per-transaction ceiling and a rolling-24h velocity
+   * cap. Both are admin-configurable (0 = off). Without these, in LIVE a single
+   * approval could push an unbounded irreversible payout. PENDING + POSTED
+   * withdrawals count toward the daily total; rejected (REVERSED) ones don't.
+   */
+  private async assertWithinWithdrawalLimits(userId: string, amountUsd: number): Promise<void> {
+    const [maxSingle, dailyLimit] = await Promise.all([
+      this.withdrawalLimit('withdrawal_max_single_usd'),
+      this.withdrawalLimit('withdrawal_daily_limit_usd'),
+    ]);
+
+    if (maxSingle > 0 && amountUsd > maxSingle) {
+      throw new BadRequestException(
+        `This exceeds the maximum single withdrawal of $${maxSingle.toLocaleString()}. Contact support to arrange a larger payout.`,
+      );
+    }
+
+    if (dailyLimit > 0) {
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const agg = await this.prisma.posting.aggregate({
+        _sum: { amount: true },
+        where: {
+          direction: PostingDirection.DEBIT,
+          ledgerAccount: { userId },
+          journalEntry: {
+            kind: JournalKind.WITHDRAWAL,
+            status: { in: [JournalStatus.PENDING, JournalStatus.POSTED] },
+            createdAt: { gte: since },
+          },
+        },
+      });
+      const already = Number(agg._sum.amount ?? 0);
+      if (already + amountUsd > dailyLimit) {
+        throw new BadRequestException(
+          `This would exceed your 24-hour withdrawal limit of $${dailyLimit.toLocaleString()} ` +
+            `($${already.toLocaleString()} already requested in the last 24 hours).`,
+        );
+      }
+    }
+  }
+
   async withdraw(userId: string, dto: WithdrawDto) {
     this.payments.assertAvailable();
     await this.assertKycVerified(userId);
     // Compliance gate: a confirmed sanctions/PEP HIT blocks money-out.
     await this.aml.assertNotBlocked(userId);
+    // Risk caps: per-transaction ceiling + rolling-24h velocity.
+    await this.assertWithinWithdrawalLimits(userId, Number(dto.amount));
     const amount = toMoney(dto.amount);
     const clientLedgerId = await this.accounts.ledgerAccountIdFor(userId, dto.accountId);
 
