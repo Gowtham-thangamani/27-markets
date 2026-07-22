@@ -162,6 +162,12 @@ export class AdminFinanceService {
             level: index + 1,
           },
         });
+
+        await this.notifications.create(partnerId, {
+          title: index === 0 ? 'Commission earned' : 'Sub-partner commission earned',
+          body: `You earned $${commission.toFixed(2)} ${index === 0 ? 'from a referred client deposit' : 'from your sub-partner network'}.`,
+          kind: 'SUCCESS',
+        });
       }
     } catch {
       // Commission accrual must never fail the deposit.

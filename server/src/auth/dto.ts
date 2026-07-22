@@ -70,6 +70,11 @@ export class RegisterDto {
   @IsString()
   @MaxLength(16)
   ref?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  campaign?: string;
 }
 
 export class VerifyEmailDto {

@@ -108,9 +108,31 @@ model User {
   downlinePartners    PartnerProfile[]     @relation("PartnerUpline")
   partnerAppsReferred PartnerApplication[] @relation("PartnerAppUpline")
 
+  // CRM / sales pipeline (surfaced in the IB "Referred Clients" table)
+  conversionStatus ConversionStatus @default(NO_ANSWER)
+  // Set the first time conversionStatus flips to CONVERTED.
+  convertedAt      DateTime?
+  // Attribution code captured from ?campaign= at registration (→ IbCampaign.code).
+  campaignCode     String?
+  // Sales agent / account manager, assigned by staff (a User with role AGENT/ADMIN).
+  assignedAgentId  String?
+  assignedAgent    User?            @relation("ClientSalesAgent", fields: [assignedAgentId], references: [id])
+  assignedClients  User[]           @relation("ClientSalesAgent")
+
   // `email` is already @unique (which creates an index) — no separate @@index needed.
   // Partner dashboard + client list filter on referredByPartnerId, so index it.
   @@index([referredByPartnerId])
+  @@index([assignedAgentId])
+}
+
+// Sales-pipeline state for a referred client, shown (and editable) in the IB
+// portal's client table. Distinct from LeadStatus, which tracks pre-signup
+// marketing leads; this tracks a signed-up user's conversion to a funded trader.
+enum ConversionStatus {
+  NO_ANSWER
+  ON_BOARDING
+  CONVERTED
+  NOT_INTERESTED
 }
 
 enum AmlScreeningStatus {
@@ -1101,5 +1123,16 @@ model PartnerProfile {
   parentPartnerId String?
   parentPartner   User?   @relation("PartnerUpline", fields: [parentPartnerId], references: [id])
 
+  // Payout destination, set by the partner in portal settings. A payout request
+  // is blocked until a method + details exist. `payoutDetails` is free-form per
+  // method (bank: accountName/iban/swift; crypto: network/address).
+  payoutMethod  PayoutMethod?
+  payoutDetails Json?
+
   @@index([parentPartnerId])
+}
+
+enum PayoutMethod {
+  BANK
+  CRYPTO
 }

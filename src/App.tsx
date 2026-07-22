@@ -24,6 +24,9 @@ const AgentTicketsPage = lazy(() => import('./pages/agent/AgentTicketsPage'))
 const PartnerClientsPage = lazy(() => import('./pages/partner/PartnerClientsPage'))
 const PartnerCommissionsPage = lazy(() => import('./pages/partner/PartnerCommissionsPage'))
 const PartnerReferralToolsPage = lazy(() => import('./pages/partner/PartnerReferralToolsPage'))
+const PartnerSubPartnersPage = lazy(() => import('./pages/partner/PartnerSubPartnersPage'))
+const PartnerPayoutsPage = lazy(() => import('./pages/partner/PartnerPayoutsPage'))
+const PartnerSettingsPage = lazy(() => import('./pages/partner/PartnerSettingsPage'))
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'))
 const AdminClientsPage = lazy(() => import('./pages/admin/AdminClientsPage'))
 const AdminBlockedUsersPage = lazy(() => import('./pages/admin/AdminBlockedUsersPage'))
@@ -234,8 +237,11 @@ export default function App() {
         <Route index element={<Navigate to="/partner/dashboard" replace />} />
         <Route path="dashboard" element={<PartnerDashboardPage />} />
         <Route path="clients" element={<PartnerClientsPage />} />
+        <Route path="sub-partners" element={<PartnerSubPartnersPage />} />
         <Route path="commissions" element={<PartnerCommissionsPage />} />
+        <Route path="payouts" element={<PartnerPayoutsPage />} />
         <Route path="tools" element={<PartnerReferralToolsPage />} />
+        <Route path="settings" element={<PartnerSettingsPage />} />
       </Route>
 
       {/* Secure agent workspace */}

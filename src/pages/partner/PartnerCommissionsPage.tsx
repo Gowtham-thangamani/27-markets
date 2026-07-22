@@ -43,15 +43,17 @@ export default function PartnerCommissionsPage() {
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<CommissionStatus | 'ALL'>('ALL')
   const [q, setQ] = useState('')
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
 
   const load = useCallback(async () => {
     setError(null)
     try {
-      setData(await partnerApi.getCommissions())
+      setData(await partnerApi.getCommissions({ from: from || undefined, to: to || undefined }))
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Failed to load commissions')
     }
-  }, [])
+  }, [from, to])
   useEffect(() => {
     void load()
   }, [load])
@@ -85,7 +87,10 @@ export default function PartnerCommissionsPage() {
   return (
     <>
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <PageTitle title="Commissions" subtitle="Your full commission statement across referred clients." />
+        <PageTitle
+          title="Commissions"
+          subtitle={data ? `Your rates: ${data.rates.direct}% direct · ${data.rates.indirect}% indirect.` : 'Your full commission statement across referred clients.'}
+        />
         <Button variant="outline" className="gap-1.5" onClick={exportCsv} disabled={!filtered.length}>
           <Download className="h-4 w-4" /> Export CSV
         </Button>
@@ -123,9 +128,18 @@ export default function PartnerCommissionsPage() {
                 ]}
               />
             </div>
-            <div className="min-w-[12rem] flex-1">
+            <div className="min-w-[10rem] flex-1">
               <Input placeholder="Search client or reference…" value={q} onChange={(e) => setQ(e.target.value)} />
             </div>
+            <label className="flex items-center gap-1.5 text-xs text-gray-500">
+              From <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-36" />
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-gray-500">
+              To <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-36" />
+            </label>
+            {(from || to) && (
+              <button onClick={() => { setFrom(''); setTo('') }} className="text-xs text-brand-400 hover:text-brand-300">Clear dates</button>
+            )}
             <span className="text-xs text-gray-500">
               {filtered.length} of {data.count}
             </span>

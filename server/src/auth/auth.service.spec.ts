@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 
 // Constructor: (prisma, tokens, audit, leads, config, crypto, email, accounts)
 const make = (prisma: any, email: any = { sendVerifyEmail: jest.fn(), sendPasswordReset: jest.fn(), sendWelcome: jest.fn(), sendLoginAlert: jest.fn() }) =>
-  new AuthService(prisma, {} as any, { record: jest.fn() } as any, {} as any, {} as any, {} as any, email as any, {} as any);
+  new AuthService(prisma, {} as any, { record: jest.fn() } as any, {} as any, {} as any, {} as any, email as any, {} as any, { create: jest.fn() } as any);
 
 const future = new Date(Date.now() + 60_000);
 
@@ -130,6 +130,7 @@ const makeRegisterService = (prisma: any) =>
     {} as any,                      // crypto
     { sendVerifyEmail: jest.fn().mockResolvedValue(undefined), sendWelcome: jest.fn().mockResolvedValue(undefined) } as any, // email
     { create: jest.fn().mockResolvedValue(undefined) } as any, // accounts
+    { create: jest.fn().mockResolvedValue(undefined) } as any, // notifications
   );
 
 describe('AuthService.register – referral attribution', () => {
@@ -188,7 +189,7 @@ describe('AuthService.login — login-alert email', () => {
       sendLoginAlert: opts.alertRejects ? jest.fn().mockRejectedValue(new Error('smtp down')) : jest.fn().mockResolvedValue(undefined),
     } as any;
     const audit = { record: jest.fn() } as any;
-    const service = new AuthService(prisma, tokens, audit, {} as any, config, {} as any, email, {} as any);
+    const service = new AuthService(prisma, tokens, audit, {} as any, config, {} as any, email, {} as any, { create: jest.fn() } as any);
     return { service, email };
   };
 
@@ -225,7 +226,7 @@ describe('AuthService.login — brute-force lockout (H-7)', () => {
     const tokens = { signAccess: jest.fn().mockResolvedValue('at'), signRefresh: jest.fn().mockResolvedValue('rt'), hashToken: jest.fn().mockReturnValue('h') } as any;
     const config = { get: jest.fn((k: string) => (k === 'LOGIN_EMAIL_OTP' ? false : 604800)) } as any;
     const email = { sendLoginAlert: jest.fn().mockResolvedValue(undefined) } as any;
-    const service = new AuthService(prisma, tokens, { record: jest.fn() } as any, {} as any, config, {} as any, email, {} as any);
+    const service = new AuthService(prisma, tokens, { record: jest.fn() } as any, {} as any, config, {} as any, email, {} as any, { create: jest.fn() } as any);
     return { service, update };
   };
 
@@ -267,7 +268,7 @@ describe('AuthService.login — email OTP (LOGIN_EMAIL_OTP)', () => {
     const tokens = { signAccess: jest.fn().mockResolvedValue('at'), signRefresh: jest.fn().mockResolvedValue('rt'), hashToken: jest.fn((s: string) => `h:${s}`) } as any;
     const config = { get: jest.fn((k: string) => (k === 'LOGIN_EMAIL_OTP' ? true : 604800)) } as any;
     const email = { sendLoginAlert: jest.fn().mockResolvedValue(undefined), sendLoginCode: jest.fn().mockResolvedValue(undefined) } as any;
-    const service = new AuthService(prisma, tokens, { record: jest.fn() } as any, {} as any, config, {} as any, email, {} as any);
+    const service = new AuthService(prisma, tokens, { record: jest.fn() } as any, {} as any, config, {} as any, email, {} as any, { create: jest.fn() } as any);
     return { service, email, loginOtp };
   };
 
@@ -326,7 +327,7 @@ describe('AuthService.disableTwoFactor — re-auth (M-2)', () => {
     const update = jest.fn().mockResolvedValue({});
     const prisma = { user: { findUnique: jest.fn().mockResolvedValue(user), update } } as any;
     const crypto = { decrypt: jest.fn().mockReturnValue('SECRET') } as any;
-    const service = new AuthService(prisma, {} as any, { record: jest.fn() } as any, {} as any, {} as any, crypto, { sendNotification: jest.fn().mockResolvedValue(undefined) } as any, {} as any);
+    const service = new AuthService(prisma, {} as any, { record: jest.fn() } as any, {} as any, {} as any, crypto, { sendNotification: jest.fn().mockResolvedValue(undefined) } as any, {} as any, { create: jest.fn() } as any);
     return { service, update };
   };
 

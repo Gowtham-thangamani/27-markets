@@ -2,12 +2,14 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PartnerPayoutStatus, UserRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class AdminPartnersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /** Partner list with referral code, referral count, and total IB commission earned. */
@@ -93,6 +95,15 @@ export class AdminPartnersService {
     });
     if (claimed.count === 0) throw new BadRequestException('Payout is not pending.');
     await this.audit.record({ userId: adminId, action: 'partner.payout.approve', entity: 'PartnerPayout', entityId: id });
+    const paid = await this.prisma.partnerPayout.findUnique({ where: { id }, select: { partnerId: true, amount: true, reference: true } });
+    if (paid) {
+      await this.notifications.create(paid.partnerId, {
+        title: 'Payout approved',
+        body: `Your payout of $${Number(paid.amount).toFixed(2)} (${paid.reference}) has been approved and paid.`,
+        kind: 'SUCCESS',
+        email: true,
+      });
+    }
     return { ok: true as const, status: PartnerPayoutStatus.PAID };
   }
 
@@ -105,6 +116,12 @@ export class AdminPartnersService {
       await tx.ibCommission.updateMany({ where: { payoutId: id }, data: { payoutId: null } });
     });
     await this.audit.record({ userId: adminId, action: 'partner.payout.reject', entity: 'PartnerPayout', entityId: id, metadata: { reason } });
+    await this.notifications.create(payout.partnerId, {
+      title: 'Payout rejected',
+      body: `Your payout request ${payout.reference} was rejected${reason ? `: ${reason}` : ''}. The commission is available to request again.`,
+      kind: 'WARNING',
+      email: true,
+    });
     return { ok: true as const, status: PartnerPayoutStatus.REJECTED };
   }
 }

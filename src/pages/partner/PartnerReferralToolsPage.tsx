@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { Copy, Share2 } from 'lucide-react'
 import { PageTitle } from '@/components/portal/PageTitle'
-import { SkeletonRows, ErrorState } from '@/components/ui'
+import { SkeletonRows, ErrorState, Input } from '@/components/ui'
 import { useToast } from '@/context/ToastContext'
 import { ApiError } from '@/lib/api'
 import { partnerApi, type PartnerProfile } from '@/lib/partnerApi'
@@ -27,6 +27,21 @@ export default function PartnerReferralToolsPage() {
   const shareText = `Join me on 27 Markets — trade 100+ global markets. Sign up with my link: ${profile.referralLink}`
   const copy = (text: string, what: string) => { void navigator.clipboard?.writeText(text); toast.success('Copied', `${what} copied.`) }
 
+  return <ReferralToolsView profile={profile} shareText={shareText} copy={copy} />
+}
+
+/** Split out so the campaign-link builder can hold its own state cleanly. */
+function ReferralToolsView({
+  profile, shareText, copy,
+}: { profile: PartnerProfile; shareText: string; copy: (t: string, w: string) => void }) {
+  const [campaign, setCampaign] = useState('')
+  // ?campaign= is captured at registration and shown in the Referred Clients
+  // table, so a partner can see which channel converted.
+  const slug = campaign.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32)
+  const campaignLink = slug
+    ? `${profile.referralLink}&campaign=${encodeURIComponent(slug)}`
+    : profile.referralLink
+
   return (
     <>
       <PageTitle title="Referral Tools" subtitle="Share your link and grow your network." />
@@ -49,6 +64,15 @@ export default function PartnerReferralToolsPage() {
             <p className="mt-2 text-xs text-gray-500">Invite other IBs to join under you. Once approved, you earn on their clients&apos; deposits too.</p>
           </div>
           <div className="glass-panel p-5">
+            <h3 className="mb-1 text-sm font-semibold text-white">Campaign link</h3>
+            <p className="mb-3 text-xs text-gray-500">Tag a channel (e.g. <span className="text-gray-400">instagram</span>) to see which one converts, in Referred Clients.</p>
+            <Input placeholder="Campaign name" value={campaign} onChange={(e) => setCampaign(e.target.value)} className="mb-2" />
+            <div className="flex items-center gap-2">
+              <code className="flex-1 truncate rounded-lg border border-white/10 bg-ink-800/60 px-3 py-2 text-xs text-brand-300">{campaignLink}</code>
+              <button onClick={() => copy(campaignLink, 'Campaign link')} className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/10 px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white"><Copy className="h-3.5 w-3.5" /> Copy</button>
+            </div>
+          </div>
+          <div className="glass-panel p-5">
             <h3 className="mb-3 text-sm font-semibold text-white">Share message</h3>
             <p className="rounded-lg border border-white/10 bg-ink-800/60 p-3 text-sm text-gray-300">{shareText}</p>
             <button onClick={() => copy(shareText, 'Message')} className="mt-3 inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white"><Share2 className="h-3.5 w-3.5" /> Copy message</button>
@@ -56,8 +80,8 @@ export default function PartnerReferralToolsPage() {
         </div>
         <div className="glass-panel flex flex-col items-center justify-center p-5">
           <h3 className="mb-4 text-sm font-semibold text-white">Scan to refer</h3>
-          <div className="rounded-xl bg-white p-3"><QRCodeSVG value={profile.referralLink} size={168} /></div>
-          <p className="mt-3 text-center text-xs text-gray-500">Point a phone camera at this code to open your referral link.</p>
+          <div className="rounded-xl bg-white p-3"><QRCodeSVG value={campaignLink} size={168} /></div>
+          <p className="mt-3 text-center text-xs text-gray-500">{slug ? `Encodes your “${slug}” campaign link.` : 'Point a phone camera at this code to open your referral link.'}</p>
         </div>
       </div>
     </>

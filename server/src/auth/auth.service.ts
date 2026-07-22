@@ -14,6 +14,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { CryptoService } from '../common/crypto.service';
 import { EmailService } from '../email/email.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { LeadsService } from '../leads/leads.service';
 import { TokensService } from './tokens.service';
@@ -73,6 +74,7 @@ export class AuthService {
     private readonly crypto: CryptoService,
     private readonly email: EmailService,
     private readonly accounts: AccountsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ── Verification / reset tokens (raw emailed, only the hash stored) ──
@@ -140,6 +142,8 @@ export class AuthService {
         postalCode: dto.postalCode,
         acceptedTermsAt: new Date(),
         referredByPartnerId,
+        // Attribution: only meaningful for a referred signup.
+        campaignCode: referredByPartnerId ? (dto.campaign?.trim() || null) : null,
         kycProfile: { create: {} },
       },
     });
@@ -151,6 +155,16 @@ export class AuthService {
       phone: user.phone ?? undefined,
       country: user.country ?? undefined,
     });
+
+    // Tell the referring partner they have a new signup. create() is internally
+    // best-effort — it never throws — so no catch is needed here.
+    if (referredByPartnerId) {
+      await this.notifications.create(referredByPartnerId, {
+        title: 'New referral signed up',
+        body: `${user.firstName} ${user.lastName} just registered through your referral link.`,
+        kind: 'INFO',
+      });
+    }
 
     // Give new users a demo account so they can trade immediately.
     await this.accounts.create(user.id, AccountType.STANDARD, AccountMode.DEMO).catch(() => undefined);

@@ -14,6 +14,8 @@ interface Props {
 
 export function KpiSparkCard({ icon: Icon, label, value, delta, spark }: Props) {
   const data = spark.map((y, x) => ({ x, y }))
+  // Only worth plotting when the series actually varies.
+  const hasShape = spark.length > 1 && spark.some((y) => y !== spark[0])
   const showDelta = delta !== undefined && delta !== null
   const up = (delta ?? 0) >= 0
   return (
@@ -33,19 +35,23 @@ export function KpiSparkCard({ icon: Icon, label, value, delta, spark }: Props) 
       </div>
       <div className="relative mt-4 font-display text-2xl font-bold text-white">{value}</div>
       <div className="relative mt-0.5 text-sm text-gray-400">{label}</div>
-      <div className="relative mt-3 h-10">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
-            <defs>
-              <linearGradient id={`spark-${label.replace(/\s/g, '')}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#e11d2e" stopOpacity={0.5} />
-                <stop offset="100%" stopColor="#e11d2e" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <Area type="monotone" dataKey="y" stroke="#e11d2e" strokeWidth={1.5} fill={`url(#spark-${label.replace(/\s/g, '')})`} isAnimationActive={false} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      {/* A flat series draws an invisible line and leaves the card looking
+          hollow, so drop the plot entirely rather than reserve dead space. */}
+      {hasShape && (
+        <div className="relative mt-3 h-10">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
+              <defs>
+                <linearGradient id={`spark-${label.replace(/\s/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#e11d2e" stopOpacity={0.5} />
+                  <stop offset="100%" stopColor="#e11d2e" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <Area type="monotone" dataKey="y" stroke="#e11d2e" strokeWidth={1.5} fill={`url(#spark-${label.replace(/\s/g, '')})`} isAnimationActive={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
       </div>
     </Card3D>
   )
