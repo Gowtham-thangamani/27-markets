@@ -576,23 +576,35 @@ export class PartnerPortalService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      const available = await tx.ibCommission.findMany({
-        where: { partnerId, payoutId: null },
-        select: { id: true, amount: true },
-      });
-      const total = available.reduce((s, c) => s + Number(c.amount), 0);
-      if (total <= 0) {
-        throw new BadRequestException('No commission is available to pay out.');
-      }
+      // Claim FIRST, then count. The reservation is `updateMany ... payoutId:null`,
+      // which is the atomic step: two concurrent payout requests serialise on
+      // these rows, and the loser re-evaluates `payoutId IS NULL` after the first
+      // commits — matching nothing. Reading available rows up front and then
+      // reserving them by id would instead let both requests claim the same
+      // commissions and mint two full-value payouts. So create a payout shell,
+      // claim everything unreserved into it, then set its amount to exactly what
+      // it actually captured.
       const payout = await tx.partnerPayout.create({
-        data: { partnerId, amount: total.toFixed(2), reference: generateTxReference() },
+        data: { partnerId, amount: '0', reference: generateTxReference() },
       });
-      // Reserve exactly the commissions we counted (consistent inside the tx).
       await tx.ibCommission.updateMany({
-        where: { id: { in: available.map((c) => c.id) } },
+        where: { partnerId, payoutId: null },
         data: { payoutId: payout.id },
       });
-      return { reference: payout.reference, amount: Number(payout.amount), status: 'PENDING' as const };
+      const reserved = await tx.ibCommission.aggregate({
+        _sum: { amount: true },
+        where: { payoutId: payout.id },
+      });
+      const total = Number(reserved._sum.amount ?? 0);
+      if (total <= 0) {
+        // Nothing was available — roll the whole tx back (the shell payout too).
+        throw new BadRequestException('No commission is available to pay out.');
+      }
+      const updated = await tx.partnerPayout.update({
+        where: { id: payout.id },
+        data: { amount: total.toFixed(2) },
+      });
+      return { reference: updated.reference, amount: Number(updated.amount), status: 'PENDING' as const };
     });
   }
 

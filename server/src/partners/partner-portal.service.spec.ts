@@ -82,14 +82,20 @@ describe('PartnerPortalService.commissions', () => {
 })
 
 describe('PartnerPortalService.requestPayout', () => {
+  // Models the race-safe flow: create shell → claim unreserved rows → sum what
+  // was actually reserved → set the amount.
   const svcWith = (commissions: any[], profile: any = { referralCode: 'ABC', payoutMethod: 'BANK' }) => {
     const available = commissions.filter((c) => !c.payoutId)
+    const reservedSum = available.reduce((s, c) => s + Number(c.amount), 0)
     const tx = {
       ibCommission: {
-        findMany: jest.fn().mockResolvedValue(available.map((c) => ({ id: c.id, amount: c.amount }))),
         updateMany: jest.fn().mockResolvedValue({ count: available.length }),
+        aggregate: jest.fn().mockResolvedValue({ _sum: { amount: reservedSum } }),
       },
-      partnerPayout: { create: jest.fn().mockImplementation(({ data }: any) => ({ id: 'po1', reference: data.reference, amount: data.amount, status: 'PENDING' })) },
+      partnerPayout: {
+        create: jest.fn().mockImplementation(({ data }: any) => ({ id: 'po1', reference: data.reference, amount: data.amount, status: 'PENDING' })),
+        update: jest.fn().mockImplementation(({ data }: any) => ({ id: 'po1', reference: 'TX-REF', amount: data.amount, status: 'PENDING' })),
+      },
     }
     const prisma = {
       partnerProfile: { findUnique: jest.fn().mockResolvedValue(profile) },
@@ -98,7 +104,7 @@ describe('PartnerPortalService.requestPayout', () => {
     return { svc: new PartnerPortalService(prisma, { get: jest.fn() } as any), tx }
   }
 
-  it('creates a PENDING payout for the available commission and reserves it', async () => {
+  it('reserves unreserved commission atomically (payoutId:null) and sets the summed amount', async () => {
     const { svc, tx } = svcWith([
       { id: 'k1', amount: 100, payoutId: null },
       { id: 'k2', amount: 50, payoutId: null },
@@ -106,13 +112,16 @@ describe('PartnerPortalService.requestPayout', () => {
     ])
     const r = await svc.requestPayout('p1')
     expect(r).toMatchObject({ amount: 150, status: 'PENDING' })
-    expect(tx.partnerPayout.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ partnerId: 'p1', amount: '150.00' }) }))
-    expect(tx.ibCommission.updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: { in: ['k1', 'k2'] } }, data: { payoutId: 'po1' } }))
+    // The claim filters on payoutId:null (the atomic guard), NOT a pre-read id list.
+    expect(tx.ibCommission.updateMany).toHaveBeenCalledWith({ where: { partnerId: 'p1', payoutId: null }, data: { payoutId: 'po1' } })
+    // Amount is the sum of what THIS payout actually captured.
+    expect(tx.partnerPayout.update).toHaveBeenCalledWith(expect.objectContaining({ data: { amount: '150.00' } }))
   })
 
-  it('rejects when no commission is available', async () => {
-    const { svc } = svcWith([{ id: 'k1', amount: 30, payoutId: 'old' }])
+  it('rejects (rolling back the shell payout) when nothing was reservable', async () => {
+    const { svc, tx } = svcWith([{ id: 'k1', amount: 30, payoutId: 'old' }])
     await expect(svc.requestPayout('p1')).rejects.toThrow(/no commission/i)
+    expect(tx.partnerPayout.update).not.toHaveBeenCalled()
   })
 
   it('throws 404 when the partner has no profile', async () => {
