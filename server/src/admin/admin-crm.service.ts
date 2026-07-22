@@ -57,6 +57,7 @@ export class AdminCrmService {
           include: { author: { select: { firstName: true, lastName: true } } },
         },
         tickets: { orderBy: { updatedAt: 'desc' }, take: 5 },
+        assignedAgent: { select: { id: true, firstName: true, lastName: true } },
       },
     });
     if (!user || user.role !== UserRole.CLIENT) throw new NotFoundException('Client not found');
@@ -98,7 +99,36 @@ export class AdminCrmService {
       tickets: user.tickets,
       kycAnswers,
       consents,
+      assignedAgentId: user.assignedAgentId,
+      assignedAgent: user.assignedAgent ? `${user.assignedAgent.firstName} ${user.assignedAgent.lastName}` : null,
     };
+  }
+
+  /**
+   * Assign (or clear, when agentId is null) the sales agent / account manager
+   * for a client. The agent must be staff (ADMIN or AGENT); the target must be a
+   * client. Surfaced to the client and to their IB in the partner portal.
+   */
+  async setSalesAgent(adminId: string, clientId: string, agentId: string | null) {
+    const client = await this.prisma.user.findUnique({ where: { id: clientId }, select: { role: true } });
+    if (!client || client.role !== UserRole.CLIENT) throw new NotFoundException('Client not found');
+
+    if (agentId) {
+      const agent = await this.prisma.user.findUnique({ where: { id: agentId }, select: { role: true } });
+      if (!agent || (agent.role !== UserRole.ADMIN && agent.role !== UserRole.AGENT)) {
+        throw new NotFoundException('Sales agent must be a staff member');
+      }
+    }
+
+    await this.prisma.user.update({ where: { id: clientId }, data: { assignedAgentId: agentId } });
+    await this.audit.record({
+      userId: adminId,
+      action: 'crm.client.sales-agent',
+      entity: 'User',
+      entityId: clientId,
+      metadata: { agentId },
+    });
+    return { ok: true as const, assignedAgentId: agentId };
   }
 
   async addClientNote(authorId: string, clientId: string, dto: NoteDto) {

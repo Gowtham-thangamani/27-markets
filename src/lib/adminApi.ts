@@ -113,6 +113,8 @@ export interface ClientDetail {
   tickets: { id: string; subject: string; status: TicketStatus; updatedAt: string }[]
   kycAnswers: { label: string; value: string }[]
   consents: { label: string; accepted: boolean }[]
+  assignedAgentId: string | null
+  assignedAgent: string | null
 }
 
 export interface Lead {
@@ -460,6 +462,9 @@ export const adminApi = {
   /** Block (SUSPENDED) or unblock (ACTIVE) a client. Admin-only. */
   setClientStatus: (id: string, status: 'ACTIVE' | 'SUSPENDED') =>
     api.patch<{ id: string; status: string }>(`/admin/clients/${id}/status`, { status }),
+  /** Assign a sales agent / account manager to a client; null clears it. */
+  setSalesAgent: (id: string, agentId: string | null) =>
+    api.patch<{ ok: true; assignedAgentId: string | null }>(`/admin/clients/${id}/sales-agent`, { agentId }),
   addClientNote: (id: string, body: string, pinned?: boolean) =>
     api.post<ClientDetail>(`/admin/clients/${id}/notes`, { body, pinned }),
 

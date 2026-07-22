@@ -40,6 +40,42 @@ describe('AdminCrmService — clients', () => {
     expect(findMany.mock.calls[0][0].where.status).toBe('SUSPENDED');
   });
 
+  it('setSalesAgent assigns a staff agent to a client and audits it', async () => {
+    const update = jest.fn().mockResolvedValue({});
+    const record = jest.fn().mockResolvedValue(undefined);
+    const prisma = {
+      user: {
+        findUnique: jest.fn()
+          .mockResolvedValueOnce({ role: 'CLIENT' })   // the client
+          .mockResolvedValueOnce({ role: 'AGENT' }),    // the agent
+        update,
+      },
+    } as any;
+    const service = new AdminCrmService(prisma, {} as any, { record } as any, { create: jest.fn() } as any);
+
+    const res = await service.setSalesAgent('admin1', 'c1', 'agent1');
+
+    expect(update).toHaveBeenCalledWith({ where: { id: 'c1' }, data: { assignedAgentId: 'agent1' } });
+    expect(record).toHaveBeenCalledWith(expect.objectContaining({ action: 'crm.client.sales-agent', entityId: 'c1' }));
+    expect(res).toEqual({ ok: true, assignedAgentId: 'agent1' });
+  });
+
+  it('setSalesAgent clears the assignment when agentId is null', async () => {
+    const update = jest.fn().mockResolvedValue({});
+    const prisma = { user: { findUnique: jest.fn().mockResolvedValue({ role: 'CLIENT' }), update } } as any;
+    const service = new AdminCrmService(prisma, {} as any, { record: jest.fn() } as any, { create: jest.fn() } as any);
+    await service.setSalesAgent('admin1', 'c1', null);
+    expect(update).toHaveBeenCalledWith({ where: { id: 'c1' }, data: { assignedAgentId: null } });
+  });
+
+  it('setSalesAgent rejects a non-staff agent', async () => {
+    const prisma = {
+      user: { findUnique: jest.fn().mockResolvedValueOnce({ role: 'CLIENT' }).mockResolvedValueOnce({ role: 'CLIENT' }), update: jest.fn() },
+    } as any;
+    const service = new AdminCrmService(prisma, {} as any, { record: jest.fn() } as any, { create: jest.fn() } as any);
+    await expect(service.setSalesAgent('admin1', 'c1', 'notStaff')).rejects.toThrow(/staff member/i);
+  });
+
   it('setClientStatus blocks a client and writes an audit record', async () => {
     const update = jest.fn().mockResolvedValue({ id: 'c1', status: 'SUSPENDED' });
     const record = jest.fn().mockResolvedValue(undefined);

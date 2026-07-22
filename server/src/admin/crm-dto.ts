@@ -7,6 +7,14 @@ export class SetClientStatusDto {
   status!: 'ACTIVE' | 'SUSPENDED';
 }
 
+/** Assign a sales agent to a client; null clears the assignment. */
+export class SetSalesAgentDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  agentId?: string | null;
+}
+
 export class UpdateLeadDto {
   @IsOptional()
   @IsEnum(LeadStatus)

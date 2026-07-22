@@ -4,7 +4,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser, Roles } from '../common/decorators';
 import { STAFF_ROLES } from '../common/roles';
 import { AdminCrmService } from './admin-crm.service';
-import { NoteDto, ReplyTicketDto, SetClientStatusDto, UpdateLeadDto, UpdateTicketDto } from './crm-dto';
+import { NoteDto, ReplyTicketDto, SetClientStatusDto, SetSalesAgentDto, UpdateLeadDto, UpdateTicketDto } from './crm-dto';
 
 @UseGuards(RolesGuard)
 @Roles(...STAFF_ROLES)
@@ -37,6 +37,11 @@ export class AdminCrmController {
   @Patch('clients/:id/status')
   setClientStatus(@CurrentUser('id') adminId: string, @Param('id') id: string, @Body() dto: SetClientStatusDto) {
     return this.crm.setClientStatus(adminId, id, dto.status as UserStatus);
+  }
+
+  @Patch('clients/:id/sales-agent')
+  setSalesAgent(@CurrentUser('id') adminId: string, @Param('id') id: string, @Body() dto: SetSalesAgentDto) {
+    return this.crm.setSalesAgent(adminId, id, dto.agentId ?? null);
   }
 
   @HttpCode(200)
