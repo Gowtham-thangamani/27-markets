@@ -66,6 +66,20 @@ describe('FundsService.withdraw', () => {
     expect(arg.guardBalance).toEqual(expect.objectContaining({ ledgerAccountId: 'client-ledger' }));
     expect(Number(arg.guardBalance.atLeast)).toBe(100);
   });
+
+  it('reflects the real provider mode in the response + audit (not hardcoded simulated)', async () => {
+    // With a live (non-simulation) provider a real withdrawal must NOT be labelled simulated.
+    const { service, post, audit } = makeService();
+    (service as any).payments = { name: 'stripe', simulated: false, assertAvailable: jest.fn() };
+    void post;
+
+    const result = await service.withdraw('user1', { accountId: 'acc1', amount: '100', method: 'bank', accountName: 'Jordan Avery', accountNumber: 'AE07 0331 1111 2222' } as any);
+
+    expect(result.simulated).toBe(false);
+    expect(audit.record).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'funds.withdraw', metadata: expect.objectContaining({ simulated: false }) }),
+    );
+  });
 });
 
 describe('FundsService.deposit — live gating (H-2)', () => {

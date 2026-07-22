@@ -228,14 +228,14 @@ export class FundsService {
       ],
     });
 
-    await this.audit.record({ userId, action: 'funds.deposit', entity: 'JournalEntry', entityId: entry.id, metadata: { amount: dto.amount, method: dto.method, simulated: true } });
+    await this.audit.record({ userId, action: 'funds.deposit', entity: 'JournalEntry', entityId: entry.id, metadata: { amount: dto.amount, method: dto.method, simulated: this.payments.simulated } });
     await this.notifications.create(userId, {
       title: 'Deposit confirmed',
       body: `$${formatMoney(amount)} has been credited to your account (ref ${entry.reference}).`,
       kind: 'SUCCESS',
       email: true,
     });
-    return { reference: entry.reference, status: entry.status, simulated: true, amount: formatMoney(amount) };
+    return { reference: entry.reference, status: entry.status, simulated: this.payments.simulated, amount: formatMoney(amount) };
   }
 
   /**
@@ -305,14 +305,14 @@ export class FundsService {
       },
     });
 
-    await this.audit.record({ userId, action: 'funds.withdraw', entity: 'JournalEntry', entityId: entry.id, metadata: { amount: dto.amount, method: dto.method, destMethod, simulated: true, status: entry.status } });
+    await this.audit.record({ userId, action: 'funds.withdraw', entity: 'JournalEntry', entityId: entry.id, metadata: { amount: dto.amount, method: dto.method, destMethod, simulated: this.payments.simulated, status: entry.status } });
     await this.notifications.create(userId, {
       title: 'Withdrawal requested',
       body: `We received your withdrawal request for $${formatMoney(amount)} (ref ${entry.reference}). It's pending review — we'll email you once it's processed.`,
       kind: 'INFO',
       email: true,
     });
-    return { reference: entry.reference, status: entry.status, simulated: true, amount: formatMoney(amount) };
+    return { reference: entry.reference, status: entry.status, simulated: this.payments.simulated, amount: formatMoney(amount) };
   }
 
   async transfer(userId: string, dto: TransferDto) {

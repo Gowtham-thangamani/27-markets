@@ -169,6 +169,49 @@ export const envSchema = z
           'sensitive fields are encrypted at rest.',
       });
     }
+    // The console email provider only logs — it never delivers. In production
+    // that silently drops verification, password-reset and login-OTP mail while
+    // the API still returns success. Force a real transport.
+    if (env.NODE_ENV === 'production' && env.EMAIL_PROVIDER !== 'smtp') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['EMAIL_PROVIDER'],
+        message:
+          'EMAIL_PROVIDER must be "smtp" in production. The console provider only ' +
+          'logs mail, so verification/reset/OTP emails would never be delivered.',
+      });
+    }
+    // Going LIVE with simulated compliance is a regulatory non-starter: the
+    // simulation AML provider clears everyone and manual KYC has no IDV. If real
+    // funds can move (ALLOW_LIVE_MODE), real KYC + AML providers are mandatory.
+    if (env.ALLOW_LIVE_MODE && env.TRADING_MODE === 'LIVE') {
+      if (env.AML_PROVIDER !== 'external') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['AML_PROVIDER'],
+          message:
+            'AML_PROVIDER must be "external" in LIVE mode. The simulation provider ' +
+            'clears every client against sanctions/PEP lists.',
+        });
+      }
+      if (env.KYC_PROVIDER !== 'external') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['KYC_PROVIDER'],
+          message:
+            'KYC_PROVIDER must be "external" in LIVE mode. Manual review performs no ' +
+            'document-authenticity or liveness checks for real onboarding.',
+        });
+      }
+      // The test-only denylist must never be the basis for real screening.
+      if (env.AML_SIM_DENYLIST) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['AML_SIM_DENYLIST'],
+          message: 'AML_SIM_DENYLIST is a testing-only shortcut and must be unset in LIVE mode.',
+        });
+      }
+    }
   });
 
 export type Env = z.infer<typeof envSchema>;

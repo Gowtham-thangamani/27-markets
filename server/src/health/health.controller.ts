@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { Public } from '../common/decorators';
@@ -21,11 +21,19 @@ export class HealthController {
     } catch {
       db = 'down';
     }
-    return {
+
+    const body = {
       status: db === 'up' ? 'ok' : 'degraded',
       db,
       tradingMode: this.config.get('TRADING_MODE', { infer: true }),
       time: new Date().toISOString(),
     };
+
+    // A load balancer keys readiness on the HTTP status, not the JSON body — so a
+    // DB-down instance must return 503, or traffic keeps routing to a dead node.
+    if (db !== 'up') {
+      throw new HttpException(body, HttpStatus.SERVICE_UNAVAILABLE);
+    }
+    return body;
   }
 }
