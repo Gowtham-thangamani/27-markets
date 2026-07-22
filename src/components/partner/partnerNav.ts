@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Network, Coins, Wallet, Share2, Settings, type LucideIcon } from 'lucide-react'
+import { LayoutDashboard, Users, Network, Coins, Wallet, Share2, Megaphone, Settings, type LucideIcon } from 'lucide-react'
 
 export interface PartnerNavItem { label: string; to: string; icon: LucideIcon }
 
@@ -9,5 +9,6 @@ export const partnerNav: PartnerNavItem[] = [
   { label: 'Commissions', to: '/partner/commissions', icon: Coins },
   { label: 'Payouts', to: '/partner/payouts', icon: Wallet },
   { label: 'Referral Tools', to: '/partner/tools', icon: Share2 },
+  { label: 'Marketing', to: '/partner/marketing', icon: Megaphone },
   { label: 'Settings', to: '/partner/settings', icon: Settings },
 ]

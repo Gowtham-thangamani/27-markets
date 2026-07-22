@@ -32,6 +32,7 @@ export interface SubPartnerClients {
   subPartner: { id: string; name: string }
   clients: PartnerClientSummary[]
 }
+export interface PartnerNotification { id: string; title: string; body: string; kind: 'info' | 'success' | 'warning'; read: boolean; date: string }
 export type PartnerPayoutStatus = 'PENDING' | 'PAID' | 'REJECTED'
 export interface PartnerPayoutRow {
   id: string; reference: string; amount: number; status: PartnerPayoutStatus
@@ -86,6 +87,8 @@ export const partnerApi = {
     const qs = q.toString()
     return api.getBlob(`/partner/commissions/statement.pdf${qs ? `?${qs}` : ''}`)
   },
+  getNotifications: () => api.get<PartnerNotification[]>('/notifications'),
+  markNotificationsRead: () => api.post<{ ok: true }>('/notifications/read-all'),
   getSettings: () => api.get<PartnerSettings>('/partner/settings'),
   updatePayoutMethod: (method: PayoutMethod, details: Record<string, string>) =>
     api.patch<{ ok: true }>('/partner/settings/payout-method', { method, details }),

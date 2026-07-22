@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Menu } from 'lucide-react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { PartnerSidebarContent } from '@/components/partner/PartnerSidebar'
+import { PartnerNotificationsBell } from '@/components/partner/PartnerNotificationsBell'
 import { useAuth } from '@/context/AuthContext'
 import { useBodyScrollLock } from '@/lib/hooks'
 import { initials } from '@/lib/format'
@@ -40,6 +41,7 @@ export function PartnerLayout() {
             <p className="text-sm font-semibold text-white">{user?.name ?? 'Partner'}</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
+            <PartnerNotificationsBell />
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 text-sm font-semibold text-brand-300 ring-1 ring-brand-500/30">
               {initials(user?.name ?? 'Partner')}
             </span>

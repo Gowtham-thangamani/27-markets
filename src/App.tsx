@@ -29,6 +29,7 @@ const PartnerPayoutsPage = lazy(() => import('./pages/partner/PartnerPayoutsPage
 const PartnerSettingsPage = lazy(() => import('./pages/partner/PartnerSettingsPage'))
 const PartnerClientDetailPage = lazy(() => import('./pages/partner/PartnerClientDetailPage'))
 const PartnerSubPartnerClientsPage = lazy(() => import('./pages/partner/PartnerSubPartnerClientsPage'))
+const PartnerMarketingPage = lazy(() => import('./pages/partner/PartnerMarketingPage'))
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'))
 const AdminClientsPage = lazy(() => import('./pages/admin/AdminClientsPage'))
 const AdminBlockedUsersPage = lazy(() => import('./pages/admin/AdminBlockedUsersPage'))
@@ -245,6 +246,7 @@ export default function App() {
         <Route path="commissions" element={<PartnerCommissionsPage />} />
         <Route path="payouts" element={<PartnerPayoutsPage />} />
         <Route path="tools" element={<PartnerReferralToolsPage />} />
+        <Route path="marketing" element={<PartnerMarketingPage />} />
         <Route path="settings" element={<PartnerSettingsPage />} />
       </Route>
 
