@@ -74,6 +74,22 @@ export interface PaymentProvider {
    * payouts already "enabled".
    */
   createPayoutOnboarding(req: PayoutOnboardingRequest): Promise<PayoutOnboardingResult>;
+  /**
+   * Completed (paid) deposits at the PSP since `since`, for reconciliation
+   * against the ledger. Optional: providers without a queryable backend
+   * (simulation) omit it and reconciliation is a no-op.
+   */
+  listCompletedDeposits?(since: Date): Promise<CompletedPspDeposit[]>;
+}
+
+/** A settled PSP-side deposit, as reconciliation sees it. */
+export interface CompletedPspDeposit {
+  /** PSP object id (e.g. the Stripe Checkout Session id). */
+  id: string;
+  /** Paid amount in minor units (cents). */
+  amountMinor: number;
+  /** Unix seconds when the PSP object was created. */
+  created: number;
 }
 
 /** Default: SIMULATION — no real funds, always available. */

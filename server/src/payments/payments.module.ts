@@ -9,6 +9,7 @@ import {
 } from './payment-provider';
 import { StripePaymentProvider } from './stripe-payment.provider';
 import { PaymentsService } from './payments.service';
+import { PaymentsReconciliationService } from './payments-reconciliation.service';
 import { StripeWebhookController } from './stripe-webhook.controller';
 
 /**
@@ -26,6 +27,7 @@ import { StripeWebhookController } from './stripe-webhook.controller';
   providers: [
     StripePaymentProvider,
     PaymentsService,
+    PaymentsReconciliationService,
     {
       provide: PAYMENT_PROVIDER,
       inject: [ConfigService, StripePaymentProvider],
@@ -40,6 +42,6 @@ import { StripeWebhookController } from './stripe-webhook.controller';
       },
     },
   ],
-  exports: [PAYMENT_PROVIDER],
+  exports: [PAYMENT_PROVIDER, PaymentsReconciliationService],
 })
 export class PaymentsModule {}

@@ -4,13 +4,24 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser, Roles } from '../common/decorators';
 import { AdminFinanceService } from './admin-finance.service';
 import { AdjustmentDto, RejectWithdrawalDto } from './admin-finance.dto';
+import { PaymentsReconciliationService } from '../payments/payments-reconciliation.service';
 
 // Finance is Admin-only (approvals + adjustments move money).
 @UseGuards(RolesGuard)
 @Roles(UserRole.ADMIN)
 @Controller('admin/finance')
 export class AdminFinanceController {
-  constructor(private readonly finance: AdminFinanceService) {}
+  constructor(
+    private readonly finance: AdminFinanceService,
+    private readonly pspReconciliation: PaymentsReconciliationService,
+  ) {}
+
+  /** Run the PSP ↔ ledger reconciliation now and return the drift summary. */
+  @HttpCode(200)
+  @Post('psp-reconcile')
+  pspReconcile() {
+    return this.pspReconciliation.reconcile();
+  }
 
   @Get('withdrawals')
   withdrawals() {

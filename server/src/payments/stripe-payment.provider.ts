@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import type { Env } from '../config/env.validation';
 import type {
+  CompletedPspDeposit,
   DepositCheckoutRequest,
   PaymentProvider,
   PayoutRequest,
@@ -115,6 +116,34 @@ export class StripePaymentProvider implements PaymentProvider {
     });
     const acct = await this.stripe.accounts.retrieve(accountId);
     return { accountId, onboardingUrl: link.url, payoutsEnabled: !!acct.payouts_enabled };
+  }
+
+  /**
+   * Paid deposit Checkout Sessions since `since`, for ledger reconciliation.
+   * Deposit sessions are identified by the metadata this provider stamps at
+   * creation (userId + tradingAccountId), so Connect/other sessions are ignored.
+   */
+  async listCompletedDeposits(since: Date): Promise<CompletedPspDeposit[]> {
+    const out: CompletedPspDeposit[] = [];
+    const created = { gte: Math.floor(since.getTime() / 1000) };
+    let startingAfter: string | undefined;
+
+    // Paginate defensively; 10 pages × 100 is far beyond an hourly window.
+    for (let page = 0; page < 10; page++) {
+      const batch: Stripe.ApiList<Stripe.Checkout.Session> = await this.stripe.checkout.sessions.list({
+        created,
+        limit: 100,
+        ...(startingAfter ? { starting_after: startingAfter } : {}),
+      });
+      for (const s of batch.data) {
+        if (s.payment_status !== 'paid') continue;
+        if (!s.metadata?.userId || !s.metadata?.tradingAccountId) continue; // not a deposit session
+        out.push({ id: s.id, amountMinor: s.amount_total ?? 0, created: s.created });
+      }
+      if (!batch.has_more || batch.data.length === 0) break;
+      startingAfter = batch.data[batch.data.length - 1].id;
+    }
+    return out;
   }
 
   /** Verify + parse an incoming webhook using the signing secret. */
