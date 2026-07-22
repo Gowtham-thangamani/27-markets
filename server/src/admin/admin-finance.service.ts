@@ -140,8 +140,9 @@ export class AdminFinanceService {
       if (!client?.referredByPartnerId) return;
 
       const chain = await this.resolveUpline(client.referredByPartnerId);
+      // L1 may be volume-tiered (rank program); L2 is always the flat setting.
       const [pctL1, pctL2] = await Promise.all([
-        this.commissionPct('ib_commission_pct'),
+        this.resolveDirectPct(client.referredByPartnerId),
         this.commissionPct('ib_commission_pct_l2'),
       ]);
       const pctByLevel = [pctL1, pctL2];
@@ -179,6 +180,66 @@ export class AdminFinanceService {
     const setting = await this.prisma.appSetting.findUnique({ where: { key } });
     const pct = Number(setting?.value ?? '0');
     return Number.isFinite(pct) && pct > 0 ? pct : 0;
+  }
+
+  /**
+   * The direct (L1) rate for a partner. If volume tiers are configured
+   * (ib_commission_tiers), the partner's rate is the highest tier whose
+   * threshold their lifetime referred-deposit volume has crossed. With no tiers
+   * configured (the default), this is exactly the flat ib_commission_pct — so
+   * the rank program is off until an admin sets tiers, changing nothing.
+   */
+  private async resolveDirectPct(partnerId: string): Promise<number> {
+    const tiers = await this.commissionTiers();
+    if (!tiers.length) return this.commissionPct('ib_commission_pct');
+
+    const volume = await this.partnerReferredVolume(partnerId);
+    // Tiers are sorted ascending by threshold; the last one we've reached wins.
+    let pct = 0;
+    for (const t of tiers) {
+      if (volume >= t.minVolume) pct = t.pct;
+    }
+    // Below the lowest threshold → fall back to the flat rate.
+    return pct > 0 ? pct : this.commissionPct('ib_commission_pct');
+  }
+
+  /** Parsed, validated, ascending volume tiers. Malformed config → [] (off). */
+  private async commissionTiers(): Promise<{ minVolume: number; pct: number }[]> {
+    const setting = await this.prisma.appSetting.findUnique({ where: { key: 'ib_commission_tiers' } });
+    if (!setting?.value) return [];
+    try {
+      const parsed = JSON.parse(setting.value);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .map((t) => ({ minVolume: Number(t?.minVolume), pct: Number(t?.pct) }))
+        .filter((t) => Number.isFinite(t.minVolume) && t.minVolume >= 0 && Number.isFinite(t.pct) && t.pct > 0)
+        .sort((a, b) => a.minVolume - b.minVolume);
+    } catch {
+      return [];
+    }
+  }
+
+  /** A partner's lifetime posted-deposit volume across all their referred clients. */
+  private async partnerReferredVolume(partnerId: string): Promise<number> {
+    const clients = await this.prisma.user.findMany({
+      where: { referredByPartnerId: partnerId },
+      select: { id: true },
+    });
+    if (!clients.length) return 0;
+    const accounts = await this.prisma.ledgerAccount.findMany({
+      where: { userId: { in: clients.map((c) => c.id) } },
+      select: { id: true },
+    });
+    if (!accounts.length) return 0;
+    const agg = await this.prisma.posting.aggregate({
+      _sum: { amount: true },
+      where: {
+        ledgerAccountId: { in: accounts.map((a) => a.id) },
+        direction: PostingDirection.CREDIT,
+        journalEntry: { kind: JournalKind.DEPOSIT, status: JournalStatus.POSTED },
+      },
+    });
+    return Number(agg._sum.amount ?? 0);
   }
 
   /**

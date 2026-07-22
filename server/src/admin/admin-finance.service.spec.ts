@@ -388,3 +388,56 @@ describe('AdminFinanceService.accrueReferralCommission (multi-level IB)', () => 
     await expect(accrue(service)).resolves.toBeUndefined();
   });
 });
+
+describe('AdminFinanceService volume tiers (rank program)', () => {
+  // tiers: JSON string for ib_commission_tiers; volume: partner's referred deposit total
+  const setup = (tiers: string | null, volume: number, rates: Record<string, string> = { ib_commission_pct: '10', ib_commission_pct_l2: '0' }) => {
+    const create = jest.fn().mockResolvedValue({});
+    const settings: Record<string, string | null> = { ...rates, ib_commission_tiers: tiers };
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({ referredByPartnerId: 'p1' }),
+        findMany: jest.fn().mockResolvedValue([{ id: 'c1' }]),
+      },
+      appSetting: {
+        findUnique: jest.fn(({ where: { key } }: any) =>
+          Promise.resolve(settings[key] == null ? null : { value: settings[key] }),
+        ),
+      },
+      partnerProfile: { findUnique: jest.fn().mockResolvedValue({ parentPartnerId: null }) },
+      ledgerAccount: { findMany: jest.fn().mockResolvedValue([{ id: 'la1' }]) },
+      posting: { aggregate: jest.fn().mockResolvedValue({ _sum: { amount: volume } }) },
+      ibCommission: { create },
+    } as any;
+    const service = new AdminFinanceService(prisma, {} as any, { record: jest.fn() } as any, payments() as any, cfg(), notify());
+    return { service, create };
+  };
+  const accrue = (s: AdminFinanceService, amount = '1000') => (s as any).accrueReferralCommission('c1', amount, 'TX-9');
+
+  it('uses the flat rate when no tiers are configured (default off)', async () => {
+    const { service, create } = setup('[]', 999999);
+    await accrue(service);
+    // 10% of 1000
+    expect(create).toHaveBeenCalledWith({ data: expect.objectContaining({ amount: '100.00', level: 1 }) });
+  })
+
+  it('picks the tier the partner\'s volume has crossed', async () => {
+    const tiers = JSON.stringify([{ minVolume: 0, pct: 10 }, { minVolume: 10000, pct: 12 }, { minVolume: 50000, pct: 15 }])
+    const { service, create } = setup(tiers, 60000) // crosses the 50k tier → 15%
+    await accrue(service)
+    expect(create).toHaveBeenCalledWith({ data: expect.objectContaining({ amount: '150.00', level: 1 }) })
+  })
+
+  it('uses a middle tier when volume is between thresholds', async () => {
+    const tiers = JSON.stringify([{ minVolume: 0, pct: 10 }, { minVolume: 10000, pct: 12 }, { minVolume: 50000, pct: 15 }])
+    const { service, create } = setup(tiers, 25000) // 12%
+    await accrue(service)
+    expect(create).toHaveBeenCalledWith({ data: expect.objectContaining({ amount: '120.00', level: 1 }) })
+  })
+
+  it('falls back to the flat rate on malformed tier JSON', async () => {
+    const { service, create } = setup('not-json', 60000)
+    await accrue(service)
+    expect(create).toHaveBeenCalledWith({ data: expect.objectContaining({ amount: '100.00', level: 1 }) })
+  })
+})
