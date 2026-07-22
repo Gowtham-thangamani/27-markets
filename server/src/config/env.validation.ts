@@ -91,10 +91,19 @@ export const envSchema = z
     KYC_PROVIDER: z.enum(['manual', 'external']).default('manual'),
     KYC_PROVIDER_API_KEY: z.string().optional(),
     KYC_PROVIDER_BASE_URL: z.string().optional(),
+    // SumSub: HMAC secret for request signing, and the verification level name
+    // applicants are created under.
+    KYC_PROVIDER_SECRET: z.string().optional(),
+    KYC_PROVIDER_LEVEL: z.string().default('basic-kyc-level'),
+    // Secret SumSub signs inbound webhooks with (set in their dashboard).
+    // Falls back to KYC_PROVIDER_SECRET when unset.
+    KYC_WEBHOOK_SECRET: z.string().optional(),
     // Sanctions/PEP/adverse-media screening: 'simulation' (default) returns CLEAR
     // unless a name is on AML_SIM_DENYLIST; 'external' requires an API key.
     AML_PROVIDER: z.enum(['simulation', 'external']).default('simulation'),
     AML_PROVIDER_API_KEY: z.string().optional(),
+    // OpenSanctions (hosted api.opensanctions.org, or a self-hosted yente URL).
+    AML_PROVIDER_BASE_URL: z.string().default('https://api.opensanctions.org'),
     AML_SIM_DENYLIST: z.string().optional(), // comma-separated names → HIT (testing only)
 
     // Manual deposit rails (no PSP). When set, the method is offered to clients;

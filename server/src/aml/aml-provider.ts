@@ -1,4 +1,4 @@
-import { Injectable, NotImplementedException } from '@nestjs/common';
+import { Injectable, Logger, NotImplementedException, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Env } from '../config/env.validation';
 
@@ -66,24 +66,90 @@ export class SimulationAmlProvider implements AmlProvider {
   }
 }
 
+/** Above this score a match is treated as a confirmed HIT (block). */
+export const AML_HIT_THRESHOLD = 0.85;
+/** Between this and the HIT threshold, a match needs human review. */
+export const AML_REVIEW_THRESHOLD = 0.6;
+const AML_TIMEOUT_MS = 10_000;
+
+/** One OpenSanctions match result (subset of the /match response we use). */
+interface OsResult {
+  score: number;
+  caption?: string;
+  datasets?: string[];
+  properties?: { topics?: string[] };
+}
+
 /**
- * LIVE skeleton: refuses until a real AML provider is integrated + keyed. Keeps
- * the compliance gate fail-closed rather than silently passing everyone.
+ * OpenSanctions adapter (hosted api.opensanctions.org, or a self-hosted yente).
+ * Screens the subject against the consolidated sanctions/PEP/adverse-media
+ * datasets via the /match API and maps the best score to CLEAR / REVIEW / HIT.
+ * Fail-closed: a missing key or an unreachable provider raises rather than
+ * silently clearing.
  */
 @Injectable()
 export class ExternalAmlProvider implements AmlProvider {
   readonly name = 'external';
+  private readonly log = new Logger('ExternalAmlProvider');
+
   constructor(private readonly config: ConfigService<Env, true>) {}
 
-  async screen(_subject: AmlSubject): Promise<AmlScreenResult> {
-    if (!this.config.get('AML_PROVIDER_API_KEY', { infer: true })) {
+  async screen(subject: AmlSubject): Promise<AmlScreenResult> {
+    const apiKey = this.config.get('AML_PROVIDER_API_KEY', { infer: true });
+    if (!apiKey) {
       throw new NotImplementedException(
         'AML screening is not configured (AML_PROVIDER_API_KEY missing). ' +
-          'Integrate a sanctions/PEP provider before enabling AML_PROVIDER=external.',
+          'Set it before enabling AML_PROVIDER=external.',
       );
     }
-    // Integration point: call the provider's screening API, map its verdict to
-    // AmlScreenResult, and return it. Left unimplemented until a vendor is chosen.
-    throw new NotImplementedException('External AML provider adapter is not implemented yet.');
+    const baseUrl = this.config.get('AML_PROVIDER_BASE_URL', { infer: true }).replace(/\/$/, '');
+
+    const properties: Record<string, string[]> = { name: [subject.fullName] };
+    if (subject.dateOfBirth) properties.birthDate = [subject.dateOfBirth.toISOString().slice(0, 10)];
+    if (subject.country) properties.country = [subject.country];
+
+    let body: { responses?: Record<string, { results?: OsResult[] }> };
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), AML_TIMEOUT_MS);
+      try {
+        const res = await fetch(`${baseUrl}/match/default?algorithm=best`, {
+          method: 'POST',
+          signal: controller.signal,
+          headers: { 'content-type': 'application/json', authorization: `ApiKey ${apiKey}` },
+          // Threshold/limit keep the response small; we score client-side too.
+          body: JSON.stringify({
+            queries: { q: { schema: 'Person', properties } },
+          }),
+        });
+        if (!res.ok) {
+          const detail = await res.text().catch(() => '');
+          this.log.error(`OpenSanctions error ${res.status}: ${detail.slice(0, 300)}`);
+          throw new ServiceUnavailableException(`AML screening provider error (${res.status}).`);
+        }
+        body = (await res.json()) as typeof body;
+      } finally {
+        clearTimeout(timer);
+      }
+    } catch (e) {
+      if (e instanceof ServiceUnavailableException) throw e;
+      if ((e as Error).name === 'AbortError') throw new ServiceUnavailableException('AML screening timed out.');
+      this.log.error(`OpenSanctions request failed: ${(e as Error).message}`);
+      throw new ServiceUnavailableException('AML screening provider is unreachable.');
+    }
+
+    const results = body.responses?.q?.results ?? [];
+    const hits: AmlHit[] = results
+      .filter((r) => typeof r.score === 'number' && r.score >= AML_REVIEW_THRESHOLD)
+      .map((r) => ({
+        list: r.properties?.topics?.[0] ?? r.datasets?.[0] ?? 'opensanctions',
+        name: r.caption ?? subject.fullName,
+        score: r.score,
+      }))
+      .sort((a, b) => b.score - a.score);
+
+    const top = hits[0]?.score ?? 0;
+    const status: AmlScreenResult['status'] = top >= AML_HIT_THRESHOLD ? 'HIT' : top >= AML_REVIEW_THRESHOLD ? 'REVIEW' : 'CLEAR';
+    return { status, provider: this.name, reference: `os_${subject.userId}`, hits };
   }
 }

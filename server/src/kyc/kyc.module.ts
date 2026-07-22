@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Env } from '../config/env.validation';
 import { KycController } from './kyc.controller';
+import { SumsubWebhookController } from './sumsub-webhook.controller';
 import { KycService } from './kyc.service';
 import { KycVerificationService } from './kyc-verification.service';
 import {
@@ -13,7 +14,7 @@ import {
 import { KYC_PROVIDER, ManualKycProvider, ExternalKycProvider, type KycProvider } from './kyc-provider';
 
 @Module({
-  controllers: [KycController],
+  controllers: [KycController, SumsubWebhookController],
   providers: [
     KycService,
     KycVerificationService,
