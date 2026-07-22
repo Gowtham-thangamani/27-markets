@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Network } from 'lucide-react'
 import { EmptyState, ErrorState, SkeletonRows } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
@@ -7,6 +8,7 @@ import { ApiError } from '@/lib/api'
 import { partnerApi, type SubPartner } from '@/lib/partnerApi'
 
 export default function PartnerSubPartnersPage() {
+  const navigate = useNavigate()
   const [rows, setRows] = useState<SubPartner[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -49,7 +51,8 @@ export default function PartnerSubPartnersPage() {
                 </tr></thead>
                 <tbody>
                   {rows.map((s) => (
-                    <tr key={s.id} className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02]">
+                    <tr key={s.id} onClick={() => navigate(`/partner/sub-partners/${s.id}/clients`)}
+                      className="cursor-pointer border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02]">
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
                           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-xs font-semibold text-brand-300 ring-1 ring-brand-500/30">{initials(s.name)}</span>

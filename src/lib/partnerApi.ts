@@ -24,6 +24,14 @@ export interface SubPartner {
   id: string; name: string; email: string; country: string | null; referralCode: string
   clients: number; commissionEarned: number; joinedAt: string
 }
+export interface PartnerClientDetail extends PartnerClient {
+  deposits: { amount: number; reference: string | null; date: string }[]
+  commissions: { amount: number; level: number; date: string; status: CommissionStatus }[]
+}
+export interface SubPartnerClients {
+  subPartner: { id: string; name: string }
+  clients: PartnerClientSummary[]
+}
 export type PartnerPayoutStatus = 'PENDING' | 'PAID' | 'REJECTED'
 export interface PartnerPayoutRow {
   id: string; reference: string; amount: number; status: PartnerPayoutStatus
@@ -56,9 +64,11 @@ export interface PartnerPayoutResult { reference: string; amount: number; status
 export const partnerApi = {
   getDashboard: () => api.get<PartnerDashboard>('/partner/dashboard'),
   getClients: () => api.get<PartnerClient[]>('/partner/clients'),
+  getClientDetail: (id: string) => api.get<PartnerClientDetail>(`/partner/clients/${id}`),
   setConversion: (clientId: string, status: ConversionStatus) =>
     api.patch<{ ok: true }>(`/partner/clients/${clientId}/conversion`, { status }),
   getSubPartners: () => api.get<SubPartner[]>('/partner/sub-partners'),
+  getSubPartnerClients: (id: string) => api.get<SubPartnerClients>(`/partner/sub-partners/${id}/clients`),
   getProfile: () => api.get<PartnerProfile>('/partner/profile'),
   getCommissions: (range?: { from?: string; to?: string }) => {
     const q = new URLSearchParams()
@@ -69,6 +79,13 @@ export const partnerApi = {
   },
   getPayouts: () => api.get<PartnerPayoutRow[]>('/partner/payouts'),
   requestPayout: () => api.post<PartnerPayoutResult>('/partner/payouts'),
+  getStatementPdf: (range?: { from?: string; to?: string }) => {
+    const q = new URLSearchParams()
+    if (range?.from) q.set('from', range.from)
+    if (range?.to) q.set('to', range.to)
+    const qs = q.toString()
+    return api.getBlob(`/partner/commissions/statement.pdf${qs ? `?${qs}` : ''}`)
+  },
   getSettings: () => api.get<PartnerSettings>('/partner/settings'),
   updatePayoutMethod: (method: PayoutMethod, details: Record<string, string>) =>
     api.patch<{ ok: true }>('/partner/settings/payout-method', { method, details }),

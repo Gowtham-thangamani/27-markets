@@ -27,6 +27,8 @@ const PartnerReferralToolsPage = lazy(() => import('./pages/partner/PartnerRefer
 const PartnerSubPartnersPage = lazy(() => import('./pages/partner/PartnerSubPartnersPage'))
 const PartnerPayoutsPage = lazy(() => import('./pages/partner/PartnerPayoutsPage'))
 const PartnerSettingsPage = lazy(() => import('./pages/partner/PartnerSettingsPage'))
+const PartnerClientDetailPage = lazy(() => import('./pages/partner/PartnerClientDetailPage'))
+const PartnerSubPartnerClientsPage = lazy(() => import('./pages/partner/PartnerSubPartnerClientsPage'))
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'))
 const AdminClientsPage = lazy(() => import('./pages/admin/AdminClientsPage'))
 const AdminBlockedUsersPage = lazy(() => import('./pages/admin/AdminBlockedUsersPage'))
@@ -237,7 +239,9 @@ export default function App() {
         <Route index element={<Navigate to="/partner/dashboard" replace />} />
         <Route path="dashboard" element={<PartnerDashboardPage />} />
         <Route path="clients" element={<PartnerClientsPage />} />
+        <Route path="clients/:id" element={<PartnerClientDetailPage />} />
         <Route path="sub-partners" element={<PartnerSubPartnersPage />} />
+        <Route path="sub-partners/:id/clients" element={<PartnerSubPartnerClientsPage />} />
         <Route path="commissions" element={<PartnerCommissionsPage />} />
         <Route path="payouts" element={<PartnerPayoutsPage />} />
         <Route path="tools" element={<PartnerReferralToolsPage />} />

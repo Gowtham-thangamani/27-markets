@@ -128,16 +128,17 @@ function tryRefresh(): Promise<boolean> {
  * `request` because that path runs every response through res.text() +
  * JSON.parse, which corrupts binary payloads.
  */
-async function requestBlob(path: string, body: unknown, _retried = false): Promise<Blob> {
+async function requestBlob(path: string, body: unknown, method: 'GET' | 'POST' = 'POST', _retried = false): Promise<Blob> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
   let res: Response
   try {
     res = await fetch(`${BASE_URL}${path}`, {
-      method: 'POST',
+      method,
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body ?? {}),
+      ...(method === 'POST'
+        ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body ?? {}) }
+        : {}),
       signal: controller.signal,
     })
   } catch (err) {
@@ -152,7 +153,7 @@ async function requestBlob(path: string, body: unknown, _retried = false): Promi
   if (res.ok) return await res.blob()
 
   if (res.status === 401 && !_retried && (await tryRefresh())) {
-    return requestBlob(path, body, true)
+    return requestBlob(path, body, method, true)
   }
 
   // Errors are still JSON, so the normal parser applies.
@@ -165,7 +166,8 @@ export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body?: unknown, opts?: RequestOptions) =>
     request<T>(path, { ...opts, method: 'POST', body }),
-  postBlob: (path: string, body?: unknown) => requestBlob(path, body),
+  postBlob: (path: string, body?: unknown) => requestBlob(path, body, 'POST'),
+  getBlob: (path: string) => requestBlob(path, undefined, 'GET'),
   upload: <T>(path: string, formData: FormData, opts?: RequestOptions) =>
     request<T>(path, { ...opts, method: 'POST', body: formData }),
   patch: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PATCH', body }),

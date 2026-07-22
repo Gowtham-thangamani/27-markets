@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Coins, Download } from 'lucide-react'
+import { Coins, Download, FileText } from 'lucide-react'
 import { Badge, Button, Input, Select, EmptyState, ErrorState, SkeletonRows } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
 import { formatCurrency, formatDate } from '@/lib/format'
@@ -84,6 +84,25 @@ export default function PartnerCommissionsPage() {
     URL.revokeObjectURL(url)
   }
 
+  const [downloading, setDownloading] = useState(false)
+  const downloadPdf = async () => {
+    setDownloading(true)
+    try {
+      // The statement reflects the active date range, matching the on-screen numbers.
+      const blob = await partnerApi.getStatementPdf({ from: from || undefined, to: to || undefined })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `27markets-commission-statement-${new Date().toISOString().slice(0, 10)}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      /* surfaced by the page's normal error handling on next load */
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   return (
     <>
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -91,9 +110,14 @@ export default function PartnerCommissionsPage() {
           title="Commissions"
           subtitle={data ? `Your rates: ${data.rates.direct}% direct · ${data.rates.indirect}% indirect.` : 'Your full commission statement across referred clients.'}
         />
-        <Button variant="outline" className="gap-1.5" onClick={exportCsv} disabled={!filtered.length}>
-          <Download className="h-4 w-4" /> Export CSV
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-1.5" onClick={exportCsv} disabled={!filtered.length}>
+            <Download className="h-4 w-4" /> Export CSV
+          </Button>
+          <Button variant="outline" className="gap-1.5" onClick={downloadPdf} disabled={downloading || !data}>
+            <FileText className="h-4 w-4" /> {downloading ? 'Preparing…' : 'Statement PDF'}
+          </Button>
+        </div>
       </div>
 
       {error ? (

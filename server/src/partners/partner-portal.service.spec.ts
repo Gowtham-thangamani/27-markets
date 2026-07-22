@@ -418,3 +418,66 @@ describe('PartnerPortalService.commissions date range', () => {
     expect(findMany.mock.calls[0][0].where).toEqual({ partnerId: 'p1' })
   })
 })
+
+describe('PartnerPortalService.clientDetail', () => {
+  const make = (found: any, deposits: any[] = [], commissions: any[] = []) => {
+    const prisma = {
+      user: { findFirst: jest.fn().mockResolvedValue(found) },
+      posting: { findMany: jest.fn().mockResolvedValue(deposits) },
+      ibCommission: { findMany: jest.fn().mockResolvedValue(commissions) },
+      auditLog: { groupBy: jest.fn().mockResolvedValue([]) },
+    } as any
+    return { svc: new PartnerPortalService(prisma, { get: jest.fn() } as any), prisma }
+  }
+  const client = {
+    id: 'c1', firstName: 'Ada', lastName: 'Lovelace', email: 'ada@x.io', country: 'UK',
+    createdAt: new Date('2026-01-01T00:00:00Z'), kycProfile: null, phone: '+9715',
+    status: 'ACTIVE', tradingAccounts: [], conversionStatus: 'CONVERTED', convertedAt: null,
+    campaignCode: 'ig', assignedAgent: null, ledgerAccounts: [{ id: 'la1' }],
+  }
+
+  it('returns profile, deposits and commission scoped to the partner', async () => {
+    const { svc, prisma } = make(
+      client,
+      [{ amount: 500, createdAt: new Date('2026-02-01T00:00:00Z'), journalEntry: { reference: 'TX-1' } }],
+      [{ amount: 50, level: 1, createdAt: new Date('2026-02-01T00:00:00Z'), payoutId: null, payout: null }],
+    )
+    const d = await svc.clientDetail('p1', 'c1')
+    expect(prisma.user.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'c1', referredByPartnerId: 'p1' },
+    }))
+    expect(d.totalDeposits).toBe(500)
+    expect(d.deposits[0]).toEqual({ amount: 500, reference: 'TX-1', date: '2026-02-01T00:00:00.000Z' })
+    expect(d.commissions[0]).toMatchObject({ amount: 50, level: 1, status: 'AVAILABLE' })
+  })
+
+  it('404s for a client the partner did not refer', async () => {
+    const { svc } = make(null)
+    await expect(svc.clientDetail('p1', 'x')).rejects.toBeInstanceOf(NotFoundException)
+  })
+})
+
+describe('PartnerPortalService.subPartnerClients', () => {
+  it('lists a downline sub-partner\'s clients, doubly scoped', async () => {
+    const prisma = {
+      partnerProfile: { findFirst: jest.fn().mockResolvedValue({ user: { id: 'sub1', firstName: 'Sub', lastName: 'One' } }) },
+      user: { findMany: jest.fn().mockResolvedValue([
+        { id: 'cc1', firstName: 'Cl', lastName: 'Ient', email: 'c@x.io', country: 'AE', createdAt: new Date(), kycProfile: null },
+      ]) },
+    } as any
+    const svc = new PartnerPortalService(prisma, { get: jest.fn() } as any)
+    const r = await svc.subPartnerClients('p1', 'sub1')
+    expect(prisma.partnerProfile.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: { userId: 'sub1', parentPartnerId: 'p1' },
+    }))
+    expect(prisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { referredByPartnerId: 'sub1' } }))
+    expect(r.subPartner.name).toBe('Sub One')
+    expect(r.clients).toHaveLength(1)
+  })
+
+  it('404s when the sub-partner is not in the caller\'s downline', async () => {
+    const prisma = { partnerProfile: { findFirst: jest.fn().mockResolvedValue(null) } } as any
+    const svc = new PartnerPortalService(prisma, { get: jest.fn() } as any)
+    await expect(svc.subPartnerClients('p1', 'other')).rejects.toBeInstanceOf(NotFoundException)
+  })
+})

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Users } from 'lucide-react'
 import { Badge, EmptyState, ErrorState, SkeletonRows } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
@@ -125,6 +126,7 @@ export default function PartnerClientsPage() {
                 <th className="px-4 py-3 font-medium">Converted</th>
                 <th className="px-4 py-3 font-medium text-right">Total Deposits</th>
                 <th className="px-4 py-3 font-medium">Sales Agent</th>
+                <th className="px-4 py-3 font-medium"></th>
               </tr></thead>
               <tbody>
                 {rows.map((c) => (
@@ -152,6 +154,7 @@ export default function PartnerClientsPage() {
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{c.convertedAt ? formatDate(c.convertedAt) : '—'}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-right font-mono tabular-nums text-white">{formatCurrency(c.totalDeposits)}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-300">{c.salesAgent ?? '—'}</td>
+                    <td className="whitespace-nowrap px-4 py-3"><Link to={`/partner/clients/${c.id}`} className="text-xs font-medium text-brand-400 hover:text-brand-300">View</Link></td>
                   </tr>
                 ))}
               </tbody>

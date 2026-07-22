@@ -9,6 +9,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { computeDelta, dayKey, emptySeries, kycStatusOf, sparkFromSeries } from '../admin/admin-dashboard.util';
 import { generateTxReference } from '../common/reference';
 import { primaryOrigin } from '../common/origin';
+import { simulationFooter } from '../documents/pdf-renderer';
+import { renderStatement } from './partner-statement';
 import type { Env } from '../config/env.validation';
 
 type Kyc = 'NOT_SUBMITTED' | 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -54,6 +56,10 @@ export interface PartnerSettings {
   payoutMethod: PayoutMethod | null;
   payoutDetails: Record<string, string> | null;
   rates: { direct: number; indirect: number };
+}
+export interface PartnerClientDetail extends PartnerClient {
+  deposits: { amount: number; reference: string | null; date: string }[];
+  commissions: { amount: number; level: number; date: string; status: CommissionStatus }[];
 }
 
 export type CommissionStatus = 'AVAILABLE' | 'IN_REVIEW' | 'PAID'
@@ -174,6 +180,74 @@ export class PartnerPortalService {
       totalDeposits: depositsByUser.get(r.id) ?? 0,
       lastLoginAt: lastLoginByUser.get(r.id)?.toISOString() ?? null,
     }));
+  }
+
+  /**
+   * Full detail for one referred client: profile, trading accounts, deposit
+   * history, and the commission that client has generated for this partner.
+   * Scoped to the partner's own referrals.
+   */
+  async clientDetail(partnerId: string, clientId: string): Promise<PartnerClientDetail> {
+    const u = await this.prisma.user.findFirst({
+      where: { id: clientId, referredByPartnerId: partnerId },
+      select: {
+        ...CLIENT_LIST_SELECT,
+        ledgerAccounts: { select: { id: true } },
+      },
+    });
+    if (!u) throw new NotFoundException('Client not found');
+
+    const ledgerIds = u.ledgerAccounts.map((a) => a.id);
+    const [depositRows, commissionRows] = await Promise.all([
+      ledgerIds.length
+        ? this.prisma.posting.findMany({
+            where: {
+              ledgerAccountId: { in: ledgerIds },
+              direction: PostingDirection.CREDIT,
+              journalEntry: { kind: JournalKind.DEPOSIT, status: JournalStatus.POSTED },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 100,
+            select: { amount: true, createdAt: true, journalEntry: { select: { reference: true } } },
+          })
+        : Promise.resolve([]),
+      this.prisma.ibCommission.findMany({
+        where: { partnerId, clientId },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+        include: { payout: { select: { status: true } } },
+      }),
+    ]);
+
+    const base = {
+      ...this.toClient(u),
+      phone: u.phone,
+      campaign: u.campaignCode,
+      accounts: u.tradingAccounts.map((a) => ({ type: a.type, mode: a.mode, status: a.status })),
+      canTrade:
+        u.status === UserStatus.ACTIVE &&
+        u.tradingAccounts.some((a) => a.mode === AccountMode.LIVE && a.status === AccountStatus.ACTIVE),
+      conversionStatus: u.conversionStatus,
+      convertedAt: u.convertedAt?.toISOString() ?? null,
+      salesAgent: u.assignedAgent ? `${u.assignedAgent.firstName} ${u.assignedAgent.lastName}` : null,
+      totalDeposits: Number(depositRows.reduce((s, d) => s + Number(d.amount), 0).toFixed(2)),
+      lastLoginAt: (await this.lastLogins([clientId])).get(clientId)?.toISOString() ?? null,
+    };
+
+    return {
+      ...base,
+      deposits: depositRows.map((d) => ({
+        amount: Number(d.amount),
+        reference: d.journalEntry?.reference ?? null,
+        date: d.createdAt.toISOString(),
+      })),
+      commissions: commissionRows.map((c) => ({
+        amount: Number(c.amount),
+        level: c.level,
+        date: c.createdAt.toISOString(),
+        status: !c.payoutId ? 'AVAILABLE' : c.payout?.status === 'PAID' ? 'PAID' : 'IN_REVIEW',
+      })),
+    };
   }
 
   /**
@@ -392,6 +466,36 @@ export class PartnerPortalService {
     }));
   }
 
+  /**
+   * A partner's commission statement as a PDF buffer, over an optional date
+   * range. Reuses the commissions aggregation, so the numbers match the portal.
+   */
+  async statementPdf(partnerId: string, range?: { from?: string; to?: string }): Promise<{ buffer: Buffer; filename: string }> {
+    const [profile, data] = await Promise.all([
+      this.prisma.partnerProfile.findUnique({
+        where: { userId: partnerId },
+        select: { referralCode: true, user: { select: { firstName: true, lastName: true } } },
+      }),
+      this.commissions(partnerId, range),
+    ]);
+    if (!profile) throw new NotFoundException('Partner profile not found');
+
+    const periodLabel = range?.from || range?.to
+      ? `${range?.from ?? 'start'} to ${range?.to ?? 'today'}`
+      : 'All time';
+
+    const buffer = await renderStatement({
+      partnerName: `${profile.user.firstName} ${profile.user.lastName}`,
+      referralCode: profile.referralCode,
+      periodLabel,
+      generatedAt: new Date(),
+      rows: data.rows.map((r) => ({ date: r.date, client: r.client, level: r.level, amount: r.amount })),
+      totals: { total: data.total, direct: data.direct, indirect: data.indirect, paid: data.paid, available: data.available },
+      footerNote: simulationFooter(this.config.get('TRADING_MODE', { infer: true } as never)),
+    });
+    return { buffer, filename: `27markets-commission-statement-${new Date().toISOString().slice(0, 10)}.pdf` };
+  }
+
   /** Commission rates this partner earns, read from the global settings. */
   private async rates(): Promise<{ direct: number; indirect: number }> {
     const settings = await this.prisma.appSetting.findMany({
@@ -437,6 +541,29 @@ export class PartnerPortalService {
       data: { payoutMethod: method, payoutDetails: clean },
     });
     return { ok: true };
+  }
+
+  /**
+   * The clients of one of this partner's direct sub-IBs. Scoped twice: the sub
+   * must be in the caller's downline, and only that sub's clients are returned.
+   */
+  async subPartnerClients(partnerId: string, subId: string): Promise<{ subPartner: { id: string; name: string }; clients: PartnerClientSummary[] }> {
+    const sub = await this.prisma.partnerProfile.findFirst({
+      where: { userId: subId, parentPartnerId: partnerId },
+      select: { user: { select: { id: true, firstName: true, lastName: true } } },
+    });
+    if (!sub) throw new NotFoundException('Sub-partner not found');
+
+    const rows = await this.prisma.user.findMany({
+      where: { referredByPartnerId: subId },
+      orderBy: { createdAt: 'desc' },
+      take: CLIENT_LIST_LIMIT,
+      select: CLIENT_SELECT,
+    });
+    return {
+      subPartner: { id: sub.user.id, name: `${sub.user.firstName} ${sub.user.lastName}` },
+      clients: rows.map((r) => this.toClient(r)),
+    };
   }
 
   /** Request a payout of all currently-available (unreserved) commission. */
