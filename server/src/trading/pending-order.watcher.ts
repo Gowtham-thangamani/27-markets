@@ -12,6 +12,9 @@ import { TradingService } from './trading.service';
 export class PendingOrderWatcher implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger('PendingOrderWatcher');
   private sub?: Subscription;
+  private reconcileTimer?: ReturnType<typeof setInterval>;
+  /** How often to drift-check the local book against the MT5 venue. */
+  private static readonly RECONCILE_MS = 5 * 60 * 1000;
   /** Newest unprocessed price per symbol. */
   private readonly latest = new Map<string, number>();
   /** Symbols with a processing pass currently in flight. */
@@ -25,10 +28,17 @@ export class PendingOrderWatcher implements OnModuleInit, OnModuleDestroy {
   onModuleInit(): void {
     this.sub = this.market.stream.subscribe((q) => this.handleTick(q.symbol, q.price));
     this.logger.log('Watching live ticks: pending orders, TP/SL, and stop-out.');
+    // Periodic MT5 drift check. A no-op on the simulation venue (reconcileMt5
+    // returns null), so it's harmless until the live venue is connected.
+    this.reconcileTimer = setInterval(() => {
+      void this.trading.reconcileMt5().catch((e) => this.logger.error(`reconciliation failed: ${(e as Error).message}`));
+    }, PendingOrderWatcher.RECONCILE_MS);
+    this.reconcileTimer.unref?.();
   }
 
   onModuleDestroy(): void {
     this.sub?.unsubscribe();
+    if (this.reconcileTimer) clearInterval(this.reconcileTimer);
   }
 
   /**

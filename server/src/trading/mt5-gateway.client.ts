@@ -121,11 +121,15 @@ export class Mt5GatewayClient {
     return this.request<Mt5Position[]>('/positions');
   }
 
-  /** Close an MT5 position by id (market close). */
-  closePosition(positionId: string): Promise<Mt5Deal> {
-    return this.request<Mt5Deal>('/trade', {
-      method: 'POST',
-      body: JSON.stringify({ actionType: 'POSITION_CLOSE_ID', positionId }),
-    });
+  /** Close an MT5 position by id (market close). Pass accountId for a client's account. */
+  closePosition(positionId: string, accountId?: string): Promise<Mt5Deal> {
+    return this.request<Mt5Deal>(
+      '/trade',
+      {
+        method: 'POST',
+        body: JSON.stringify({ actionType: 'POSITION_CLOSE_ID', positionId }),
+      },
+      accountId,
+    );
   }
 }

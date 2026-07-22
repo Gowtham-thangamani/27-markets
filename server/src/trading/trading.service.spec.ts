@@ -156,7 +156,11 @@ describe('TradingService.placeOrder — equity-based margin (M-10)', () => {
 
 describe('TradingService.closePosition — P&L simulated flag follows the venue (M-9)', () => {
   it('posts realized P&L as non-simulated when the account trades on a live venue', async () => {
-    const mt5exec = { name: 'mt5', simulated: false, assertAvailable: jest.fn(), fill: jest.fn().mockResolvedValue({ price: 110, simulated: false }) };
+    const mt5exec = {
+      name: 'mt5', simulated: false, assertAvailable: jest.fn(),
+      fill: jest.fn().mockResolvedValue({ price: 110, simulated: false }),
+      closePosition: jest.fn().mockResolvedValue({ price: 110, simulated: false }),
+    };
     const ledger = ledgerWith(1000);
     const prisma = {
       position: {
@@ -173,6 +177,10 @@ describe('TradingService.closePosition — P&L simulated flag follows the venue 
 
     expect(ledger.post).toHaveBeenCalledTimes(1);
     expect(ledger.post.mock.calls[0][0].simulated).toBe(false);
+    // A full close on a real venue uses the close-by-id primitive, not an
+    // opposite market order.
+    expect(mt5exec.closePosition).toHaveBeenCalledTimes(1);
+    expect(mt5exec.fill).not.toHaveBeenCalled();
   });
 });
 
@@ -543,5 +551,156 @@ describe('TradingService validation', () => {
     await expect(
       service.placeOrder('u1', { accountId: 'acc1', symbol: 'X', side: 'BUY', quantity: 1, type: 'LIMIT', triggerPrice: 110 } as any),
     ).rejects.toThrow('must trigger below');
+  });
+});
+
+describe('TradingService — broker-authoritative lifecycle (LIVE venue)', () => {
+  const liveExec = (price = 110) => ({
+    name: 'mt5', simulated: false, assertAvailable: jest.fn(),
+    fill: jest.fn().mockResolvedValue({ price, simulated: false, brokerPositionId: 'mt5-77' }),
+    closePosition: jest.fn().mockResolvedValue({ price, simulated: false }),
+  });
+  const openPos = (over: any = {}) => ({
+    id: 'p1', userId: 'u1', accountId: 'acc1', symbol: 'X', side: 'BUY',
+    quantity: new Prisma.Decimal(1), entryPrice: new Prisma.Decimal(100),
+    status: 'OPEN', realizedPnl: null, brokerPositionId: 'mt5-77', takeProfit: new Prisma.Decimal(110), stopLoss: null,
+    ...over,
+  });
+  const prismaWith = (pos: any, accountMode = 'LIVE') => ({
+    position: {
+      findMany: jest.fn().mockResolvedValue([pos]),
+      findUnique: jest.fn().mockResolvedValue(pos),
+      updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      update: jest.fn().mockImplementation(({ data }: any) => ({ id: 'p1', ...data })),
+      create: jest.fn().mockResolvedValue({ id: 'p2' }),
+    },
+    order: { findMany: jest.fn().mockResolvedValue([]), create: jest.fn().mockResolvedValue({}), updateMany: jest.fn().mockResolvedValue({ count: 1 }), update: jest.fn().mockResolvedValue({}) },
+    tradingAccount: { findUnique: jest.fn().mockResolvedValue({ id: 'acc1', userId: 'u1', status: 'ACTIVE', mode: accountMode, leverage: '1:500', ledgerAccount: { id: 'cl' } }) },
+  }) as any;
+
+  it('TP auto-close on a LIVE venue closes at the broker (by id) and books the broker fill price', async () => {
+    const exec = liveExec(111.5); // broker fills at 111.5, tick said 110
+    const prisma = prismaWith(openPos());
+    const ledger = ledgerWith(1000);
+    const service = new TradingService(prisma, ledger as any, audit() as any, exec as any, marketWith([{ symbol: 'X', price: 110 }]) as any, mt5conn() as any);
+
+    await service.processTick('X', 110); // hits TP 110
+
+    expect(exec.closePosition).toHaveBeenCalledWith(expect.objectContaining({ brokerPositionId: 'mt5-77' }));
+    const exitUpdate = prisma.position.update.mock.calls.find((c: any) => c[0].data.exitPrice !== undefined);
+    expect(exitUpdate[0].data.exitPrice).toBe(111.5);
+  });
+
+  it('TP auto-close on the SIM venue books the tick price and never touches a venue', async () => {
+    const exec = simExec(999); // would be wrong if called
+    (exec as any).closePosition = jest.fn();
+    const prisma = prismaWith(openPos({ brokerPositionId: null }), 'DEMO');
+    const ledger = ledgerWith(1000);
+    const service = new TradingService(prisma, ledger as any, audit() as any, exec as any, marketWith([{ symbol: 'X', price: 110 }]) as any, mt5conn() as any);
+
+    await service.processTick('X', 110);
+
+    expect((exec as any).closePosition).not.toHaveBeenCalled();
+    expect(exec.fill).not.toHaveBeenCalled(); // sim auto-close books at the tick, no venue call
+  });
+
+  it('reverts the claim when the broker close fails, so the position is not stranded CLOSED', async () => {
+    const exec = liveExec();
+    exec.closePosition = jest.fn().mockRejectedValue(new Error('gateway down'));
+    const prisma = prismaWith(openPos());
+    const service = new TradingService(prisma, ledgerWith(1000) as any, audit() as any, exec as any, marketWith([{ symbol: 'X', price: 110 }]) as any, mt5conn() as any);
+
+    await service.processTick('X', 110);
+
+    const revert = prisma.position.update.mock.calls.find((c: any) => c[0].data.status === 'OPEN');
+    expect(revert).toBeTruthy();
+    expect(prisma.order.create).not.toHaveBeenCalled(); // no P&L order booked
+  });
+
+  it('pending trigger on a LIVE venue executes at the broker after winning the claim and stores the broker id', async () => {
+    const exec = liveExec(105.2);
+    const pendingOrder = { id: 'o1', userId: 'u1', accountId: 'acc1', symbol: 'X', side: 'BUY', type: 'LIMIT', quantity: new Prisma.Decimal(1), triggerPrice: new Prisma.Decimal(105), status: 'PENDING' };
+    const prisma = prismaWith(openPos());
+    prisma.order.findMany = jest.fn().mockResolvedValue([pendingOrder]);
+    prisma.position.findMany = jest.fn().mockResolvedValue([]); // margin check
+    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, exec as any, marketWith([{ symbol: 'X', price: 104 }]) as any, mt5conn() as any);
+
+    await service.triggerPendingForQuote('X', 104); // BUY LIMIT 105 triggers at 104
+
+    expect(prisma.order.updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'o1', status: 'PENDING' } })); // claim first
+    expect(exec.fill).toHaveBeenCalledTimes(1); // then execute once
+    expect(prisma.position.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ entryPrice: 105.2, brokerPositionId: 'mt5-77' }),
+    });
+  });
+
+  it('pending trigger on the SIM venue opens at the tick price without any venue call (unchanged)', async () => {
+    const exec = simExec(999);
+    const pendingOrder = { id: 'o1', userId: 'u1', accountId: 'acc1', symbol: 'X', side: 'BUY', type: 'LIMIT', quantity: new Prisma.Decimal(1), triggerPrice: new Prisma.Decimal(105), status: 'PENDING' };
+    const prisma = prismaWith(openPos(), 'DEMO');
+    prisma.order.findMany = jest.fn().mockResolvedValue([pendingOrder]);
+    prisma.position.findMany = jest.fn().mockResolvedValue([]);
+    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, exec as any, marketWith([{ symbol: 'X', price: 104 }]) as any, mt5conn() as any);
+
+    await service.triggerPendingForQuote('X', 104);
+
+    expect(exec.fill).not.toHaveBeenCalled();
+    expect(prisma.position.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ entryPrice: 104, brokerPositionId: null }),
+    });
+  });
+
+  it('reverts a claimed pending order to PENDING when broker execution fails', async () => {
+    const exec = liveExec();
+    exec.fill = jest.fn().mockRejectedValue(new Error('gateway down'));
+    const pendingOrder = { id: 'o1', userId: 'u1', accountId: 'acc1', symbol: 'X', side: 'BUY', type: 'LIMIT', quantity: new Prisma.Decimal(1), triggerPrice: new Prisma.Decimal(105), status: 'PENDING' };
+    const prisma = prismaWith(openPos());
+    prisma.order.findMany = jest.fn().mockResolvedValue([pendingOrder]);
+    prisma.position.findMany = jest.fn().mockResolvedValue([]);
+    const service = new TradingService(prisma, ledgerWith(50000) as any, audit() as any, exec as any, marketWith([{ symbol: 'X', price: 104 }]) as any, mt5conn() as any);
+
+    await service.triggerPendingForQuote('X', 104);
+
+    expect(prisma.order.update).toHaveBeenCalledWith({ where: { id: 'o1' }, data: { status: 'PENDING' } });
+    expect(prisma.position.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('TradingService.reconcileMt5', () => {
+  const gatewayWith = (positions: any[], equity = 10000) => ({
+    accountId: 'acct-1',
+    getPositions: jest.fn().mockResolvedValue(positions),
+    getAccount: jest.fn().mockResolvedValue({ balance: 10000, equity, margin: 0, marginLevel: 0, currency: 'USD' }),
+  });
+
+  const make = (exec: any, gateway: any, localOpen: any[]) => {
+    const auditor = audit();
+    const prisma = { position: { findMany: jest.fn().mockResolvedValue(localOpen) } } as any;
+    const svc = new TradingService(prisma, ledgerWith(0) as any, auditor as any, exec as any, marketWith() as any, mt5conn() as any, undefined, gateway as any);
+    return { svc, auditor };
+  };
+
+  it('is a no-op on the simulation venue', async () => {
+    const gateway = gatewayWith([]);
+    const { svc } = make(simExec(100), gateway, []);
+    expect(await svc.reconcileMt5()).toBeNull();
+    expect(gateway.getPositions).not.toHaveBeenCalled();
+  });
+
+  it('reports in-sync when local and broker books match', async () => {
+    const exec = { name: 'mt5', simulated: false } as any;
+    const { svc } = make(exec, gatewayWith([{ id: 'mt5-1', symbol: 'X' }]), [{ id: 'p1', brokerPositionId: 'mt5-1', symbol: 'X' }]);
+    expect(await svc.reconcileMt5()).toEqual({ inSync: true, localOnly: 0, brokerOnly: 0 });
+  });
+
+  it('flags and audits drift in both directions', async () => {
+    const exec = { name: 'mt5', simulated: false } as any;
+    const { svc, auditor } = make(
+      exec,
+      gatewayWith([{ id: 'mt5-9', symbol: 'Y' }]), // broker-only
+      [{ id: 'p1', brokerPositionId: 'mt5-1', symbol: 'X' }], // local-only
+    );
+    expect(await svc.reconcileMt5()).toEqual({ inSync: false, localOnly: 1, brokerOnly: 1 });
+    expect(auditor.record).toHaveBeenCalledWith(expect.objectContaining({ action: 'trade.reconcile.drift' }));
   });
 });

@@ -17,7 +17,7 @@ describe('Mt5ExecutionProvider', () => {
     const fill = await provider.fill('BINANCE:BTCUSDT', 'BUY' as any, 0.1);
 
     expect(gateway.placeMarketOrder).toHaveBeenCalledWith({ symbol: 'BTCUSD', side: 'BUY', volume: 0.1 }, undefined);
-    expect(fill).toEqual({ price: 60500, simulated: false }); // BUY → ask
+    expect(fill).toEqual({ price: 60500, simulated: false, brokerPositionId: 'p1' }); // BUY → ask; venue id captured
   });
 
   it('uses the deal price when the gateway returns one', async () => {

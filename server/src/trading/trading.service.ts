@@ -26,6 +26,7 @@ import { toMoney } from '../ledger/money';
 import { generateTxReference } from '../common/reference';
 import { EXECUTION_PROVIDER, SimulationExecutionProvider, type ExecutionProvider, type Fill } from './execution-provider';
 import { Mt5ConnectionService } from './mt5-connection.service';
+import { Mt5GatewayClient } from './mt5-gateway.client';
 import type { PlaceOrderDto, SetProtectionDto } from './trading.dto';
 
 type AccountWithLedger = Prisma.TradingAccountGetPayload<{ include: { ledgerAccount: true } }>;
@@ -49,6 +50,7 @@ export class TradingService {
     private readonly market: MarketService,
     private readonly mt5: Mt5ConnectionService,
     @Optional() private readonly simExecProvider?: SimulationExecutionProvider,
+    @Optional() private readonly gateway?: Mt5GatewayClient,
   ) {}
 
   /** Always-simulated venue, used for DEMO accounts even when the live MT5 venue is active. */
@@ -217,7 +219,7 @@ export class TradingService {
         data: { userId, accountId: account.id, symbol, side, type: OrderType.MARKET, quantity, price: fill.price, status: 'FILLED', simulated: fill.simulated },
       });
       return tx.position.create({
-        data: { userId, accountId: account.id, symbol, side, quantity, entryPrice: fill.price, status: PositionStatus.OPEN },
+        data: { userId, accountId: account.id, symbol, side, quantity, entryPrice: fill.price, status: PositionStatus.OPEN, brokerPositionId: fill.brokerPositionId ?? null },
       });
     });
     await this.audit.record({
@@ -346,6 +348,34 @@ export class TradingService {
     return pnlRounded;
   }
 
+  /**
+   * Execute a position close at the venue and return the fill.
+   *
+   * DEMO/simulation is unchanged: a market fill at the live price. On a real
+   * (MT5) venue a FULL close acts on the broker position by id — the correct
+   * primitive that nets/hedges deterministically — while a partial close (or a
+   * position opened before ids were captured) falls back to an opposite order.
+   */
+  private async closeAtVenue(
+    venue: ExecutionProvider,
+    pos: Position,
+    closeSide: OrderSide,
+    closeQty: number,
+    userId: string,
+    full: boolean,
+  ): Promise<Fill> {
+    if (venue.simulated) {
+      return venue.fill(pos.symbol, closeSide, closeQty);
+    }
+    return venue.closePosition({
+      brokerPositionId: full ? pos.brokerPositionId : null,
+      symbol: pos.symbol,
+      side: closeSide,
+      quantity: closeQty,
+      mt5AccountId: await this.mt5AccountFor(venue, userId),
+    });
+  }
+
   /** Close a position at the live price. Pass a quantity below the position size for a partial close. */
   async closePosition(userId: string, positionId: string, quantity?: number) {
     const pos = await this.prisma.position.findUnique({ where: { id: positionId } });
@@ -364,7 +394,7 @@ export class TradingService {
       // Partial close: the position stays OPEN, so this doesn't claim a status
       // transition. Its P&L key is unique per partial. (Concurrent identical
       // partials remain a lower-risk follow-up.)
-      const fill = await venue.fill(pos.symbol, closeSide, closeQty, await this.mt5AccountFor(venue, userId));
+      const fill = await this.closeAtVenue(venue, pos, closeSide, closeQty, userId, false);
       const pnl = await this.realizePnl(account, pos, closeQty, fill.price, '', `pnl:${pos.id}:partial:${randomUUID()}`);
       const updated = await this.prisma.position.update({
         where: { id: positionId },
@@ -391,7 +421,7 @@ export class TradingService {
     if (claim.count === 0) throw new BadRequestException('Position already closed');
 
     try {
-      const fill = await venue.fill(pos.symbol, closeSide, closeQty, await this.mt5AccountFor(venue, userId));
+      const fill = await this.closeAtVenue(venue, pos, closeSide, closeQty, userId, true);
       const pnl = await this.realizePnl(account, pos, closeQty, fill.price, '', `pnl:${pos.id}:close`);
       const updated = await this.prisma.position.update({
         where: { id: positionId },
@@ -436,7 +466,32 @@ export class TradingService {
       include: { ledgerAccount: true },
     });
     if (!account) return;
-    const pnl = await this.realizePnl(account, position, Number(position.quantity), price, reason, `pnl:${position.id}:close`);
+
+    // On a real venue, actually close the broker position and realize P&L at the
+    // executed price; DEMO/simulation closes locally at the trigger price
+    // (unchanged). A failed broker close reverts the claim so the position is
+    // never stranded CLOSED while still open at the broker.
+    const venue = this.execFor(account);
+    let fillPrice = price;
+    if (!venue.simulated) {
+      try {
+        const closeSide: OrderSide = position.side === OrderSide.BUY ? OrderSide.SELL : OrderSide.BUY;
+        const fill = await this.closeAtVenue(venue, position, closeSide, Number(position.quantity), position.userId, true);
+        fillPrice = fill.price;
+        if (fillPrice !== price) {
+          await this.prisma.position.update({ where: { id: position.id }, data: { exitPrice: fillPrice } });
+        }
+      } catch (err) {
+        await this.prisma.position.update({
+          where: { id: position.id },
+          data: { status: PositionStatus.OPEN, exitPrice: null, closedAt: null },
+        });
+        this.logger.error(`Auto-close (${reason}) failed to close ${position.symbol} at the venue: ${(err as Error).message}`);
+        return;
+      }
+    }
+
+    const pnl = await this.realizePnl(account, position, Number(position.quantity), fillPrice, reason, `pnl:${position.id}:close`);
     const prevRealized = Number(position.realizedPnl ?? 0);
     await this.prisma.position.update({
       where: { id: position.id },
@@ -447,9 +502,9 @@ export class TradingService {
       action: `trade.autoclose.${reason}`,
       entity: 'Position',
       entityId: position.id,
-      metadata: { price, reason, realizedPnl: pnl },
+      metadata: { price: fillPrice, reason, realizedPnl: pnl },
     });
-    this.logger.log(`Auto-closed ${position.symbol} (${reason}) @ ${price} — P&L ${pnl}`);
+    this.logger.log(`Auto-closed ${position.symbol} (${reason}) @ ${fillPrice} — P&L ${pnl}`);
   }
 
   // ── Trigger logic (pure, unit-testable) ──────────────────────────────────
@@ -515,12 +570,34 @@ export class TradingService {
 
       // Atomically claim the fill: only the tick that flips PENDING→FILLED opens
       // the position. A concurrent tick that lost the claim (count 0) skips it,
-      // so one order can never produce two positions.
+      // so one order can never produce two positions — and, on a real venue,
+      // can never send two broker orders (we execute only AFTER winning the claim).
+      const venue = this.execFor(account);
       const claim = await this.prisma.order.updateMany({
         where: { id: o.id, status: 'PENDING' },
         data: { status: 'FILLED', price },
       });
       if (claim.count === 0) continue;
+
+      // DEMO/simulation opens at the trigger price (unchanged). A real venue
+      // executes the order once (winner only) and opens at the broker fill,
+      // capturing the venue position id; a failed execution reverts to PENDING.
+      let fillPrice = price;
+      let brokerPositionId: string | null = null;
+      if (!venue.simulated) {
+        try {
+          const fill = await venue.fill(o.symbol, o.side, Number(o.quantity), await this.mt5AccountFor(venue, o.userId));
+          fillPrice = fill.price;
+          brokerPositionId = fill.brokerPositionId ?? null;
+          if (fillPrice !== price) {
+            await this.prisma.order.update({ where: { id: o.id }, data: { price: fillPrice } });
+          }
+        } catch (err) {
+          await this.prisma.order.update({ where: { id: o.id }, data: { status: 'PENDING' } });
+          this.logger.error(`Pending order ${o.id} failed to execute at the venue: ${(err as Error).message}`);
+          continue;
+        }
+      }
 
       await this.prisma.position.create({
         data: {
@@ -529,8 +606,9 @@ export class TradingService {
           symbol: o.symbol,
           side: o.side,
           quantity: o.quantity,
-          entryPrice: price,
+          entryPrice: fillPrice,
           status: PositionStatus.OPEN,
+          brokerPositionId,
         },
       });
       await this.audit.record({
@@ -538,7 +616,7 @@ export class TradingService {
         action: 'trade.trigger',
         entity: 'Order',
         entityId: o.id,
-        metadata: { triggerPrice: trigger, fillPrice: price },
+        metadata: { triggerPrice: trigger, fillPrice },
       });
     }
   }
@@ -678,6 +756,58 @@ export class TradingService {
   /** Which execution venue is active (simulation vs MT5) — for ops/verification. */
   venue() {
     return { name: this.exec.name, simulated: this.exec.simulated };
+  }
+
+  /**
+   * Read-only drift check between the local open book and the MT5 venue. Only
+   * runs when the MT5 venue is active. Reports (logs + audits) divergences — a
+   * local position the broker has closed, or a broker position not in our book —
+   * but never auto-corrects: a mismatch on a real-money book needs human review.
+   */
+  async reconcileMt5(): Promise<{ inSync: boolean; localOnly: number; brokerOnly: number } | null> {
+    if (this.exec.name !== 'mt5' || !this.gateway) return null;
+
+    let brokerPositions: Awaited<ReturnType<Mt5GatewayClient['getPositions']>>;
+    let brokerAccount: Awaited<ReturnType<Mt5GatewayClient['getAccount']>>;
+    try {
+      [brokerPositions, brokerAccount] = await Promise.all([this.gateway.getPositions(), this.gateway.getAccount()]);
+    } catch (e) {
+      this.logger.error(`MT5 reconciliation: gateway unreachable — ${(e as Error).message}`);
+      return null;
+    }
+
+    const localOpen = await this.prisma.position.findMany({
+      where: { status: PositionStatus.OPEN, brokerPositionId: { not: null } },
+      select: { id: true, brokerPositionId: true, symbol: true },
+    });
+    const brokerIds = new Set(brokerPositions.map((p) => p.id));
+    const localIds = new Set(localOpen.map((p) => p.brokerPositionId));
+
+    // Local OPEN with no matching broker position → broker closed it, we didn't.
+    const localOnly = localOpen.filter((p) => p.brokerPositionId && !brokerIds.has(p.brokerPositionId));
+    // Broker position not in our open book → opened at broker, missing locally.
+    const brokerOnly = brokerPositions.filter((p) => !localIds.has(p.id));
+
+    if (localOnly.length || brokerOnly.length) {
+      this.logger.error(
+        `MT5 reconciliation DRIFT: ${localOnly.length} local-only, ${brokerOnly.length} broker-only ` +
+          `(broker equity ${brokerAccount.equity}). Manual review required.`,
+      );
+      await this.audit.record({
+        action: 'trade.reconcile.drift',
+        entity: 'TradingAccount',
+        entityId: this.gateway.accountId ?? 'mt5',
+        metadata: {
+          localOnly: localOnly.map((p) => ({ id: p.id, symbol: p.symbol, brokerPositionId: p.brokerPositionId })),
+          brokerOnly: brokerOnly.map((p) => ({ brokerPositionId: p.id, symbol: p.symbol })),
+          brokerEquity: brokerAccount.equity,
+        },
+      });
+      return { inSync: false, localOnly: localOnly.length, brokerOnly: brokerOnly.length };
+    }
+
+    this.logger.log(`MT5 reconciliation: ${localOpen.length} positions in sync (broker equity ${brokerAccount.equity}).`);
+    return { inSync: true, localOnly: 0, brokerOnly: 0 };
   }
 
   // ── Queries ──────────────────────────────────────────────────────────────

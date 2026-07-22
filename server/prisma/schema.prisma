@@ -994,6 +994,10 @@ model Position {
   stopLoss    Decimal?       @db.Decimal(18, 8)
   realizedPnl Decimal?       @db.Decimal(18, 2)
   status      PositionStatus @default(OPEN)
+  // The venue's (MT5) position id, captured on a LIVE open so TP/SL, stop-out
+  // and manual closes act on the real broker position by id. Null for
+  // simulated/DEMO positions and legacy rows.
+  brokerPositionId String?
   openedAt    DateTime       @default(now())
   closedAt    DateTime?
 
