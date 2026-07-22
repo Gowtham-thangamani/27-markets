@@ -364,21 +364,46 @@ describe('PartnerPortalService.payouts', () => {
 })
 
 describe('PartnerPortalService payout method + settings', () => {
-  const make = (profile: any) => {
+  const make = (profile: any, tiersJson: string | null = null, volume = 0) => {
     const update = jest.fn().mockResolvedValue({})
     const prisma = {
       partnerProfile: { findUnique: jest.fn().mockResolvedValue(profile), update },
-      appSetting: { findMany: jest.fn().mockResolvedValue([
-        { key: 'ib_commission_pct', value: '10' }, { key: 'ib_commission_pct_l2', value: '3' },
-      ]) },
+      appSetting: {
+        findMany: jest.fn().mockResolvedValue([
+          { key: 'ib_commission_pct', value: '10' }, { key: 'ib_commission_pct_l2', value: '3' },
+        ]),
+        findUnique: jest.fn().mockResolvedValue(tiersJson ? { value: tiersJson } : null),
+      },
+      user: { findMany: jest.fn().mockResolvedValue(volume ? [{ id: 'c1' }] : []) },
+      ledgerAccount: { findMany: jest.fn().mockResolvedValue(volume ? [{ id: 'la1' }] : []) },
+      posting: { aggregate: jest.fn().mockResolvedValue({ _sum: { amount: volume } }) },
     } as any
     return { svc: new PartnerPortalService(prisma, { get: jest.fn() } as any), update, prisma }
   }
 
-  it('returns payout method + rates in settings', async () => {
+  it('returns payout method + rates + flat tier progress in settings', async () => {
     const { svc } = make({ payoutMethod: 'BANK', payoutDetails: { iban: 'AE...' } })
     const s = await svc.settings('p1')
-    expect(s).toEqual({ payoutMethod: 'BANK', payoutDetails: { iban: 'AE...' }, rates: { direct: 10, indirect: 3 } })
+    expect(s).toEqual({
+      payoutMethod: 'BANK',
+      payoutDetails: { iban: 'AE...' },
+      rates: { direct: 10, indirect: 3 },
+      tierProgress: { tiered: false, volume: 0, currentRate: 10, next: null },
+    })
+  })
+
+  it('computes rank standing + next tier when volume tiers are configured', async () => {
+    const tiers = JSON.stringify([{ minVolume: 0, pct: 10 }, { minVolume: 10000, pct: 12 }, { minVolume: 50000, pct: 15 }])
+    const { svc } = make({ payoutMethod: 'BANK', payoutDetails: {} }, tiers, 25000) // in the 12% band
+    const s = await svc.settings('p1')
+    expect(s.tierProgress).toEqual({ tiered: true, volume: 25000, currentRate: 12, next: { threshold: 50000, rate: 15 } })
+  })
+
+  it('reports the top tier (no next) when volume clears the highest threshold', async () => {
+    const tiers = JSON.stringify([{ minVolume: 0, pct: 10 }, { minVolume: 50000, pct: 15 }])
+    const { svc } = make({ payoutMethod: 'BANK', payoutDetails: {} }, tiers, 60000)
+    const s = await svc.settings('p1')
+    expect(s.tierProgress).toEqual({ tiered: true, volume: 60000, currentRate: 15, next: null })
   })
 
   it('whitelists bank fields and trims/bounds values', async () => {

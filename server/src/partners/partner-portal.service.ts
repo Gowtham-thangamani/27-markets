@@ -52,10 +52,22 @@ export interface SubPartner {
   id: string; name: string; email: string; country: string | null; referralCode: string;
   clients: number; commissionEarned: number; joinedAt: string;
 }
+/** Volume-tier (rank) standing for a partner. */
+export interface TierProgress {
+  /** Are volume tiers configured at all? When false the flat rate applies. */
+  tiered: boolean;
+  /** Lifetime referred-deposit volume, USD. */
+  volume: number;
+  /** The direct rate this partner currently earns, %. */
+  currentRate: number;
+  /** The next tier up, or null when already at the top / no tiers. */
+  next: { threshold: number; rate: number } | null;
+}
 export interface PartnerSettings {
   payoutMethod: PayoutMethod | null;
   payoutDetails: Record<string, string> | null;
   rates: { direct: number; indirect: number };
+  tierProgress: TierProgress;
 }
 export interface PartnerClientDetail extends PartnerClient {
   deposits: { amount: number; reference: string | null; date: string }[];
@@ -510,11 +522,67 @@ export class PartnerPortalService {
   async settings(partnerId: string): Promise<PartnerSettings> {
     const profile = await this.prisma.partnerProfile.findUnique({ where: { userId: partnerId } });
     if (!profile) throw new NotFoundException('Partner profile not found');
+    const rates = await this.rates();
     return {
       payoutMethod: profile.payoutMethod,
       payoutDetails: (profile.payoutDetails as Record<string, string> | null) ?? null,
-      rates: await this.rates(),
+      rates,
+      tierProgress: await this.tierProgress(partnerId, rates.direct),
     };
+  }
+
+  /**
+   * The partner's rank in the volume-tier program: their lifetime referred
+   * volume, the direct rate it currently earns, and the next tier (if any).
+   * When no tiers are configured, `tiered` is false and the flat rate applies.
+   */
+  private async tierProgress(partnerId: string, flatRate: number): Promise<TierProgress> {
+    const setting = await this.prisma.appSetting.findUnique({ where: { key: 'ib_commission_tiers' } });
+    let tiers: { minVolume: number; pct: number }[] = [];
+    try {
+      const parsed = setting?.value ? JSON.parse(setting.value) : [];
+      if (Array.isArray(parsed)) {
+        tiers = parsed
+          .map((t) => ({ minVolume: Number(t?.minVolume), pct: Number(t?.pct) }))
+          .filter((t) => Number.isFinite(t.minVolume) && t.minVolume >= 0 && Number.isFinite(t.pct) && t.pct > 0)
+          .sort((a, b) => a.minVolume - b.minVolume);
+      }
+    } catch {
+      tiers = [];
+    }
+    if (!tiers.length) return { tiered: false, volume: 0, currentRate: flatRate, next: null };
+
+    const volume = await this.referredVolume(partnerId);
+    let currentRate = flatRate;
+    let next: TierProgress['next'] = null;
+    for (const t of tiers) {
+      if (volume >= t.minVolume) currentRate = t.pct;
+      else {
+        next = { threshold: t.minVolume, rate: t.pct };
+        break;
+      }
+    }
+    return { tiered: true, volume: Number(volume.toFixed(2)), currentRate, next };
+  }
+
+  /** Lifetime posted-deposit volume across a partner's referred clients. */
+  private async referredVolume(partnerId: string): Promise<number> {
+    const clients = await this.prisma.user.findMany({ where: { referredByPartnerId: partnerId }, select: { id: true } });
+    if (!clients.length) return 0;
+    const accounts = await this.prisma.ledgerAccount.findMany({
+      where: { userId: { in: clients.map((c) => c.id) } },
+      select: { id: true },
+    });
+    if (!accounts.length) return 0;
+    const agg = await this.prisma.posting.aggregate({
+      _sum: { amount: true },
+      where: {
+        ledgerAccountId: { in: accounts.map((a) => a.id) },
+        direction: PostingDirection.CREDIT,
+        journalEntry: { kind: JournalKind.DEPOSIT, status: JournalStatus.POSTED },
+      },
+    });
+    return Number(agg._sum.amount ?? 0);
   }
 
   /** Save the partner's payout destination. */

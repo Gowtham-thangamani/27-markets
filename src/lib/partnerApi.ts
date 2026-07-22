@@ -55,10 +55,17 @@ export interface PartnerCommissionRow { id: string; amount: number; source: stri
 /** `direct` is level-1 earnings; `indirect` is earned through sub-partners. */
 export interface PartnerCommissions { total: number; available: number; paid: number; count: number; direct: number; indirect: number; rates: { direct: number; indirect: number }; rows: PartnerCommissionRow[] }
 export type PayoutMethod = 'BANK' | 'CRYPTO'
+export interface TierProgress {
+  tiered: boolean
+  volume: number
+  currentRate: number
+  next: { threshold: number; rate: number } | null
+}
 export interface PartnerSettings {
   payoutMethod: PayoutMethod | null
   payoutDetails: Record<string, string> | null
   rates: { direct: number; indirect: number }
+  tierProgress: TierProgress
 }
 export interface PartnerPayoutResult { reference: string; amount: number; status: string }
 

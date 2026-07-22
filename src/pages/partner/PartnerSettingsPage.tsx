@@ -1,10 +1,78 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Landmark, Bitcoin, Percent } from 'lucide-react'
+import { Landmark, Bitcoin, Percent, User, Phone, Globe, Mail } from 'lucide-react'
 import { Button, Input, ErrorState, SkeletonCard } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
+import { SecuritySettings } from '@/components/portal/SecuritySettings'
 import { useToast } from '@/context/ToastContext'
+import { useAuth } from '@/context/AuthContext'
 import { ApiError } from '@/lib/api'
-import { partnerApi, type PartnerSettings, type PayoutMethod } from '@/lib/partnerApi'
+import { partnerApi, type PartnerSettings, type PayoutMethod, type TierProgress } from '@/lib/partnerApi'
+
+const usd = (n: number) => `$${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+
+/** Rank / volume-tier standing: current rate + progress bar to the next tier. */
+function RankProgress({ tier }: { tier: TierProgress }) {
+  // Progress within the current band: from where this rate began to the next
+  // threshold. With no next tier the partner is at the top band (full bar).
+  const pct = tier.next
+    ? Math.min(100, Math.max(0, (tier.volume / tier.next.threshold) * 100))
+    : 100
+  return (
+    <div className="mt-4 rounded-lg border border-brand-500/20 bg-brand-500/[0.06] p-4">
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-white">Your rank</div>
+        <div className="font-display text-xl font-bold text-brand-300">{tier.currentRate}%</div>
+      </div>
+      <div className="mt-1 text-xs text-gray-500">Referred volume: <span className="text-gray-300">{usd(tier.volume)}</span></div>
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+        <div className="h-full rounded-full bg-brand-500" style={{ width: `${pct}%` }} />
+      </div>
+      <div className="mt-2 text-xs text-gray-400">
+        {tier.next
+          ? <>Reach <span className="text-white">{usd(tier.next.threshold)}</span> referred volume to earn <span className="text-brand-300">{tier.next.rate}%</span> — {usd(Math.max(0, tier.next.threshold - tier.volume))} to go.</>
+          : <>You're at the top commission tier. 🎉</>}
+      </div>
+    </div>
+  )
+}
+
+/** Name + contact details, editable by the partner (email is support-only). */
+function PartnerProfileCard() {
+  const toast = useToast()
+  const { user, updateProfile } = useAuth()
+  const [name, setName] = useState(user?.name ?? '')
+  const [phone, setPhone] = useState(user?.phone ?? '')
+  const [country, setCountry] = useState(user?.country ?? '')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    setName(user?.name ?? ''); setPhone(user?.phone ?? ''); setCountry(user?.country ?? '')
+  }, [user])
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      await updateProfile({ name, phone, country })
+      toast.success('Profile updated', 'Your changes have been saved.')
+    } catch (e) {
+      toast.error('Could not save', e instanceof ApiError ? e.message : 'Please try again.')
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="glass-panel p-6">
+      <h3 className="text-sm font-semibold text-white">Profile</h3>
+      <p className="mt-0.5 text-xs text-gray-500">Your name and contact details.</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <Input label="Full name" icon={<User className="h-4 w-4" />} value={name} onChange={(e) => setName(e.target.value)} />
+        <Input label="Email" type="email" readOnly icon={<Mail className="h-4 w-4" />} hint="Contact support to change your email" value={user?.email ?? ''} />
+        <Input label="Phone" icon={<Phone className="h-4 w-4" />} value={phone} onChange={(e) => setPhone(e.target.value)} />
+        <Input label="Country" icon={<Globe className="h-4 w-4" />} value={country} onChange={(e) => setCountry(e.target.value)} />
+      </div>
+      <div className="mt-4"><Button onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save profile'}</Button></div>
+    </div>
+  )
+}
 
 const BANK_FIELDS: { key: string; label: string; placeholder: string }[] = [
   { key: 'accountName', label: 'Account holder', placeholder: 'Full name on the account' },
@@ -59,7 +127,17 @@ export default function PartnerSettingsPage() {
 
   return (
     <>
-      <PageTitle title="Settings" subtitle="Your payout method and commission rates." />
+      <PageTitle title="Settings" subtitle="Your profile, security, payout method and commission rates." />
+
+      <div className="mb-4 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+        <PartnerProfileCard />
+        <div className="glass-panel p-6">
+          <h3 className="mb-1 text-sm font-semibold text-white">Security</h3>
+          <p className="mb-4 text-xs text-gray-500">Protect your commission account.</p>
+          <SecuritySettings />
+        </div>
+      </div>
+
       {error ? <ErrorState description={error} onRetry={load} />
         : loading || !data ? <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]"><SkeletonCard /><SkeletonCard /></div>
         : (
@@ -114,6 +192,8 @@ export default function PartnerSettingsPage() {
                   <div className="font-display text-xl font-bold text-white">{data.rates.indirect}%</div>
                 </div>
               </div>
+
+              {data.tierProgress.tiered && <RankProgress tier={data.tierProgress} />}
             </div>
           </div>
         )}
