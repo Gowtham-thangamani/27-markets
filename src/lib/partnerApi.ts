@@ -7,6 +7,8 @@ export type AccountStatus = 'ACTIVE' | 'PENDING' | 'SUSPENDED' | 'ARCHIVED'
 export interface PartnerClientAccount { type: AccountType; mode: AccountMode; status: AccountStatus }
 /** Row of the dashboard's recent-referrals strip. */
 export interface PartnerClientSummary { id: string; name: string; email: string; country: string | null; kyc: Kyc; createdAt: string }
+export type ClientSortBy = 'name' | 'country' | 'conversion' | 'campaign' | 'signup'
+export interface PartnerClientList { rows: PartnerClient[]; total: number; page: number; pageSize: number }
 export type ConversionStatus = 'NO_ANSWER' | 'ON_BOARDING' | 'CONVERTED' | 'NOT_INTERESTED'
 /** Row of the full clients list, with accounts, CRM state and financials. */
 export interface PartnerClient extends PartnerClientSummary {
@@ -77,7 +79,16 @@ export interface PartnerPayoutResult { reference: string; amount: number; status
 
 export const partnerApi = {
   getDashboard: () => api.get<PartnerDashboard>('/partner/dashboard'),
-  getClients: () => api.get<PartnerClient[]>('/partner/clients'),
+  getClients: (opts: { page?: number; pageSize?: number; search?: string; sortBy?: ClientSortBy; sortDir?: 'asc' | 'desc' } = {}) => {
+    const q = new URLSearchParams()
+    if (opts.page) q.set('page', String(opts.page))
+    if (opts.pageSize) q.set('pageSize', String(opts.pageSize))
+    if (opts.search) q.set('search', opts.search)
+    if (opts.sortBy) q.set('sortBy', opts.sortBy)
+    if (opts.sortDir) q.set('sortDir', opts.sortDir)
+    const qs = q.toString()
+    return api.get<PartnerClientList>(`/partner/clients${qs ? `?${qs}` : ''}`)
+  },
   getClientDetail: (id: string) => api.get<PartnerClientDetail>(`/partner/clients/${id}`),
   setConversion: (clientId: string, status: ConversionStatus) =>
     api.patch<{ ok: true }>(`/partner/clients/${clientId}/conversion`, { status }),

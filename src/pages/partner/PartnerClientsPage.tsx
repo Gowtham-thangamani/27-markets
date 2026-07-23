@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Users } from 'lucide-react'
-import { Badge, EmptyState, ErrorState, SkeletonRows } from '@/components/ui'
+import { Users, Search, ChevronUp, ChevronDown } from 'lucide-react'
+import { Badge, EmptyState, ErrorState, SkeletonRows, Input } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
 import { useToast } from '@/context/ToastContext'
 import { initials, formatDate, formatCurrency } from '@/lib/format'
 import { ApiError } from '@/lib/api'
-import { partnerApi, type PartnerClient, type ConversionStatus } from '@/lib/partnerApi'
+import { partnerApi, type PartnerClient, type ConversionStatus, type ClientSortBy } from '@/lib/partnerApi'
 
 const KYC_TONE: Record<string, 'success' | 'warning' | 'neutral' | 'danger'> = {
   APPROVED: 'success', PENDING: 'warning', NOT_SUBMITTED: 'neutral', REJECTED: 'danger',
@@ -71,20 +71,45 @@ function ConversionSelect({
   )
 }
 
+const PAGE_SIZE = 20
+
 export default function PartnerClientsPage() {
   const toast = useToast()
   const [rows, setRows] = useState<PartnerClient[]>([])
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [savingId, setSavingId] = useState<string | null>(null)
 
+  // Server-side query state.
+  const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [debounced, setDebounced] = useState('')
+  const [sortBy, setSortBy] = useState<ClientSortBy>('signup')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+
+  // Debounce the search box so typing doesn't fire a request per keystroke.
+  useEffect(() => {
+    const t = setTimeout(() => { setDebounced(search.trim()); setPage(1) }, 350)
+    return () => clearTimeout(t)
+  }, [search])
+
   const load = useCallback(async () => {
     setLoading(true); setError(null)
-    try { setRows(await partnerApi.getClients()) }
-    catch (e) { setError(e instanceof ApiError ? e.message : 'Failed to load') }
+    try {
+      const r = await partnerApi.getClients({ page, pageSize: PAGE_SIZE, search: debounced || undefined, sortBy, sortDir })
+      setRows(r.rows); setTotal(r.total)
+    } catch (e) { setError(e instanceof ApiError ? e.message : 'Failed to load') }
     finally { setLoading(false) }
-  }, [])
+  }, [page, debounced, sortBy, sortDir])
   useEffect(() => { void load() }, [load])
+
+  const toggleSort = (col: ClientSortBy) => {
+    if (sortBy === col) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    else { setSortBy(col); setSortDir(col === 'name' || col === 'country' ? 'asc' : 'desc') }
+    setPage(1)
+  }
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
   const changeConversion = useCallback(async (client: PartnerClient, status: ConversionStatus) => {
     const prev = client.conversionStatus
@@ -102,33 +127,65 @@ export default function PartnerClientsPage() {
     }
   }, [toast])
 
+  // Truly-empty (no clients at all, not just a filtered-out search).
+  if (!loading && !error && total === 0 && !debounced) {
+    return (
+      <>
+        <PageTitle title="Referred Clients" subtitle="Clients who signed up through your referral link." />
+        <EmptyState icon={Users} title="No referrals yet" description="Share your referral link to start referring clients." />
+      </>
+    )
+  }
+
+  const th = (label: string, col?: ClientSortBy, extra = '') => (
+    <th className={`px-4 py-3 font-medium ${extra} ${col ? 'cursor-pointer select-none hover:text-gray-300' : ''}`}
+        onClick={col ? () => toggleSort(col) : undefined}>
+      <span className="inline-flex items-center gap-1">
+        {label}
+        {col && sortBy === col && (sortDir === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+      </span>
+    </th>
+  )
+
   return (
     <>
       <PageTitle title="Referred Clients" subtitle="Clients who signed up through your referral link." />
+
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="relative w-full max-w-xs">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+          <Input className="pl-9" placeholder="Search name, email or phone…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        <span className="text-xs text-gray-500">{total} {total === 1 ? 'client' : 'clients'}{debounced && ' matched'}</span>
+      </div>
+
       {error ? <ErrorState description={error} onRetry={load} />
         : loading ? <SkeletonRows rows={6} />
-        : rows.length === 0 ? <EmptyState icon={Users} title="No referrals yet" description="Share your referral link to start referring clients." />
         : (
+          <>
           <div className="glass-panel overflow-x-auto">
             <table className="w-full min-w-[1500px] text-sm">
               <thead><tr className="border-b border-white/[0.06] text-left text-xs text-gray-500">
-                <th className="px-4 py-3 font-medium">ID</th>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Phone</th>
-                <th className="px-4 py-3 font-medium">Country</th>
-                <th className="px-4 py-3 font-medium">Campaign</th>
-                <th className="px-4 py-3 font-medium">Trading Accounts</th>
-                <th className="px-4 py-3 font-medium">Can Trade</th>
-                <th className="px-4 py-3 font-medium">Conversion Status</th>
-                <th className="px-4 py-3 font-medium">KYC Status</th>
-                <th className="px-4 py-3 font-medium">Signed Up</th>
-                <th className="px-4 py-3 font-medium">Last Login</th>
-                <th className="px-4 py-3 font-medium">Converted</th>
-                <th className="px-4 py-3 font-medium text-right">Total Deposits</th>
-                <th className="px-4 py-3 font-medium">Sales Agent</th>
-                <th className="px-4 py-3 font-medium"></th>
+                {th('ID')}
+                {th('Name', 'name')}
+                {th('Phone')}
+                {th('Country', 'country')}
+                {th('Campaign', 'campaign')}
+                {th('Trading Accounts')}
+                {th('Can Trade')}
+                {th('Conversion Status', 'conversion')}
+                {th('KYC Status')}
+                {th('Signed Up', 'signup')}
+                {th('Last Login')}
+                {th('Converted')}
+                {th('Total Deposits', undefined, 'text-right')}
+                {th('Sales Agent')}
+                {th('')}
               </tr></thead>
               <tbody>
+                {rows.length === 0 && (
+                  <tr><td colSpan={15} className="px-4 py-8 text-center text-sm text-gray-500">No clients match “{debounced}”.</td></tr>
+                )}
                 {rows.map((c) => (
                   <tr key={c.id} className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02]">
                     <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-gray-500">{c.id.slice(-8)}</td>
@@ -160,6 +217,19 @@ export default function PartnerClientsPage() {
               </tbody>
             </table>
           </div>
+
+          {pages > 1 && (
+            <div className="mt-4 flex items-center justify-between text-xs text-gray-400">
+              <span>Page {page} of {pages}</span>
+              <div className="flex gap-2">
+                <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}
+                  className="rounded-lg border border-white/10 px-3 py-1.5 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40">Previous</button>
+                <button disabled={page >= pages} onClick={() => setPage((p) => p + 1)}
+                  className="rounded-lg border border-white/10 px-3 py-1.5 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40">Next</button>
+              </div>
+            </div>
+          )}
+          </>
         )}
     </>
   )

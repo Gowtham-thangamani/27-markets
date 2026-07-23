@@ -4,7 +4,7 @@ import type { Response } from 'express';
 import { UserRole } from '@prisma/client';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser, Roles } from '../common/decorators';
-import { PartnerPortalService } from './partner-portal.service';
+import { PartnerPortalService, type ClientSortBy } from './partner-portal.service';
 import { UpdateConversionDto } from './dto/update-conversion.dto';
 import { UpdatePayoutMethodDto } from './dto/update-payout-method.dto';
 
@@ -18,7 +18,22 @@ export class PartnerPortalController {
   dashboard(@CurrentUser('id') userId: string) { return this.portal.dashboard(userId); }
 
   @Get('clients')
-  clients(@CurrentUser('id') userId: string) { return this.portal.clients(userId); }
+  clients(
+    @CurrentUser('id') userId: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('search') search?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortDir') sortDir?: string,
+  ) {
+    return this.portal.clients(userId, {
+      page: page ? Number(page) : undefined,
+      pageSize: pageSize ? Number(pageSize) : undefined,
+      search,
+      sortBy: sortBy as ClientSortBy | undefined,
+      sortDir: sortDir === 'asc' ? 'asc' : sortDir === 'desc' ? 'desc' : undefined,
+    });
+  }
 
   @Get('clients/:id')
   clientDetail(@CurrentUser('id') userId: string, @Param('id') clientId: string) {

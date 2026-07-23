@@ -159,7 +159,7 @@ describe('PartnerPortalService.clients', () => {
 
   const svcWith = (rows: any[], ledger: any[] = [], postings: any[] = [], audits: any[] = []) => {
     const prisma = {
-      user: { findMany: jest.fn().mockResolvedValue(rows) },
+      user: { findMany: jest.fn().mockResolvedValue(rows), count: jest.fn().mockResolvedValue(rows.length) },
       ledgerAccount: { findMany: jest.fn().mockResolvedValue(ledger) },
       posting: { groupBy: jest.fn().mockResolvedValue(postings) },
       auditLog: { groupBy: jest.fn().mockResolvedValue(audits) },
@@ -174,8 +174,9 @@ describe('PartnerPortalService.clients', () => {
       [{ ledgerAccountId: 'la1', _sum: { amount: 500 } }, { ledgerAccountId: 'la2', _sum: { amount: 295 } }],
     )
 
-    const [row] = await svc.clients('p1')
+    const { rows: [row], total } = await svc.clients('p1')
 
+    expect(total).toBe(1)
     expect(row.totalDeposits).toBe(795)
     expect(row.phone).toBe('+971500000000')
     expect(row.accounts).toEqual([{ type: 'STANDARD', mode: 'LIVE', status: 'ACTIVE' }])
@@ -183,21 +184,33 @@ describe('PartnerPortalService.clients', () => {
 
   it('reports zero deposits rather than null when a client has never funded', async () => {
     const svc = svcWith([client()], [{ id: 'la1', userId: 'c1' }], [])
-    const [row] = await svc.clients('p1')
+    const { rows: [row] } = await svc.clients('p1')
     expect(row.totalDeposits).toBe(0)
   })
 
   it('surfaces the latest sign-in, or null when the client never logged in', async () => {
     const when = new Date('2026-07-01T10:00:00Z')
     const withLogin = svcWith([client()], [], [], [{ userId: 'c1', _max: { createdAt: when } }])
-    expect((await withLogin.clients('p1'))[0].lastLoginAt).toBe(when.toISOString())
+    expect((await withLogin.clients('p1')).rows[0].lastLoginAt).toBe(when.toISOString())
 
     const never = svcWith([client()], [], [], [])
-    expect((await never.clients('p1'))[0].lastLoginAt).toBeNull()
+    expect((await never.clients('p1')).rows[0].lastLoginAt).toBeNull()
+  })
+
+  it('searches, sorts and paginates via the query, exposing the total', async () => {
+    const svc = svcWith([client()])
+    await svc.clients('p1', { page: 2, pageSize: 10, search: 'ada', sortBy: 'name', sortDir: 'asc' })
+    const prisma = (svc as any).prisma
+    const arg = prisma.user.findMany.mock.calls[0][0]
+    expect(arg.skip).toBe(10) // (page 2 - 1) * 10
+    expect(arg.take).toBe(10)
+    expect(arg.orderBy).toEqual([{ firstName: 'asc' }, { lastName: 'asc' }])
+    expect(arg.where.OR).toEqual(expect.arrayContaining([{ email: { contains: 'ada', mode: 'insensitive' } }]))
+    expect(prisma.user.count).toHaveBeenCalledWith(expect.objectContaining({ where: arg.where }))
   })
 
   describe('canTrade', () => {
-    const canTradeOf = async (over: any) => (await svcWith([client(over)]).clients('p1'))[0].canTrade
+    const canTradeOf = async (over: any) => (await svcWith([client(over)]).clients('p1')).rows[0].canTrade
 
     it('is true for an active user with an active live account', async () => {
       expect(await canTradeOf({})).toBe(true)
@@ -222,8 +235,9 @@ describe('PartnerPortalService.clients', () => {
 
   it('skips the aggregate queries entirely when the partner has no clients', async () => {
     const svc = svcWith([])
-    const rows = await svc.clients('p1')
+    const { rows, total } = await svc.clients('p1')
     expect(rows).toEqual([])
+    expect(total).toBe(0)
     expect((svc as any).prisma.posting.groupBy).not.toHaveBeenCalled()
     expect((svc as any).prisma.auditLog.groupBy).not.toHaveBeenCalled()
   })
@@ -232,7 +246,7 @@ describe('PartnerPortalService.clients', () => {
 describe('PartnerPortalService CRM fields on the clients list', () => {
   const svcWith = (row: any) => {
     const prisma = {
-      user: { findMany: jest.fn().mockResolvedValue([row]) },
+      user: { findMany: jest.fn().mockResolvedValue([row]), count: jest.fn().mockResolvedValue(1) },
       ledgerAccount: { findMany: jest.fn().mockResolvedValue([]) },
       posting: { groupBy: jest.fn().mockResolvedValue([]) },
       auditLog: { groupBy: jest.fn().mockResolvedValue([]) },
@@ -251,7 +265,7 @@ describe('PartnerPortalService CRM fields on the clients list', () => {
       convertedAt: new Date('2026-03-02T00:00:00Z'),
       assignedAgent: { firstName: 'Sam', lastName: 'Agent' },
     })
-    const [row] = await svc.clients('p1')
+    const { rows: [row] } = await svc.clients('p1')
     expect(row.campaign).toBe('1341')
     expect(row.conversionStatus).toBe('CONVERTED')
     expect(row.convertedAt).toBe('2026-03-02T00:00:00.000Z')
@@ -260,7 +274,7 @@ describe('PartnerPortalService CRM fields on the clients list', () => {
 
   it('leaves optional CRM fields null when unset', async () => {
     const svc = svcWith({ ...base, campaignCode: null, conversionStatus: 'NO_ANSWER', convertedAt: null, assignedAgent: null })
-    const [row] = await svc.clients('p1')
+    const { rows: [row] } = await svc.clients('p1')
     expect(row.campaign).toBeNull()
     expect(row.convertedAt).toBeNull()
     expect(row.salesAgent).toBeNull()

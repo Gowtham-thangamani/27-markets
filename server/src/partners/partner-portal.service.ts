@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { ConfigService } from '@nestjs/config';
 import {
   AccountMode, AccountStatus, AccountType, JournalKind, JournalStatus, PartnerPayoutStatus,
-  PayoutMethod, PostingDirection, UserStatus,
+  PayoutMethod, PostingDirection, Prisma, UserStatus,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { computeDelta, dayKey, emptySeries, kycStatusOf, sparkFromSeries } from '../admin/admin-dashboard.util';
@@ -17,6 +17,14 @@ type Kyc = 'NOT_SUBMITTED' | 'PENDING' | 'APPROVED' | 'REJECTED';
 export interface PartnerClientAccount { type: AccountType; mode: AccountMode; status: AccountStatus }
 /** What the dashboard's "recent referrals" strip needs. */
 export interface PartnerClientSummary { id: string; name: string; email: string; country: string | null; kyc: Kyc; createdAt: string }
+export type ClientSortBy = 'name' | 'country' | 'conversion' | 'campaign' | 'signup';
+export interface ClientListOpts {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  sortBy?: ClientSortBy;
+  sortDir?: 'asc' | 'desc';
+}
 export type ConversionStatusT = 'NO_ANSWER' | 'ON_BOARDING' | 'CONVERTED' | 'NOT_INTERESTED';
 /** The full clients-list row, which also carries accounts, CRM state and financials. */
 export interface PartnerClient extends PartnerClientSummary {
@@ -30,6 +38,13 @@ export interface PartnerClient extends PartnerClientSummary {
   /** Lifetime posted deposits, USD. */
   totalDeposits: number;
   lastLoginAt: string | null;
+}
+/** A page of the referred-clients list, with the total for pagination. */
+export interface PartnerClientList {
+  rows: PartnerClient[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 export interface PartnerDashboard {
   referralCode: string;
@@ -167,14 +182,50 @@ export class PartnerPortalService {
     };
   }
 
-  async clients(partnerId: string): Promise<PartnerClient[]> {
-    const rows = await this.prisma.user.findMany({
-      where: { referredByPartnerId: partnerId },
-      orderBy: { createdAt: 'desc' },
-      take: CLIENT_LIST_LIMIT,
-      select: CLIENT_LIST_SELECT,
-    });
-    if (!rows.length) return [];
+  /**
+   * A page of referred clients, server-side searched + sorted + paginated so
+   * the table scales past a few hundred clients. Search matches name / email /
+   * phone; sort covers the DB-backed columns (deposits + last login are
+   * computed per page and shown but not server-sortable).
+   */
+  async clients(partnerId: string, opts: ClientListOpts = {}): Promise<PartnerClientList> {
+    const pageSize = Math.min(Math.max(opts.pageSize ?? 20, 1), 100);
+    const page = Math.max(opts.page ?? 1, 1);
+    const dir: Prisma.SortOrder = opts.sortDir === 'asc' ? 'asc' : 'desc';
+
+    const search = opts.search?.trim();
+    const where: Prisma.UserWhereInput = {
+      referredByPartnerId: partnerId,
+      ...(search
+        ? {
+            OR: [
+              { firstName: { contains: search, mode: 'insensitive' } },
+              { lastName: { contains: search, mode: 'insensitive' } },
+              { email: { contains: search, mode: 'insensitive' } },
+              { phone: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const orderBy: Prisma.UserOrderByWithRelationInput[] =
+      opts.sortBy === 'name' ? [{ firstName: dir }, { lastName: dir }]
+      : opts.sortBy === 'country' ? [{ country: dir }]
+      : opts.sortBy === 'conversion' ? [{ conversionStatus: dir }]
+      : opts.sortBy === 'campaign' ? [{ campaignCode: dir }]
+      : [{ createdAt: dir }]; // default: signup date
+
+    const [total, rows] = await Promise.all([
+      this.prisma.user.count({ where }),
+      this.prisma.user.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        select: CLIENT_LIST_SELECT,
+      }),
+    ]);
+    if (!rows.length) return { rows: [], total, page, pageSize };
 
     const ids = rows.map((r) => r.id);
     const [depositsByUser, lastLoginByUser] = await Promise.all([
@@ -182,22 +233,27 @@ export class PartnerPortalService {
       this.lastLogins(ids),
     ]);
 
-    return rows.map((r) => ({
-      ...this.toClient(r),
-      phone: r.phone,
-      campaign: r.campaignCode,
-      accounts: r.tradingAccounts.map((a) => ({ type: a.type, mode: a.mode, status: a.status })),
-      // No dedicated trading lock exists: a client can trade when neither the
-      // account nor the user is suspended/closed.
-      canTrade:
-        r.status === UserStatus.ACTIVE &&
-        r.tradingAccounts.some((a) => a.mode === AccountMode.LIVE && a.status === AccountStatus.ACTIVE),
-      conversionStatus: r.conversionStatus,
-      convertedAt: r.convertedAt?.toISOString() ?? null,
-      salesAgent: r.assignedAgent ? `${r.assignedAgent.firstName} ${r.assignedAgent.lastName}` : null,
-      totalDeposits: depositsByUser.get(r.id) ?? 0,
-      lastLoginAt: lastLoginByUser.get(r.id)?.toISOString() ?? null,
-    }));
+    return {
+      total,
+      page,
+      pageSize,
+      rows: rows.map((r) => ({
+        ...this.toClient(r),
+        phone: r.phone,
+        campaign: r.campaignCode,
+        accounts: r.tradingAccounts.map((a) => ({ type: a.type, mode: a.mode, status: a.status })),
+        // No dedicated trading lock exists: a client can trade when neither the
+        // account nor the user is suspended/closed.
+        canTrade:
+          r.status === UserStatus.ACTIVE &&
+          r.tradingAccounts.some((a) => a.mode === AccountMode.LIVE && a.status === AccountStatus.ACTIVE),
+        conversionStatus: r.conversionStatus,
+        convertedAt: r.convertedAt?.toISOString() ?? null,
+        salesAgent: r.assignedAgent ? `${r.assignedAgent.firstName} ${r.assignedAgent.lastName}` : null,
+        totalDeposits: depositsByUser.get(r.id) ?? 0,
+        lastLoginAt: lastLoginByUser.get(r.id)?.toISOString() ?? null,
+      })),
+    };
   }
 
   /**
