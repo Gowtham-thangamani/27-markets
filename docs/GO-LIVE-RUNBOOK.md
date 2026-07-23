@@ -45,7 +45,15 @@ None of these can be replaced by configuration. Secure them first.
 | `JWT_ACCESS_SECRET` | yes | ≥32 chars; **must differ** from refresh in prod |
 | `JWT_REFRESH_SECRET` | yes | ≥32 chars |
 | `ENCRYPTION_KEY` | **set in prod** | ≥16 chars; encrypts 2FA secrets at rest (without it they're plaintext) |
+| `EMAIL_PROVIDER` | **`smtp` in prod** | boot refuses `console` in production (else verification/reset/OTP mail silently never sends) |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | with smtp | transactional email (e.g. Zoho) |
 | `TOTP_ISSUER` | no | shown in authenticator apps |
+| `SENTRY_DSN` | recommended | server error monitoring (no‑op if unset) |
+| `VITE_SENTRY_DSN` | recommended | frontend error monitoring, baked at build (no‑op if unset) |
+
+**Withdrawal risk limits** (admin‑editable AppSettings, `0` = off): review
+`withdrawal_max_single_usd` / `withdrawal_daily_limit_usd` before LIVE. Seeded to
+$50k / $100k — tune to policy.
 
 ## 2. Seam flips (each is independent)
 
@@ -58,8 +66,14 @@ None of these can be replaced by configuration. Secure them first.
 | `MT5_ACCOUNT_ID` | MT5 login |
 Verify: `GET /api/trading/venue` → `{"name":"mt5","simulated":false}`. Place a tiny
 test order on a test account; confirm the deal on the MT5 terminal. Map any new
-instruments in `toMt5Symbol` (`mt5-symbols.ts`). Phase 4: position/balance
-reconciliation + close‑by‑ticket for hedging accounts.
+instruments in `toMt5Symbol` (`mt5-symbols.ts`).
+**Broker‑authoritative lifecycle is implemented** (opens capture the broker
+position id; TP/SL, stop‑out and full closes route through the venue by id;
+pending fills execute at the venue after the atomic claim; a 5‑min drift check
+audits any local↔broker divergence). It is unit‑tested but **not yet exercised
+against a real MetaApi account** — validate on a **demo MT5 account first**:
+open a market + a pending order, hit a TP and a stop‑out, confirm each on the
+MT5 terminal, and confirm `trade.reconcile.drift` is absent from the audit log.
 
 ### B. Payments → Stripe (deposits + payouts)
 | Var | Value |
@@ -89,6 +103,39 @@ object in the bucket, and that staff streaming (`/kyc/documents/:id/file`) works
 Set `FINNHUB_API_KEY` (or replace the provider) and confirm `MARKET_SYMBOLS`. Verify
 `GET /api/market/quotes` returns fresh (non‑stale) ticks.
 
+### E. KYC → SumSub (identity verification)
+| Var | Value |
+|---|---|
+| `KYC_PROVIDER` | `external` |
+| `KYC_PROVIDER_API_KEY` | SumSub app token |
+| `KYC_PROVIDER_SECRET` | SumSub secret (request signing) |
+| `KYC_PROVIDER_BASE_URL` | optional (default `https://api.sumsub.com`) |
+| `KYC_PROVIDER_LEVEL` | verification level name (default `basic-kyc-level`) |
+| `KYC_WEBHOOK_SECRET` | SumSub webhook secret (falls back to `KYC_PROVIDER_SECRET`) |
+
+`POST /kyc/verification-session` creates/reuses a SumSub applicant and returns an
+`sdkToken`; the portal launches the WebSDK with it. Point a SumSub **webhook** at
+`POST /api/kyc/webhook/sumsub` (event `applicantReviewed`): GREEN → all KYC steps
+APPROVED + AML screen; RED → REJECTED. **Frontend follow‑up:** wire the SumSub
+WebSDK to launch with `sdkToken`. Validate in the SumSub **sandbox** first: run a
+test applicant to GREEN and RED, confirm the webhook flips `KycProfile`.
+
+### F. AML → OpenSanctions (sanctions/PEP screening)
+| Var | Value |
+|---|---|
+| `AML_PROVIDER` | `external` |
+| `AML_PROVIDER_API_KEY` | OpenSanctions API key |
+| `AML_PROVIDER_BASE_URL` | optional (default `https://api.opensanctions.org`; or a self‑hosted yente) |
+
+Screens name + DOB + country on KYC approval and money‑out; maps the best match
+score to CLEAR / REVIEW (≥0.6) / HIT (≥0.85). REVIEW/HIT land in the admin AML
+queue (`/admin/aml`). Validate: screen a known sanctioned name → HIT; a clean
+name → CLEAR; confirm a HIT blocks withdrawal (`assertNotBlocked`).
+
+> **LIVE boot guard:** with `TRADING_MODE=LIVE` + `ALLOW_LIVE_MODE=true`, the app
+> **refuses to boot** unless `AML_PROVIDER=external` **and** `KYC_PROVIDER=external`
+> (and `AML_SIM_DENYLIST` is unset). Simulated compliance cannot reach LIVE.
+
 ---
 
 ## 3. The flip sequence (order matters)
@@ -97,11 +144,16 @@ Set `FINNHUB_API_KEY` (or replace the provider) and confirm `MARKET_SYMBOLS`. Ve
 2. **Secrets**: load core env (§1) incl. `ENCRYPTION_KEY` and distinct JWT secrets.
 3. **Storage** (B/C are safe to enable before LIVE): `STORAGE_PROVIDER=s3`, verify.
 4. **Market data**: real feed key, verify quotes.
-5. **Execution**: `EXECUTION_PROVIDER=mt5` + creds, verify `/trading/venue` + test deal.
-6. **Payments**: `PSP_PROVIDER=stripe` + keys + webhook, verify a test deposit.
-7. **Only when 1–6 are green and licensing is in place** — flip the money rail:
-   `TRADING_MODE=LIVE` **and** `ALLOW_LIVE_MODE=true`. The app will refuse to boot if
-   `LIVE` is set without the explicit override.
+5. **Compliance** (E/F — safe to enable before LIVE, and required for it):
+   `KYC_PROVIDER=external` + SumSub creds + webhook; `AML_PROVIDER=external` +
+   OpenSanctions key. Validate both in sandbox (§2E/§2F).
+6. **Execution**: `EXECUTION_PROVIDER=mt5` + creds, verify `/trading/venue` + test deal
+   **on a demo MT5 account** (broker‑authoritative lifecycle + no reconciliation drift).
+7. **Payments**: `PSP_PROVIDER=stripe` + keys + webhook, verify a test deposit; run
+   `POST /admin/finance/psp-reconcile` → expect `inSync: true`.
+8. **Only when 1–7 are green and licensing is in place** — flip the money rail:
+   `TRADING_MODE=LIVE` **and** `ALLOW_LIVE_MODE=true`. The app refuses to boot if
+   `LIVE` is set without the override, or with simulated KYC/AML (§2 guard).
 8. **Smoke test** end‑to‑end on a real (small) account: deposit → trade → close →
    withdraw → finance approval → payout. Then announce.
 
