@@ -73,6 +73,12 @@ export interface PartnerClientDetail extends PartnerClient {
   deposits: { amount: number; reference: string | null; date: string }[];
   commissions: { amount: number; level: number; date: string; status: CommissionStatus }[];
 }
+export interface PartnerCampaignPerf { campaign: string; signups: number; funded: number; deposits: number; commission: number }
+export interface PartnerPerformance {
+  funnel: { signups: number; kycVerified: number; funded: number };
+  campaigns: PartnerCampaignPerf[];
+  earnings: { month: string; amount: number }[];
+}
 
 export type CommissionStatus = 'AVAILABLE' | 'IN_REVIEW' | 'PAID'
 export interface PartnerCommissionRow { id: string; amount: number; source: string; reference: string | null; client: string; date: string; status: CommissionStatus; level: number }
@@ -192,6 +198,82 @@ export class PartnerPortalService {
       totalDeposits: depositsByUser.get(r.id) ?? 0,
       lastLoginAt: lastLoginByUser.get(r.id)?.toISOString() ?? null,
     }));
+  }
+
+  /**
+   * Growth analytics for the partner: per-campaign performance, the signup→
+   * funded conversion funnel, and a monthly earnings trend. Turns the captured
+   * campaign attribution + commission history into something actionable.
+   */
+  async performance(partnerId: string): Promise<PartnerPerformance> {
+    const profile = await this.prisma.partnerProfile.findUnique({ where: { userId: partnerId }, select: { id: true } });
+    if (!profile) throw new NotFoundException('Partner profile not found');
+
+    const clients = await this.prisma.user.findMany({
+      where: { referredByPartnerId: partnerId },
+      select: { id: true, campaignCode: true, kycProfile: { select: { identityStatus: true, addressStatus: true, selfieStatus: true } } },
+    });
+    const ids = clients.map((c) => c.id);
+    if (!ids.length) {
+      return { funnel: { signups: 0, kycVerified: 0, funded: 0 }, campaigns: [], earnings: [] };
+    }
+
+    const [depositsByUser, commissions] = await Promise.all([
+      this.depositTotals(ids),
+      this.prisma.ibCommission.findMany({ where: { partnerId }, select: { amount: true, clientId: true, createdAt: true } }),
+    ]);
+
+    // Commission earned per referred client (any level attributed to this partner).
+    const commByClient = new Map<string, number>();
+    for (const c of commissions) {
+      commByClient.set(c.clientId, (commByClient.get(c.clientId) ?? 0) + Number(c.amount));
+    }
+
+    // ── Per-campaign breakdown ──
+    const CAMPAIGN_NONE = 'Direct / no campaign';
+    const camp = new Map<string, { signups: number; funded: number; deposits: number; commission: number }>();
+    for (const c of clients) {
+      const key = c.campaignCode?.trim() || CAMPAIGN_NONE;
+      const row = camp.get(key) ?? { signups: 0, funded: 0, deposits: 0, commission: 0 };
+      const dep = depositsByUser.get(c.id) ?? 0;
+      row.signups += 1;
+      if (dep > 0) row.funded += 1;
+      row.deposits += dep;
+      row.commission += commByClient.get(c.id) ?? 0;
+      camp.set(key, row);
+    }
+    const campaigns = [...camp.entries()]
+      .map(([campaign, r]) => ({
+        campaign,
+        signups: r.signups,
+        funded: r.funded,
+        deposits: Number(r.deposits.toFixed(2)),
+        commission: Number(r.commission.toFixed(2)),
+      }))
+      .sort((a, b) => b.commission - a.commission || b.signups - a.signups);
+
+    // ── Conversion funnel ──
+    const funnel = {
+      signups: clients.length,
+      kycVerified: clients.filter((c) => this.kycOf(c) === 'APPROVED').length,
+      funded: clients.filter((c) => (depositsByUser.get(c.id) ?? 0) > 0).length,
+    };
+
+    // ── Monthly earnings (last 12 months, oldest→newest) ──
+    const months: { key: string; label: string }[] = [];
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+      months.push({ key: `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`, label: d.toISOString().slice(0, 7) });
+    }
+    const byMonth = new Map(months.map((m) => [m.key, 0]));
+    for (const c of commissions) {
+      const key = `${c.createdAt.getUTCFullYear()}-${String(c.createdAt.getUTCMonth() + 1).padStart(2, '0')}`;
+      if (byMonth.has(key)) byMonth.set(key, (byMonth.get(key) as number) + Number(c.amount));
+    }
+    const earnings = months.map((m) => ({ month: m.label, amount: Number((byMonth.get(m.key) as number).toFixed(2)) }));
+
+    return { funnel, campaigns, earnings };
   }
 
   /**

@@ -515,3 +515,51 @@ describe('PartnerPortalService.subPartnerClients', () => {
     await expect(svc.subPartnerClients('p1', 'other')).rejects.toBeInstanceOf(NotFoundException)
   })
 })
+
+describe('PartnerPortalService.performance', () => {
+  const make = (clients: any[], deposits: Record<string, number>, commissions: any[]) => {
+    const prisma = {
+      partnerProfile: { findUnique: jest.fn().mockResolvedValue({ id: 'pp1' }) },
+      user: { findMany: jest.fn().mockResolvedValue(clients) },
+      ledgerAccount: { findMany: jest.fn().mockResolvedValue(Object.keys(deposits).map((userId) => ({ id: `la_${userId}`, userId }))) },
+      posting: { groupBy: jest.fn().mockResolvedValue(Object.entries(deposits).map(([userId, amt]) => ({ ledgerAccountId: `la_${userId}`, _sum: { amount: amt } }))) },
+      ibCommission: { findMany: jest.fn().mockResolvedValue(commissions) },
+    } as any
+    return new PartnerPortalService(prisma, { get: jest.fn() } as any)
+  }
+  const kyc = (s: string) => ({ identityStatus: s, addressStatus: s, selfieStatus: s })
+
+  it('returns an empty shape for a partner with no clients', async () => {
+    const svc = make([], {}, [])
+    expect(await svc.performance('p1')).toEqual({ funnel: { signups: 0, kycVerified: 0, funded: 0 }, campaigns: [], earnings: [] })
+  })
+
+  it('builds the funnel, campaign breakdown, and monthly earnings', async () => {
+    const now = new Date()
+    const clients = [
+      { id: 'c1', campaignCode: 'instagram', kycProfile: kyc('APPROVED') }, // funded
+      { id: 'c2', campaignCode: 'instagram', kycProfile: kyc('APPROVED') }, // not funded
+      { id: 'c3', campaignCode: null, kycProfile: kyc('PENDING') },         // funded, no campaign
+    ]
+    const deposits = { c1: 1000, c3: 500 } // c2 has none
+    const commissions = [
+      { amount: 100, clientId: 'c1', createdAt: now },
+      { amount: 50, clientId: 'c3', createdAt: now },
+    ]
+    const svc = make(clients, deposits, commissions)
+    const r = await svc.performance('p1')
+
+    expect(r.funnel).toEqual({ signups: 3, kycVerified: 2, funded: 2 })
+
+    const ig = r.campaigns.find((c) => c.campaign === 'instagram')!
+    expect(ig).toEqual({ campaign: 'instagram', signups: 2, funded: 1, deposits: 1000, commission: 100 })
+    const none = r.campaigns.find((c) => c.campaign === 'Direct / no campaign')!
+    expect(none).toMatchObject({ signups: 1, funded: 1, deposits: 500, commission: 50 })
+    // Highest commission first.
+    expect(r.campaigns[0].campaign).toBe('instagram')
+
+    // 12 months, this month carries the $150 total.
+    expect(r.earnings).toHaveLength(12)
+    expect(r.earnings[11].amount).toBe(150)
+  })
+})

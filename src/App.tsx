@@ -25,6 +25,7 @@ const PartnerClientsPage = lazy(() => import('./pages/partner/PartnerClientsPage
 const PartnerCommissionsPage = lazy(() => import('./pages/partner/PartnerCommissionsPage'))
 const PartnerReferralToolsPage = lazy(() => import('./pages/partner/PartnerReferralToolsPage'))
 const PartnerSubPartnersPage = lazy(() => import('./pages/partner/PartnerSubPartnersPage'))
+const PartnerPerformancePage = lazy(() => import('./pages/partner/PartnerPerformancePage'))
 const PartnerPayoutsPage = lazy(() => import('./pages/partner/PartnerPayoutsPage'))
 const PartnerSettingsPage = lazy(() => import('./pages/partner/PartnerSettingsPage'))
 const PartnerClientDetailPage = lazy(() => import('./pages/partner/PartnerClientDetailPage'))
@@ -241,6 +242,7 @@ export default function App() {
         <Route path="dashboard" element={<PartnerDashboardPage />} />
         <Route path="clients" element={<PartnerClientsPage />} />
         <Route path="clients/:id" element={<PartnerClientDetailPage />} />
+        <Route path="performance" element={<PartnerPerformancePage />} />
         <Route path="sub-partners" element={<PartnerSubPartnersPage />} />
         <Route path="sub-partners/:id/clients" element={<PartnerSubPartnerClientsPage />} />
         <Route path="commissions" element={<PartnerCommissionsPage />} />

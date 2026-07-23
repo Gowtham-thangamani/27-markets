@@ -28,6 +28,12 @@ export interface PartnerClientDetail extends PartnerClient {
   deposits: { amount: number; reference: string | null; date: string }[]
   commissions: { amount: number; level: number; date: string; status: CommissionStatus }[]
 }
+export interface PartnerCampaignPerf { campaign: string; signups: number; funded: number; deposits: number; commission: number }
+export interface PartnerPerformance {
+  funnel: { signups: number; kycVerified: number; funded: number }
+  campaigns: PartnerCampaignPerf[]
+  earnings: { month: string; amount: number }[]
+}
 export interface SubPartnerClients {
   subPartner: { id: string; name: string }
   clients: PartnerClientSummary[]
@@ -75,6 +81,7 @@ export const partnerApi = {
   getClientDetail: (id: string) => api.get<PartnerClientDetail>(`/partner/clients/${id}`),
   setConversion: (clientId: string, status: ConversionStatus) =>
     api.patch<{ ok: true }>(`/partner/clients/${clientId}/conversion`, { status }),
+  getPerformance: () => api.get<PartnerPerformance>('/partner/performance'),
   getSubPartners: () => api.get<SubPartner[]>('/partner/sub-partners'),
   getSubPartnerClients: (id: string) => api.get<SubPartnerClients>(`/partner/sub-partners/${id}/clients`),
   getProfile: () => api.get<PartnerProfile>('/partner/profile'),

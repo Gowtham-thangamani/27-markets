@@ -34,6 +34,9 @@ export class PartnerPortalController {
     return this.portal.setConversionStatus(userId, clientId, dto.status);
   }
 
+  @Get('performance')
+  performance(@CurrentUser('id') userId: string) { return this.portal.performance(userId); }
+
   @Get('sub-partners')
   subPartners(@CurrentUser('id') userId: string) { return this.portal.subPartners(userId); }
 
