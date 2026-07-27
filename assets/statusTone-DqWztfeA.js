@@ -1,0 +1,1 @@
+const n={Active:"success",Pending:"warning",Suspended:"danger",Archived:"neutral",Completed:"success",Failed:"danger",Approved:"success",Rejected:"danger","Not Submitted":"neutral",Open:"info","In Progress":"warning",Resolved:"success"};function s(e){return n[e]??"neutral"}export{s};

@@ -1,0 +1,49 @@
+name: Deploy frontend to S3 + CloudFront
+
+# Ships the React app to the production target (S3 27markets-frontend → CloudFront
+# E19DRXVNFKYHB4, API api.27markets.com). Wraps scripts/deploy-frontend.sh.
+#
+# Required repo secrets (Settings → Secrets and variables → Actions):
+#   AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY — IAM user with S3 + CloudFront perms
+# Bucket / distribution / region are non-secret (see docs/DEPLOYMENT.md).
+#
+# NOTE: this deploys the FRONTEND only. The backend (EC2) is deployed separately
+# with scripts/deploy-backend.sh.
+
+on:
+  push:
+    branches: [main]
+    # Skip when only backend/docs changed — nothing to rebuild for the frontend.
+    paths-ignore:
+      - 'server/**'
+      - 'docs/**'
+      - '**/*.md'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-s3
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-north-1
+      - name: Build → S3 → CloudFront invalidation
+        env:
+          S3_BUCKET: 27markets-frontend
+          CF_DISTRIBUTION_ID: E19DRXVNFKYHB4
+          VITE_API_URL: https://api.27markets.com/api
+        run: bash scripts/deploy-frontend.sh

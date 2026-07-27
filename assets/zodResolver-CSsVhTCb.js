@@ -1,0 +1,1 @@
+function n(t){return async a=>{const s=t.safeParse(a);if(s.success)return{values:s.data,errors:{}};const e={};for(const r of s.error.issues){const o=r.path.join(".")||"root";e[o]||(e[o]={type:r.code,message:r.message})}return{values:{},errors:e}}}export{n as z};

@@ -1,0 +1,47 @@
+node_modules
+dist
+dist-ssr
+*.local
+.vite
+
+# Env (never commit real secrets; *.example files are templates)
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Logs
+*.log
+dev.log
+npm-debug.log*
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+
+# Playwright QA artifacts
+.playwright-mcp
+*.png
+
+# …but the site's own images in public/ MUST be tracked (used by the deployed site)
+!public/*.png
+!public/**/*.png
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+
+# stray archives
+docs.zip
+*.zip
+
+# TS/Vite build artifacts (generated)
+*.tsbuildinfo
+vite.config.js
+
+# Build-time market-news artifact (regenerated each deploy)
+public/news.json

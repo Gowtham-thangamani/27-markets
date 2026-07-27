@@ -1,0 +1,7 @@
+node_modules
+dist
+.env
+*.log
+
+# KYC document storage (local dev) — never commit uploaded PII
+storage/

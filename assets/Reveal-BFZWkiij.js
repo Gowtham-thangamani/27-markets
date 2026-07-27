@@ -1,0 +1,1 @@
+import{j as n}from"./three-Bkz3aQXs.js";import{f as s}from"./motion-CBEN3rKb.js";import{y as a}from"./index--c6SK4rD.js";function d({children:i,variants:o=s,className:t,delay:r=0,amount:e=.2}){return n.jsx(a.div,{className:t,variants:o,initial:"hidden",whileInView:"show",viewport:{once:!0,amount:e},transition:{delay:r},children:i})}export{d as R};
