@@ -1,0 +1,1 @@
+import{h as o}from"./index-B_P6--1O.js";const s={list:()=>o.get("/downloads"),adminList:()=>o.get("/admin/downloads"),create:d=>o.post("/admin/downloads",d),update:(d,a)=>o.patch(`/admin/downloads/${d}`,a),remove:d=>o.del(`/admin/downloads/${d}`)};export{s as d};

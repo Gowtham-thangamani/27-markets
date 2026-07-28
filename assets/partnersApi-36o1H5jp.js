@@ -1,0 +1,1 @@
+import{h as a}from"./index-B_P6--1O.js";const i={apply:p=>a.post("/partners/apply",p),listApplications:p=>a.get(`/admin/partner-applications${p?`?status=${p}`:""}`),approve:p=>a.post(`/admin/partner-applications/${p}/approve`,{}),reject:(p,t)=>a.post(`/admin/partner-applications/${p}/reject`,{reason:t})};export{i as p};

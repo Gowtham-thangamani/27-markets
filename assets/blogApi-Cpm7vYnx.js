@@ -1,0 +1,1 @@
+import{h as e}from"./index-B_P6--1O.js";const g={list:(o=1,t=12)=>e.get(`/blog?page=${o}&limit=${t}`),bySlug:o=>e.get(`/blog/${encodeURIComponent(o)}`),adminList:()=>e.get("/admin/blog"),adminGet:o=>e.get(`/admin/blog/${o}`),create:o=>e.post("/admin/blog",o),update:(o,t)=>e.patch(`/admin/blog/${o}`,t),remove:o=>e.del(`/admin/blog/${o}`)};export{g as b};
