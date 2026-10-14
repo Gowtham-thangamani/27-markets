@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
-# Build the React app for production and publish it to S3 + invalidate CloudFront.
+# Build one surface of the React app for production and publish it to S3 +
+# invalidate CloudFront.
+#
+# Each surface (marketing, portal, partner, admin) is a separate bundle on its
+# own hostname and its own bucket + distribution. "all" is the combined
+# pre-split build that 27markets.com/staging/ still serves.
 #
 # Prereqs (one-time):
 #   - AWS CLI installed and `aws configure` done (or an IAM user/role with S3 +
@@ -7,18 +12,28 @@
 #   - The S3 bucket and CloudFront distribution already created (see docs/DEPLOYMENT.md).
 #
 # Usage:
-#   S3_BUCKET=27markets-frontend CF_DISTRIBUTION_ID=E1234ABC ./scripts/deploy-frontend.sh
+#   SURFACE=admin S3_BUCKET=27markets-admin CF_DISTRIBUTION_ID=E1234ABC \
+#     ./scripts/deploy-frontend.sh
 #
 set -euo pipefail
 
 : "${S3_BUCKET:?Set S3_BUCKET (the frontend bucket name)}"
 : "${CF_DISTRIBUTION_ID:?Set CF_DISTRIBUTION_ID (CloudFront distribution id)}"
+# Which slice of the app to build. vite.config.ts rejects anything else.
+: "${SURFACE:?Set SURFACE: marketing, portal, partner, admin or all}"
 # The API the built site talks to. Baked into the bundle at build time.
 : "${VITE_API_URL:=https://api.27markets.com/api}"
 
-echo "==> Building frontend with VITE_API_URL=$VITE_API_URL"
+echo "==> Building surface '$SURFACE' with VITE_API_URL=$VITE_API_URL"
 export VITE_API_URL
+export VITE_SURFACE="$SURFACE"
 npm run build
+
+# Prove this bundle carries no other surface's code BEFORE anything is published.
+# Under `set -e` a non-zero exit aborts the deploy, so a leaking build never
+# reaches S3 — which is the whole point of splitting the surfaces.
+echo "==> Verifying bundle isolation"
+node scripts/check-bundle-isolation.mjs "$SURFACE" dist
 
 echo "==> Syncing dist/ to s3://$S3_BUCKET"
 # 1) Hashed, content-addressed files under assets/ never change → cache forever.
@@ -39,4 +54,4 @@ aws cloudfront create-invalidation \
   --distribution-id "$CF_DISTRIBUTION_ID" \
   --paths "/*" >/dev/null
 
-echo "==> Done. Live at https://27markets.com (allow ~1 min for the CDN)."
+echo "==> Done. Surface '$SURFACE' published (allow ~1 min for the CDN)."
