@@ -1,6 +1,11 @@
 {
   "compilerOptions": {
     "composite": true,
+    // Keep tsc's emitted vite.config.js/.d.ts out of the repo root. Vite resolves
+    // vite.config.js BEFORE vite.config.ts, so an artifact left here silently
+    // shadows the real config — a stale one survives branch switches and config
+    // edits appear to do nothing.
+    "outDir": "./node_modules/.tmp/tsconfig-node",
     "skipLibCheck": true,
     "module": "ESNext",
     "moduleResolution": "bundler",

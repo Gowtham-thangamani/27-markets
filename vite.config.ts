@@ -2,6 +2,22 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'node:path'
 
+// Which slice of the app this build contains. The '@surface-routes' alias below
+// resolves to exactly one composition module, so a surface's bundle never even
+// imports another surface's routes — isolation holds because the foreign modules
+// are absent from the graph, not because the bundler was asked to drop them.
+// Tree-shaking alone does NOT achieve this: each route module calls
+// lazy(() => import(...)) at module scope, which Rollup treats as a side effect,
+// so a statically imported module is retained and every import() it contains is
+// still emitted as a chunk. Measured: all 167 chunks survived in every surface.
+const SURFACES = ['marketing', 'portal', 'partner', 'admin', 'all'] as const
+const surface = process.env.VITE_SURFACE || 'all'
+if (!(SURFACES as readonly string[]).includes(surface)) {
+  throw new Error(
+    `Unknown VITE_SURFACE "${surface}". Expected one of: ${SURFACES.join(', ')}`,
+  )
+}
+
 export default defineConfig(() => ({
   // Served at the domain root on S3 + CloudFront (production), Vercel, and local
   // dev — so base is '/'. A sub-path host (e.g. GitHub Pages at /27-markets/)
@@ -12,6 +28,7 @@ export default defineConfig(() => ({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@surface-routes': path.resolve(__dirname, `./src/routes/surfaces/${surface}.tsx`),
     },
   },
   server: {

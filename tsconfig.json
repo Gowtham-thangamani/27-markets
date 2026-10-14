@@ -17,7 +17,10 @@
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      // Build-time alias (see vite.config.ts). Every surface module exports the
+      // same signature, so typing against one of them is accurate for all.
+      "@surface-routes": ["./src/routes/surfaces/all.tsx"]
     }
   },
   "include": ["src"],

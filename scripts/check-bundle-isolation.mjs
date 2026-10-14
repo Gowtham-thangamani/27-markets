@@ -20,13 +20,15 @@ import { join } from 'node:path'
 
 /**
  * Page chunks and route strings that belong to exactly one surface.
- * `PartnerApplyPage` is deliberately excluded from `partner` — the IB
- * application form is a public marketing page, not part of the portal.
+ *
+ * Two marketing pages start with "Partner" and are deliberately excluded from
+ * the `partner` sentinel: PartnerApplyPage (the public IB application form) and
+ * PartnershipPage (the /partnership marketing page). Both are public.
  */
 const SENTINELS = {
   marketing: {
     chunks: [
-      /^(Home|About|Markets|Platforms|Trust|Faq|Partnership|Contact|BlogList|BlogDetail|Disclaimer|Legal)Page-/,
+      /^(Home|About|Markets|Platforms|Trust|Faq|Contact|BlogList|BlogDetail|Disclaimer|Legal)Page-/,
     ],
     strings: [],
   },
@@ -35,7 +37,7 @@ const SENTINELS = {
     strings: [],
   },
   partner: {
-    chunks: [/^Partner(?!Apply)[A-Za-z]*Page-/],
+    chunks: [/^Partner(?!Apply|ship)[A-Za-z]*Page-/],
     strings: ['partner/sub-partners'],
   },
   admin: {

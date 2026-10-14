@@ -54,6 +54,11 @@ describe('checkIsolation — chunk filename leaks', () => {
     const dir = fixture({ 'PartnerApplyPage-x.js': 'x' })
     expect(checkIsolation('marketing', dir)).toEqual({ ok: true, leaks: [] })
   })
+
+  it('does not confuse PartnershipPage (marketing) with the partner portal', () => {
+    const dir = fixture({ 'PartnershipPage-x.js': 'x' })
+    expect(checkIsolation('marketing', dir)).toEqual({ ok: true, leaks: [] })
+  })
 })
 
 describe('checkIsolation — content string leaks', () => {

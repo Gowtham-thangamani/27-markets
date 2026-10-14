@@ -45,3 +45,4 @@ vite.config.js
 
 # Build-time market-news artifact (regenerated each deploy)
 public/news.json
+vite.config.d.ts
