@@ -24,6 +24,30 @@ set -euo pipefail
 # The API the built site talks to. Baked into the bundle at build time.
 : "${VITE_API_URL:=https://api.27markets.com/api}"
 
+# Bind each surface to the bucket(s) it is allowed to publish to.
+#
+# The isolation gate below answers "does this bundle contain only surface X's
+# code". It cannot answer "is surface X going to surface X's bucket" — so
+# without this table, editing SURFACE but not S3_BUCKET in a recalled command
+# publishes the admin CRM to the public apex bucket and invalidates the CDN
+# immediately. Separate buckets only help if the pairing is enforced.
+case "$SURFACE" in
+  marketing) ALLOWED_BUCKETS="27markets-preview 27markets-frontend" ;;
+  portal)    ALLOWED_BUCKETS="27markets-portal" ;;
+  partner)   ALLOWED_BUCKETS="27markets-partners" ;;
+  admin)     ALLOWED_BUCKETS="27markets-admin" ;;
+  all)       ALLOWED_BUCKETS="27markets-frontend" ;;
+  *)         echo "Unknown SURFACE '$SURFACE'" >&2; exit 1 ;;
+esac
+
+if [[ " $ALLOWED_BUCKETS " != *" $S3_BUCKET "* ]]; then
+  echo "REFUSING: surface '$SURFACE' may only publish to: $ALLOWED_BUCKETS" >&2
+  echo "          but S3_BUCKET is '$S3_BUCKET'." >&2
+  echo "          Set ALLOW_BUCKET_OVERRIDE=1 if this pairing is deliberate." >&2
+  [[ "${ALLOW_BUCKET_OVERRIDE:-}" == "1" ]] || exit 1
+  echo "          ALLOW_BUCKET_OVERRIDE=1 set — continuing." >&2
+fi
+
 echo "==> Building surface '$SURFACE' with VITE_API_URL=$VITE_API_URL"
 export VITE_API_URL
 export VITE_SURFACE="$SURFACE"

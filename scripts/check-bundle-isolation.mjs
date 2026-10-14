@@ -1,17 +1,21 @@
 /**
- * Proves a surface build does not contain another surface's code.
+ * Proves a surface build contains its own code and no other surface's.
  *
- * The split relies on Rollup eliminating the route modules a surface doesn't
- * use. That is an assumption about a bundler, and assumptions about bundlers
- * break quietly — a stray eager import or a barrel file re-exporting a sibling
- * is enough to put the whole admin tree back into the public bundle with no
- * visible symptom. This turns the assumption into a deploy gate.
+ * The split relies on the '@surface-routes' alias in vite.config.ts putting one
+ * surface's routes in the module graph. That is a config property, and config
+ * breaks quietly — a stale vite.config.js shadowing the real one, a barrel file
+ * re-exporting a sibling, an empty surface module — any of which would ship the
+ * admin CRM to the public site with no visible symptom. This is the deploy gate.
  *
- * Two independent checks:
- *   1. Chunk filenames — a foreign page chunk existing at all proves it was
- *      emitted. This is the real security property.
- *   2. Content strings — catches a foreign route inlined into the entry chunk
- *      rather than split out.
+ * Three checks:
+ *   1. Foreign chunk filenames — a foreign page chunk existing proves it was
+ *      emitted. This is the main security property.
+ *   2. Foreign content strings — catches foreign code inlined into a shared
+ *      chunk rather than split out, and modules that are not pages at all
+ *      (src/lib/adminApi.ts holds ~400 back-office endpoints and is not named
+ *      *Page-, so the filename check alone is blind to it).
+ *   3. Own chunks present — "no foreign code" is satisfied by an empty bundle,
+ *      so the surface's own pages must actually be there.
  *
  * Usage:  node scripts/check-bundle-isolation.mjs <surface> [distDir]
  */
@@ -19,30 +23,34 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
 /**
- * Page chunks and route strings that belong to exactly one surface.
+ * Page chunks and content strings that belong to exactly one surface.
  *
  * Two marketing pages start with "Partner" and are deliberately excluded from
- * the `partner` sentinel: PartnerApplyPage (the public IB application form) and
+ * the `partner` pattern: PartnerApplyPage (the public IB application form) and
  * PartnershipPage (the /partnership marketing page). Both are public.
+ *
+ * `strings` deliberately holds no /portal/ path: the marketing build legitimately
+ * contains /portal/* as a hand-off route to the portal host, so a /portal/ needle
+ * would fire on a correct build.
  */
 const SENTINELS = {
   marketing: {
     chunks: [
-      /^(Home|About|Markets|Platforms|Trust|Faq|Contact|BlogList|BlogDetail|Disclaimer|Legal)Page-/,
+      /^(Home|About|Markets|Platforms|Accounts|TradingConditions|Funding|Trust|Faq|EconomicCalendar|Partnership|PartnerApply|Contact|BlogList|BlogDetail|Disclaimer|Legal)Page-/,
     ],
     strings: [],
   },
   portal: {
-    chunks: [/^(Trade|Funds|Kyc|PortalAccounts|Downloads|Profile)Page-/],
+    chunks: [/^(Dashboard|Trade|Funds|Kyc|PortalAccounts|Downloads|Profile|Support)Page-/],
     strings: [],
   },
   partner: {
     chunks: [/^Partner(?!Apply|ship)[A-Za-z]*Page-/],
-    strings: ['partner/sub-partners'],
+    strings: ['partner/sub-partners', '/partner/commissions'],
   },
   admin: {
     chunks: [/^(Admin[A-Za-z]*|Agent[A-Za-z]*)Page-/],
-    strings: ['admin/withdrawal-requests'],
+    strings: ['admin/withdrawal-requests', '/admin/clients', '/admin/leads'],
   },
 }
 
@@ -72,15 +80,14 @@ export function checkIsolation(surface, distDir) {
     return { ok: false, leaks: [`Could not scan ${distDir}: ${err.message}`] }
   }
 
-  // A check that scanned nothing must never report success — that would make
-  // every later deploy trust a green result that proved nothing.
   if (files.length === 0) {
     return { ok: false, leaks: [`No JavaScript files found under ${distDir} — nothing was scanned`] }
   }
 
-  const foreign = Object.entries(SENTINELS).filter(([name]) => name !== surface)
   const leaks = []
 
+  // 1 + 2: foreign code. Reported first so the message names the actual leak.
+  const foreign = Object.entries(SENTINELS).filter(([name]) => name !== surface)
   for (const [owner, { chunks, strings }] of foreign) {
     for (const file of files) {
       if (chunks.some((re) => re.test(file.name))) {
@@ -95,6 +102,17 @@ export function checkIsolation(surface, distDir) {
           leaks.push(`string "${needle}" (owned by "${owner}") found in ${file.name}`)
         }
       }
+    }
+  }
+
+  // 3: this surface's own code must be present, or the check proved nothing.
+  const own = SENTINELS[surface]
+  if (own) {
+    const mine = files.filter((f) => own.chunks.some((re) => re.test(f.name)))
+    if (mine.length === 0) {
+      leaks.push(
+        `No own chunks found for surface "${surface}" — the bundle is empty or built the wrong surface`,
+      )
     }
   }
 

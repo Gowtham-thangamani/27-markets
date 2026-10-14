@@ -95,6 +95,7 @@ export interface ApiUser {
   notifySecurity?: boolean
   notifyProduct?: boolean
   notifyMarketing?: boolean
+  hasPartnerProfile?: boolean
 }
 
 export interface ApiKycStatus {
@@ -154,6 +155,7 @@ export function mapUser(u: ApiUser): UserProfile {
     notifySecurity: u.notifySecurity ?? true,
     notifyProduct: u.notifyProduct ?? false,
     notifyMarketing: u.notifyMarketing ?? true,
+    hasPartnerProfile: u.hasPartnerProfile ?? false,
   }
 }
 

@@ -93,6 +93,8 @@ export interface UserProfile {
   notifySecurity: boolean
   notifyProduct: boolean
   notifyMarketing: boolean
+  /** Has an IB partner profile attached, regardless of which role is currently active. */
+  hasPartnerProfile: boolean
 }
 
 export type InstrumentCategory =

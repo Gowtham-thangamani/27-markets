@@ -127,16 +127,22 @@ export default function AdminPartnerApplicationsPage() {
                     <div className="text-white">
                       Referral code: <span className="font-mono text-success">{invite.referralCode}</span>
                     </div>
-                    <button
-                      type="button"
-                      className="mt-1 inline-flex items-center gap-1 text-xs text-brand-300 hover:text-brand-200"
-                      onClick={() => {
-                        void navigator.clipboard?.writeText(invite.inviteUrl)
-                        toast.success('Copied', 'Invite link copied.')
-                      }}
-                    >
-                      <Copy className="h-3.5 w-3.5" /> {invite.inviteUrl}
-                    </button>
+                    {invite.inviteUrl ? (
+                      <button
+                        type="button"
+                        className="mt-1 inline-flex items-center gap-1 text-xs text-brand-300 hover:text-brand-200"
+                        onClick={() => {
+                          void navigator.clipboard?.writeText(invite.inviteUrl as string)
+                          toast.success('Copied', 'Invite link copied.')
+                        }}
+                      >
+                        <Copy className="h-3.5 w-3.5" /> {invite.inviteUrl}
+                      </button>
+                    ) : (
+                      <p className="mt-1 text-xs text-gray-400">
+                        Attached to their existing account — no invite needed, they can switch into the IB view from their account menu.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

@@ -1,10 +1,16 @@
 /**
- * Which slice of the app this build contains. Chosen at build time via
- * VITE_SURFACE so Rollup can fold the comparisons to literals and drop the
- * route trees that don't apply — that is what keeps admin code out of the
- * public bundle.
+ * Which slice of the app this build contains, and where the other slices live.
  *
- * Unset => 'all' => every route mounts, identical to the pre-split bundle.
+ * NOTE ON THE MECHANISM: isolation is achieved by the '@surface-routes' alias in
+ * vite.config.ts, which puts exactly one surface's routes in the module graph.
+ * It is NOT achieved by tree-shaking these values — that was tried and does not
+ * work, because every route module calls lazy(() => import(...)) at module scope
+ * and Rollup treats that as a side effect, retaining the module and emitting all
+ * its chunks. Do not add `SURFACE === 'x' && <Route .../>` gates here and expect
+ * the other branch to disappear; it will not.
+ *
+ * What lives here is runtime-only: which surface this build is, and the host map
+ * used to send a user to a surface that is not this one.
  */
 export type Surface = 'marketing' | 'portal' | 'partner' | 'admin' | 'all'
 
@@ -34,13 +40,16 @@ export const SURFACE: Surface = resolveSurface(
 )
 
 /**
- * Where each surface lives in production. Used for cross-host redirects when a
- * user's role belongs to a different host than the one they signed in on.
+ * Where each surface lives. Overridable per environment so `npm run dev` and a
+ * preview host do not bounce users into production: without the overrides a
+ * developer running VITE_SURFACE=admin locally and signing in as a client would
+ * be sent to https://portal.27markets.com.
+ *
  * Note the partner key is singular while its host is plural.
  */
 export const HOST_FOR_SURFACE: Record<Exclude<Surface, 'all'>, string> = {
-  marketing: 'https://27markets.com',
-  portal: 'https://portal.27markets.com',
-  partner: 'https://partners.27markets.com',
-  admin: 'https://admin.27markets.com',
+  marketing: import.meta.env.VITE_HOST_MARKETING ?? 'https://27markets.com',
+  portal: import.meta.env.VITE_HOST_PORTAL ?? 'https://portal.27markets.com',
+  partner: import.meta.env.VITE_HOST_PARTNER ?? 'https://partners.27markets.com',
+  admin: import.meta.env.VITE_HOST_ADMIN ?? 'https://admin.27markets.com',
 }

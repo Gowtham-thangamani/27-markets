@@ -70,7 +70,35 @@ describe('checkIsolation — content string leaks', () => {
   })
 })
 
+describe('checkIsolation — content string leaks, admin API surface', () => {
+  it('catches admin API paths even when no Admin*Page chunk is present', () => {
+    // src/lib/adminApi.ts holds ~400 back-office endpoint paths and their request
+    // and response shapes. It is not named *Page-, so the filename check is blind
+    // to it — a shared component importing it would leak the whole CRM API.
+    const dir = fixture({ 'shared-abc.js': 'fetch("/admin/clients/"+id+"/status")' })
+    const result = checkIsolation('marketing', dir)
+    expect(result.ok).toBe(false)
+    expect(result.leaks.some((l) => /admin\/clients/.test(l))).toBe(true)
+  })
+})
+
 describe('checkIsolation — the check must not pass vacuously', () => {
+  it('fails when the bundle contains none of its OWN code', () => {
+    // A dist holding just the entry and the 404 chunk satisfies every "no foreign
+    // code" rule while containing nothing. That is the shape produced by an empty
+    // surface module or a shadowed vite config, so absence of foreign code is not
+    // enough — the surface's own pages must actually be there.
+    const dir = fixture({ 'index-abc.js': 'x', 'NotFoundPage-x.js': 'x' })
+    const result = checkIsolation('marketing', dir)
+    expect(result.ok).toBe(false)
+    expect(result.leaks[0]).toMatch(/own chunks/i)
+  })
+
+  it('passes when the surface\'s own chunks are present', () => {
+    const dir = fixture({ 'HomePage-a.js': 'x', 'AboutPage-b.js': 'x' })
+    expect(checkIsolation('marketing', dir)).toEqual({ ok: true, leaks: [] })
+  })
+
   it('fails on a directory with no JavaScript in it', () => {
     const dir = fixture({})
     const result = checkIsolation('marketing', dir)

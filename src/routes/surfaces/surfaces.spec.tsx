@@ -47,17 +47,45 @@ describe('marketing', () => {
     expect(is404(routes, '/partner/apply')).toBe(false)
   })
 
-  it('mounts no authenticated routes', () => {
+  it('mounts no partner or admin routes at all', () => {
     const routes = tree(marketing)
-    expect(is404(routes, '/portal/dashboard')).toBe(true)
     expect(is404(routes, '/partner/dashboard')).toBe(true)
     expect(is404(routes, '/admin/dashboard')).toBe(true)
+    expect(is404(routes, '/admin/withdrawal-requests')).toBe(true)
   })
 
-  it('has no auth pages — it links to the portal host for sign-in', () => {
-    const routes = tree(marketing)
-    expect(is404(routes, '/login')).toBe(true)
-    expect(is404(routes, '/register')).toBe(true)
+  it('mounts /portal/* only as a hand-off, never as the real portal layout', () => {
+    // The route exists so footer and modal links work, but it must be a leaf
+    // redirect — not the RequireAuth/PortalLayout tree, whose pages belong to
+    // another bundle. scripts/check-bundle-isolation.mjs proves the pages are
+    // absent from the build; this proves the route shape.
+    const matches = matchRoutes(tree(marketing), '/portal/dashboard')
+    expect(matches).not.toBeNull()
+    expect(matches!.length).toBe(1)
+    expect(matches![0].route.path).toBe('/portal/*')
+  })
+
+  // The marketing chrome links to /login, /register, /demo and /portal/* from
+  // the Navbar, the hero CTAs, the footer and every account-tier card. Those
+  // pages live in the portal build, so the routes must exist here and leave for
+  // the portal host — otherwise the public site's entire conversion funnel 404s.
+  it.each(['/login', '/register', '/demo', '/portal/dashboard', '/portal/trade'])(
+    'mounts %s so marketing links do not 404',
+    (path) => {
+      expect(is404(tree(marketing), path)).toBe(false)
+    },
+  )
+})
+
+describe('every private surface has a reachable entry point', () => {
+  // AuthShell, the portal sidebar logo and NotFoundPage all link to "/". If it
+  // is unmounted, the 404 page's only recovery control renders the 404 page.
+  it.each([
+    ['portal', portal],
+    ['partner', partner],
+    ['admin', admin],
+  ])('%s mounts /', (_name, routes) => {
+    expect(is404(tree(routes), '/')).toBe(false)
   })
 })
 
