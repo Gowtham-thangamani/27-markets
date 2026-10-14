@@ -1,6 +1,8 @@
 import { lazy } from 'react'
-import { Navigate, Route } from 'react-router-dom'
+import { Route } from 'react-router-dom'
 import { MarketingLayout } from '../layouts/MarketingLayout'
+import { ExternalRedirect } from './ExternalRedirect'
+import { HOST_FOR_SURFACE } from '../lib/surface'
 
 const HomePage = lazy(() => import('../pages/HomePage'))
 const AboutPage = lazy(() => import('../pages/AboutPage'))
@@ -19,6 +21,8 @@ const BlogDetailPage = lazy(() => import('../pages/BlogDetailPage'))
 const PartnerApplyPage = lazy(() => import('../pages/PartnerApplyPage'))
 const DisclaimerPage = lazy(() => import('../pages/DisclaimerPage'))
 const LegalPage = lazy(() => import('../pages/LegalPage'))
+
+const IB_DASHBOARD = `${HOST_FOR_SURFACE.partner}/partner/dashboard`
 
 /** Public marketing site. No authentication anywhere in this tree. */
 export function marketingRoutes() {
@@ -39,9 +43,11 @@ export function marketingRoutes() {
       <Route path="/blog" element={<BlogListPage />} />
       <Route path="/blog/:slug" element={<BlogDetailPage />} />
       <Route path="/partner/apply" element={<PartnerApplyPage />} />
-      {/* Short, brandable alias so the IB portal can be linked/shared as its own URL. */}
-      <Route path="/ib-portal" element={<Navigate to="/partner/dashboard" replace />} />
-      <Route path="/ibpartner" element={<Navigate to="/partner/dashboard" replace />} />
+      {/* Short, brandable aliases for the IB portal. It is a separate build on
+          its own hostname, so these must leave this site rather than route
+          internally — /partner/dashboard does not exist in the marketing bundle. */}
+      <Route path="/ib-portal" element={<ExternalRedirect to={IB_DASHBOARD} />} />
+      <Route path="/ibpartner" element={<ExternalRedirect to={IB_DASHBOARD} />} />
       <Route path="/disclaimer" element={<DisclaimerPage />} />
       <Route path="/legal/:doc" element={<LegalPage />} />
     </Route>

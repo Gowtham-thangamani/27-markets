@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
 import { zodResolver } from '@/lib/zodResolver'
 import { loginSchema, type LoginValues } from '@/lib/validation'
-import { isStaffRole, landingPathForRole } from '@/lib/roles'
+import { isStaffRole, landingUrlForRole } from '@/lib/roles'
 import { ApiError } from '@/lib/api'
 import { useSeo } from '@/lib/useSeo'
 import { useT } from '@/i18n/LanguageContext'
@@ -46,9 +46,14 @@ export default function LoginPage() {
         needTotp ? code : undefined,
         needEmailOtp ? code : undefined,
       )
-      const dest = explicitFrom ?? landingPathForRole(user.role)
+      const dest = explicitFrom ?? landingUrlForRole(user.role)
       toast.success(t('auth.login.welcomeToast'), isStaffRole(user.role) ? t('auth.login.crm') : t('auth.login.portal'))
-      navigate(dest, { replace: true })
+      if (dest.startsWith('https://')) {
+        // This role's pages live on another host — its routes don't exist here.
+        window.location.replace(dest)
+      } else {
+        navigate(dest, { replace: true })
+      }
     } catch (err) {
       const e = err as ApiError
       if (e.code === 'TwoFactorRequired') {
