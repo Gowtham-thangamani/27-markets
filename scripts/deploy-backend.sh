@@ -35,7 +35,14 @@ tar czf "/tmp/server-${STAMP}.tgz" -C server \
 
 echo "==> Uploading + extracting into ${APP_DIR} (.env.production preserved)"
 scp -i "$SSH_KEY" "/tmp/server-${STAMP}.tgz" "${EC2_USER}@${EC2_HOST}:~/server-new.tgz"
-$SSH "cd ${APP_DIR} && tar xzf ~/server-new.tgz"
+# --no-same-owner: the tar is built on Windows, so it carries numeric UIDs that
+#   do not exist on the box. Without this, tar tries to chown the extracted
+#   files to a stranger and fails with "Cannot utime: Operation not permitted".
+# --overwrite: replace the previous deploy's files rather than refusing with
+#   "Cannot open: File exists".
+# Both failures aborted the deploy AFTER the upload reported success, so the
+# box silently kept running months-old code while the deploy looked fine.
+$SSH "cd ${APP_DIR} && tar xzf ~/server-new.tgz --no-same-owner --overwrite"
 
 echo "==> Rebuilding + restarting the api container (migrations run on start)"
 $SSH "cd ${APP_DIR} && docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build"
