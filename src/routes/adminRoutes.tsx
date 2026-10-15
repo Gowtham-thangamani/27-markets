@@ -9,6 +9,10 @@ import { placeholderLinks } from '../components/admin/adminNav'
 const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'))
 const AdminClientsPage = lazy(() => import('../pages/admin/AdminClientsPage'))
 const AdminClientDetailPage = lazy(() => import('../pages/admin/AdminClientDetailPage'))
+const AdminKycFieldsTabsPage = lazy(() => import('../pages/admin/AdminKycFieldsTabsPage'))
+const AdminPaymentMethodTypesTabsPage = lazy(() => import('../pages/admin/AdminPaymentMethodTypesTabsPage'))
+const AdminTemplatesTabsPage = lazy(() => import('../pages/admin/AdminTemplatesTabsPage'))
+const AdminReferralsTabsPage = lazy(() => import('../pages/admin/AdminReferralsTabsPage'))
 const AdminBlockedUsersPage = lazy(() => import('../pages/admin/AdminBlockedUsersPage'))
 const AdminLeadsPage = lazy(() => import('../pages/admin/AdminLeadsPage'))
 const AdminSupportPage = lazy(() => import('../pages/admin/AdminSupportPage'))
@@ -174,7 +178,12 @@ export function adminRoutes() {
         <Route path="campaigns" element={<AdminCampaignsPage />} />
         <Route path="notification-logs" element={<AdminNotificationLogsPage />} />
         <Route path="staff-forms-assignments" element={<AdminStaffFormAssignmentsPage />} />
-        <Route path="referrals" element={<AdminReferralsPage />} />
+        {/* Merged, tabbed pages. The old paths still resolve so existing
+            bookmarks and links keep working. */}
+        <Route path="kyc-fields" element={<AdminKycFieldsTabsPage />} />
+        <Route path="payment-method-types" element={<AdminPaymentMethodTypesTabsPage />} />
+        <Route path="templates" element={<AdminTemplatesTabsPage />} />
+        <Route path="referrals" element={<AdminReferralsTabsPage />} />
         <Route path="user-referrals" element={<AdminUserReferralsPage />} />
         <Route path="ib-campaigns" element={<AdminIbCampaignsPage />} />
         <Route path="data-change-requests" element={<AdminDataChangeRequestsPage />} />

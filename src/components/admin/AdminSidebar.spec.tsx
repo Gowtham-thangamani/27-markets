@@ -32,11 +32,11 @@ describe('AdminSidebarContent', () => {
 
   it('toggles a group open and closed on header click', () => {
     renderAt('/admin/dashboard')
-    expect(screen.queryByRole('link', { name: /Transactions/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Deposit Requests/ })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Finance/ }))
-    expect(screen.getByRole('link', { name: /Transactions/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Deposit Requests/ })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Finance/ }))
-    expect(screen.queryByRole('link', { name: /Transactions/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Deposit Requests/ })).not.toBeInTheDocument()
   })
 
   it('shows live (non-placeholder) links without a "soon" badge', () => {

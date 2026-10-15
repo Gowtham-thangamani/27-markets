@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createRoutesFromChildren, matchRoutes } from 'react-router-dom'
 import { appRoutes } from './index'
+import { adminNav, isGroup } from '@/components/admin/adminNav'
 
 /**
  * These tests ask "which paths does this build mount?" by matching against the
@@ -37,5 +38,18 @@ describe('appRoutes — default build mounts every surface', () => {
 
   it('still falls through to 404 for an unknown path', () => {
     expect(is404('/no-such-page-anywhere')).toBe(true)
+  })
+})
+
+describe('every admin nav link resolves to a real route', () => {
+  // Renaming or merging a sidebar entry without moving its route sends staff to
+  // the 404 page. This pins the two together.
+  it.each(
+    adminNav
+      .flatMap((e) => (isGroup(e) ? e.children : [e]))
+      .filter((l) => !l.placeholder)
+      .map((l) => [l.label, l.to] as const),
+  )('%s -> %s', (_label, path) => {
+    expect(is404(path)).toBe(false)
   })
 })

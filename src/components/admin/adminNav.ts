@@ -43,33 +43,45 @@ export const adminNav: AdminNavEntry[] = [
   },
   {
     label: 'KYC & Compliance', icon: ShieldCheck, children: [
-      { label: 'Pending Documents', to: '/admin/kyc' },
+      // Two genuinely different pages, previously named as if one were a subset
+      // of the other: KYC Review is the approve/reject queue; Document Tracker
+      // is a read-only inventory of every uploaded file, with no status or
+      // actions. Renamed from 'Pending Documents' to say what it does.
+      { label: 'KYC Review', to: '/admin/kyc' },
+      { label: 'Document Tracker', to: '/admin/document-tracker' },
       { label: 'AML Screening', to: '/admin/aml' },
       { label: 'KYC Forms', to: '/admin/kyc-forms' },
-      { label: 'KYC Questions', to: '/admin/kyc-questions' },
-      { label: 'Extended Fields', to: '/admin/extended-fields' },
-      { label: 'Users KYC Forms', to: '/admin/users-kyc-forms' },
-      { label: 'Document Tracker', to: '/admin/document-tracker' },
-      { label: 'Dormant Accounts', to: '/admin/dormant-accounts' },
+      // One page, tabbed: KYC questions and extended profile fields were the
+      // same component with a different `kind`.
+      { label: 'KYC Fields', to: '/admin/kyc-fields' },
+      // Renamed from 'Users KYC Forms', which read as a sibling of 'KYC Forms'
+      // but is per-client status, not form definitions.
+      { label: 'Client KYC Status', to: '/admin/users-kyc-forms' },
       { label: 'Staff Forms Assignments', to: '/admin/staff-forms-assignments' },
       { label: 'Consents', to: '/admin/consents' },
     ],
   },
   {
     label: 'Finance', icon: Banknote, children: [
-      { label: 'Transactions', to: '/admin/finance' },
+      // 'Transactions' (/admin/finance) was subtitled "approve withdrawals and
+      // review deposits" — exactly what these two pages do. The route still
+      // works; it is no longer a third way in.
       { label: 'Deposit Requests', to: '/admin/deposit-requests' },
+      { label: 'Withdrawal Requests', to: '/admin/withdrawal-requests' },
       { label: 'All Wallets', to: '/admin/wallets' },
       { label: 'Payment Gateways', to: '/admin/payment-gateways' },
       { label: 'Exchange Rates', to: '/admin/exchange-rates' },
-      { label: 'Credit Card Types', to: '/admin/credit-card-types' },
-      { label: 'E-Wallet Types', to: '/admin/ewallet-types' },
+      // One page, tabbed: card and e-wallet types were the same component with
+      // a different `category`.
+      { label: 'Payment Method Types', to: '/admin/payment-method-types' },
     ],
   },
   {
     label: 'Trading', icon: CandlestickChart, children: [
       { label: 'Accounts', to: '/admin/accounts' },
       { label: 'Account Types', to: '/admin/account-types' },
+      // Moved from KYC & Compliance: dormancy is an account concern.
+      { label: 'Dormant Accounts', to: '/admin/dormant-accounts' },
       { label: 'Instruments', to: '/admin/instruments' },
       { label: 'Economic Calendar', to: '/admin/economic-calendar' },
       { label: 'Servers', to: '/admin/servers' },
@@ -86,28 +98,22 @@ export const adminNav: AdminNavEntry[] = [
     label: 'Requests', icon: ClipboardList, children: [
       { label: 'Account Requests', to: '/admin/account-requests' },
       { label: 'Data Change Requests', to: '/admin/data-change-requests' },
-      { label: 'Withdrawal Requests', to: '/admin/withdrawal-requests' },
     ],
   },
-  {
-    label: 'Referrals', icon: Share2, children: [
-      { label: 'Referrals', to: '/admin/referrals' },
-      { label: 'User Referrals', to: '/admin/user-referrals' },
-    ],
-  },
+  // One page, tabbed: referred clients and the referrer leaderboard are two
+  // views of the same data. A group with a single child is just noise.
+  { label: 'Referrals', to: '/admin/referrals', icon: Share2 },
   {
     label: 'Notifications', icon: Bell, children: [
-      { label: 'Templates', to: '/admin/notification-templates' },
+      // Named explicitly: there used to be a second, unrelated 'Templates'.
+      { label: 'Notification Templates', to: '/admin/notification-templates' },
       { label: 'Campaigns', to: '/admin/campaigns' },
       { label: 'Logs', to: '/admin/notification-logs' },
     ],
   },
-  {
-    label: 'Templates', icon: LayoutTemplate, children: [
-      { label: 'PDF Templates', to: '/admin/pdf-templates' },
-      { label: 'Comment Templates', to: '/admin/comment-templates' },
-    ],
-  },
+  // One page, tabbed: PDF and comment templates were the same component with a
+  // different `kind`.
+  { label: 'Document Templates', to: '/admin/templates', icon: LayoutTemplate },
   {
     label: 'Contents', icon: Newspaper, children: [
       { label: 'Blog', to: '/admin/blog' },
