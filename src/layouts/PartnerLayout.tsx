@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Menu } from 'lucide-react'
+import { ArrowLeftRight, Menu } from 'lucide-react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { PartnerSidebarContent } from '@/components/partner/PartnerSidebar'
 import { PartnerNotificationsBell } from '@/components/partner/PartnerNotificationsBell'
+import { SwitchAccountModal } from '@/components/SwitchAccountModal'
+import { Button } from '@/components/ui'
 import { useAuth } from '@/context/AuthContext'
 import { useBodyScrollLock } from '@/lib/hooks'
 import { initials } from '@/lib/format'
 
 export function PartnerLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [switchOpen, setSwitchOpen] = useState(false)
   const { pathname } = useLocation()
   const { user } = useAuth()
   useBodyScrollLock(mobileOpen)
@@ -41,6 +44,12 @@ export function PartnerLayout() {
             <p className="text-sm font-semibold text-white">{user?.name ?? 'Partner'}</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
+            {user?.role === 'PARTNER' && (
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setSwitchOpen(true)}>
+                <ArrowLeftRight className="h-4 w-4" />
+                <span className="hidden sm:inline">Switch to Client</span>
+              </Button>
+            )}
             <PartnerNotificationsBell />
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 text-sm font-semibold text-brand-300 ring-1 ring-brand-500/30">
               {initials(user?.name ?? 'Partner')}
@@ -51,6 +60,9 @@ export function PartnerLayout() {
           <div className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8"><Outlet /></div>
         </main>
       </div>
+      {user?.role === 'PARTNER' && (
+        <SwitchAccountModal open={switchOpen} onClose={() => setSwitchOpen(false)} targetRole="CLIENT" />
+      )}
     </div>
   )
 }

@@ -26,7 +26,7 @@ export interface ApplyPartnerBody {
   ref?: string
 }
 
-export interface ApproveResult { ok: true; referralCode: string; inviteUrl: string }
+export interface ApproveResult { ok: true; referralCode: string; inviteUrl: string | null }
 
 export const partnersApi = {
   apply: (body: ApplyPartnerBody) => api.post<{ id: string }>('/partners/apply', body),

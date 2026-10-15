@@ -9,7 +9,7 @@ import { createHash, randomBytes, randomInt } from 'node:crypto';
 import * as argon2 from 'argon2';
 import { authenticator } from 'otplib';
 import * as QRCode from 'qrcode';
-import { AccountType, AccountMode, VerificationTokenType, type User } from '@prisma/client';
+import { AccountType, AccountMode, VerificationTokenType, UserRole, type User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { CryptoService } from '../common/crypto.service';
@@ -38,6 +38,21 @@ const LOGIN_OTP_MAX_ATTEMPTS = 5;
 /** Don't send a fresh code more than once per this window (anti email-spam). */
 const LOGIN_OTP_RESEND_MS = 45 * 1000;
 
+/** Context-switch OTP (client <-> IB partner): same shape as the login OTP. */
+const SWITCH_OTP_TTL_MS = 10 * 60 * 1000;
+const SWITCH_OTP_MAX_ATTEMPTS = 5;
+const SWITCH_OTP_RESEND_MS = 45 * 1000;
+
+/** Age in whole years as of today — used to enforce the 18+ registration gate. */
+function calculateAge(dob: Date): number {
+  const now = new Date();
+  let age = now.getFullYear() - dob.getFullYear();
+  const hadBirthdayThisYear =
+    now.getMonth() > dob.getMonth() || (now.getMonth() === dob.getMonth() && now.getDate() >= dob.getDate());
+  if (!hadBirthdayThisYear) age--;
+  return age;
+}
+
 /**
  * Mask an email before it enters the (unauthenticated) audit sink. A value that
  * doesn't look like an email — e.g. a password accidentally typed into the email
@@ -61,6 +76,9 @@ export interface PublicUser {
   role: string;
   twoFactorEnabled: boolean;
   emailVerified: boolean;
+  // Whether this account also has an IB partner profile attached — gates the
+  // client<->partner context-switch UI regardless of which role is currently active.
+  hasPartnerProfile: boolean;
 }
 
 @Injectable()
@@ -106,7 +124,11 @@ export class AuthService {
     return lastStep != null && step <= lastStep;
   }
 
-  toPublic(user: User): PublicUser {
+  async toPublic(user: User): Promise<PublicUser> {
+    const partnerProfile = await this.prisma.partnerProfile.findUnique({
+      where: { userId: user.id },
+      select: { id: true },
+    });
     return {
       id: user.id,
       email: user.email,
@@ -115,12 +137,17 @@ export class AuthService {
       role: user.role,
       twoFactorEnabled: user.twoFactorEnabled,
       emailVerified: user.emailVerified,
+      hasPartnerProfile: !!partnerProfile,
     };
   }
 
   async register(dto: RegisterDto, ctx: RequestContext): Promise<{ user: PublicUser; tokens: IssuedTokens }> {
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } });
     if (existing) throw new ConflictException('An account with this email already exists');
+
+    if (calculateAge(new Date(dto.dateOfBirth)) < 18) {
+      throw new BadRequestException('You must be at least 18 years old to register');
+    }
 
     const passwordHash = await argon2.hash(dto.password, { type: argon2.argon2id });
 
@@ -136,7 +163,7 @@ export class AuthService {
         lastName: dto.lastName,
         phone: dto.phone,
         country: dto.country,
-        dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : null,
+        dateOfBirth: new Date(dto.dateOfBirth),
         address: dto.address,
         city: dto.city,
         postalCode: dto.postalCode,
@@ -176,7 +203,7 @@ export class AuthService {
 
     const tokens = await this.issueSession(user, ctx);
     await this.audit.record({ userId: user.id, action: 'auth.register', entity: 'User', entityId: user.id, ...ctx });
-    return { user: this.toPublic(user), tokens };
+    return { user: await this.toPublic(user), tokens };
   }
 
   /** Confirm an email-verification token. */
@@ -321,7 +348,7 @@ export class AuthService {
         device: ctx.userAgent ?? 'unknown',
       })
       .catch(() => undefined);
-    return { user: this.toPublic(user), tokens };
+    return { user: await this.toPublic(user), tokens };
   }
 
   /** Rotate a refresh token: validates the session, then replaces it. */
@@ -500,6 +527,85 @@ export class AuthService {
       throw new UnauthorizedException('Invalid code.');
     }
     await this.prisma.loginOtp.delete({ where: { userId } });
+  }
+
+  private targetRoleLabel(role: UserRole): string {
+    return role === UserRole.PARTNER ? 'IB Partner' : 'Client';
+  }
+
+  /** Only an account currently in CLIENT or PARTNER mode may switch, and only to the other one. */
+  private async assertSwitchAllowed(user: User, targetRole: UserRole): Promise<void> {
+    if (user.role !== UserRole.CLIENT && user.role !== UserRole.PARTNER) {
+      throw new BadRequestException('This account cannot switch context.');
+    }
+    if (user.role === targetRole) {
+      throw new BadRequestException(`You are already in ${this.targetRoleLabel(targetRole)} mode.`);
+    }
+    if (targetRole === UserRole.PARTNER) {
+      const profile = await this.prisma.partnerProfile.findUnique({ where: { userId: user.id }, select: { id: true } });
+      if (!profile) throw new BadRequestException('You do not have an IB partner profile.');
+    }
+  }
+
+  /** Request a step-up code to switch this account's active role (client <-> IB partner). */
+  async requestContextSwitch(userId: string, targetRole: UserRole): Promise<{ ok: true }> {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    await this.assertSwitchAllowed(user, targetRole);
+
+    const now = Date.now();
+    const existing = await this.prisma.contextSwitchOtp.findUnique({ where: { userId } });
+    // Anti-spam: a still-valid code sent within the resend window is left as-is.
+    if (
+      existing &&
+      existing.targetRole === targetRole &&
+      existing.expiresAt.getTime() > now &&
+      existing.createdAt.getTime() > now - SWITCH_OTP_RESEND_MS
+    ) {
+      return { ok: true };
+    }
+    const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
+    const codeHash = this.hashToken(code);
+    const expiresAt = new Date(now + SWITCH_OTP_TTL_MS);
+    await this.prisma.contextSwitchOtp.upsert({
+      where: { userId },
+      create: { userId, codeHash, targetRole, expiresAt },
+      update: { codeHash, targetRole, attempts: 0, expiresAt, createdAt: new Date(now) },
+    });
+    await this.email.sendContextSwitchCode(user.email, code, this.targetRoleLabel(targetRole)).catch(() => undefined);
+    return { ok: true };
+  }
+
+  /** Verify the step-up code, flip the account's active role, and issue a fresh session. */
+  async confirmContextSwitch(
+    userId: string,
+    targetRole: UserRole,
+    code: string,
+    ctx: RequestContext,
+  ): Promise<{ user: PublicUser; tokens: IssuedTokens }> {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    await this.assertSwitchAllowed(user, targetRole);
+
+    const otp = await this.prisma.contextSwitchOtp.findUnique({ where: { userId } });
+    if (!otp || otp.targetRole !== targetRole || otp.expiresAt.getTime() < Date.now()) {
+      throw new UnauthorizedException('Your code has expired. Please request a new one.');
+    }
+    if (otp.attempts >= SWITCH_OTP_MAX_ATTEMPTS) {
+      await this.prisma.contextSwitchOtp.delete({ where: { userId } });
+      throw new UnauthorizedException('Too many attempts. Please request a new code.');
+    }
+    if (this.hashToken(code) !== otp.codeHash) {
+      await this.prisma.contextSwitchOtp.update({ where: { userId }, data: { attempts: { increment: 1 } } });
+      throw new UnauthorizedException('Invalid code.');
+    }
+    await this.prisma.contextSwitchOtp.delete({ where: { userId } });
+
+    const updated = await this.prisma.user.update({ where: { id: userId }, data: { role: targetRole } });
+    // Switching mid-session revokes other sessions, so an old tab/device can't
+    // keep acting under the previous role after this one switches.
+    await this.prisma.session.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date() } });
+    const tokens = await this.issueSession(updated, ctx);
+    await this.audit.record({ userId, action: 'auth.context_switch', entity: 'User', entityId: userId, metadata: { targetRole }, ...ctx });
+    return { user: await this.toPublic(updated), tokens };
   }
 
   private async issueSession(user: User, ctx: RequestContext): Promise<IssuedTokens> {

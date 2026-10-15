@@ -90,6 +90,7 @@ model User {
   notifications       Notification[]
   amlScreenings       AmlScreening[]
   loginOtp            LoginOtp?
+  contextSwitchOtp    ContextSwitchOtp?
 
   // Payouts (Stripe Connect): the client's connected account for receiving
   // withdrawals, and whether Stripe has enabled payouts on it (set via webhook /
@@ -319,6 +320,19 @@ model LoginOtp {
   attempts  Int      @default(0)
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+// Step-up verification for switching a session's active role (CLIENT <-> PARTNER)
+// on an account that holds both — see AuthService.requestContextSwitch/confirmContextSwitch.
+model ContextSwitchOtp {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash   String
+  targetRole UserRole
+  attempts   Int      @default(0)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
 }
 
 // Refresh-token sessions. The raw refresh token is NEVER stored — only a hash.

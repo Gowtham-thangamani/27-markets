@@ -22,6 +22,7 @@ export const demoUser: UserProfile = {
   notifySecurity: true,
   notifyProduct: false,
   notifyMarketing: true,
+  hasPartnerProfile: false,
 }
 
 export const seedAccounts: TradingAccount[] = [

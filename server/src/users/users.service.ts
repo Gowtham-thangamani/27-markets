@@ -11,7 +11,10 @@ export class UsersService {
   ) {}
 
   async profile(userId: string) {
-    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      include: { partnerProfile: { select: { id: true } } },
+    });
     return {
       id: user.id,
       email: user.email,
@@ -26,6 +29,8 @@ export class UsersService {
       notifySecurity: user.notifySecurity,
       notifyProduct: user.notifyProduct,
       notifyMarketing: user.notifyMarketing,
+      // Gates the client<->IB-partner context-switch UI regardless of which role is active.
+      hasPartnerProfile: !!user.partnerProfile,
     };
   }
 

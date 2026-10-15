@@ -5,6 +5,7 @@ import * as argon2 from 'argon2';
 import { PartnerApplicationStatus, UserRole, VerificationTokenType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { EmailService } from '../email/email.service';
 import { generateReferralCode } from './referral-code';
 import { primaryOrigin } from '../common/origin';
 import type { Env } from '../config/env.validation';
@@ -16,6 +17,7 @@ export class PartnersService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly config: ConfigService<Env, true>,
+    private readonly email: EmailService,
   ) {}
 
   async apply(dto: ApplyPartnerDto): Promise<{ id: string }> {
@@ -67,17 +69,58 @@ export class PartnersService {
     });
   }
 
-  async approve(adminId: string, id: string): Promise<{ ok: true; referralCode: string; inviteUrl: string }> {
+  async approve(adminId: string, id: string): Promise<{ ok: true; referralCode: string; inviteUrl: string | null }> {
     const app = await this.prisma.partnerApplication.findUnique({ where: { id } });
     if (!app) throw new NotFoundException('Application not found');
     if (app.status !== PartnerApplicationStatus.PENDING) throw new BadRequestException('Application is not pending');
 
     const email = app.email.toLowerCase();
-    if (await this.prisma.user.findUnique({ where: { email } })) {
-      throw new ConflictException('A user with this email already exists; resolve manually');
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+      include: { partnerProfile: { select: { id: true } } },
+    });
+    if (existingUser?.partnerProfile) {
+      throw new ConflictException('This account already has an IB partner profile');
+    }
+    // Staff applying under their own email is unusual enough to need a human
+    // to sort out manually, rather than silently attaching partner capability.
+    if (existingUser && (existingUser.role === UserRole.ADMIN || existingUser.role === UserRole.AGENT)) {
+      throw new ConflictException('A staff account with this email already exists; resolve manually');
     }
 
     const referralCode = await this.uniqueReferralCode();
+
+    if (existingUser) {
+      // Existing client — attach the partner profile to their SAME account
+      // instead of creating a duplicate. They keep their login, stay CLIENT by
+      // default, and can switch into the IB view any time (client<->partner
+      // context switch) — no new password, no invite link needed.
+      await this.prisma.$transaction(async (tx) => {
+        await tx.partnerProfile.create({
+          data: { userId: existingUser.id, referralCode, parentPartnerId: app.referredByPartnerId },
+        });
+        await tx.partnerApplication.update({
+          where: { id },
+          data: { status: PartnerApplicationStatus.APPROVED, reviewedAt: new Date(), reviewedById: adminId, resultingUserId: existingUser.id },
+        });
+      });
+      await this.email
+        .sendNotification(existingUser.email, {
+          firstName: existingUser.firstName,
+          title: 'Your IB partner application was approved',
+          body: 'You can now switch into your IB partner dashboard any time from your account menu — no new login needed.',
+        })
+        .catch(() => undefined);
+      await this.audit.record({
+        userId: adminId,
+        action: 'partner.application.approve',
+        entity: 'PartnerApplication',
+        entityId: id,
+        metadata: { referralCode, attachedToExistingUser: true },
+      });
+      return { ok: true, referralCode, inviteUrl: null };
+    }
+
     const rawToken = randomBytes(32).toString('hex');
     const randomPassword = await argon2.hash(randomBytes(24).toString('hex'), { type: argon2.argon2id });
 

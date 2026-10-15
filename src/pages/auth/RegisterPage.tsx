@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AuthShell } from '@/layouts/AuthShell'
-import { Button, Input, Select } from '@/components/ui'
+import { Button, Input, Select, PhoneInput } from '@/components/ui'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
 import { registerStep1, registerStep2, registerStep3 } from '@/lib/validation'
@@ -19,6 +19,14 @@ type Errors = Record<string, string>
 const STEP_KEYS = ['auth.reg.step1', 'auth.reg.step2', 'auth.reg.step3']
 
 const accountTypes: Array<'Standard' | 'Raw Spread' | 'VIP'> = ['Standard', 'Raw Spread', 'VIP']
+
+// Latest date of birth that clears the 18+ gate — caps the date picker so
+// under-18 dates aren't even selectable.
+const maxDob = (() => {
+  const d = new Date()
+  d.setFullYear(d.getFullYear() - 18)
+  return d.toISOString().slice(0, 10)
+})()
 
 export default function RegisterPage() {
   useSeo({ title: 'Open an Account — 27 Markets' })
@@ -187,8 +195,8 @@ export default function RegisterPage() {
                   <Input label={t('auth.reg.lastName')} value={form.lastName} error={errors.lastName} onChange={(e) => set('lastName', e.target.value)} />
                 </div>
                 <Input label={t('auth.email')} type="email" value={form.email} error={errors.email} onChange={(e) => set('email', e.target.value)} />
-                <Input label={t('auth.reg.phone')} value={form.phone} placeholder="+971 50 000 0000" error={errors.phone} onChange={(e) => set('phone', e.target.value)} />
-                <Input label={t('auth.reg.dob')} type="date" value={form.dateOfBirth} error={errors.dateOfBirth} onChange={(e) => set('dateOfBirth', e.target.value)} />
+                <PhoneInput label={t('auth.reg.phone')} value={form.phone} error={errors.phone} onChange={(v) => set('phone', v)} />
+                <Input label={t('auth.reg.dob')} type="date" max={maxDob} value={form.dateOfBirth} error={errors.dateOfBirth} onChange={(e) => set('dateOfBirth', e.target.value)} />
               </>
             )}
 

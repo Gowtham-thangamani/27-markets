@@ -45,6 +45,13 @@ const DEFAULTS: Record<string, TemplateCopy> = {
       "It expires in 10 minutes. If you didn't try to sign in, ignore this email and " +
       'consider changing your password.',
   },
+  context_switch_code: {
+    subject: 'Your 27 Markets account-switch code',
+    body:
+      'Your verification code to switch to your {{targetLabel}} view is:\n\n{{code}}\n\n' +
+      "It expires in 10 minutes. If you didn't request this, ignore this email and " +
+      'consider changing your password.',
+  },
   // Generic transactional notification (deposits, withdrawals, KYC, tickets, …).
   // Subject/body come from the event; admins can override this template per key.
   notification: {
@@ -235,6 +242,12 @@ export class EmailService {
   /** The 6-digit login verification code (email OTP second factor). */
   async sendLoginCode(to: string, code: string): Promise<void> {
     const { subject, text } = await this.render('login_code', { code });
+    return this.deliver(to, subject, text);
+  }
+
+  /** The 6-digit step-up code required to switch a session's active role (client <-> IB partner). */
+  async sendContextSwitchCode(to: string, code: string, targetLabel: string): Promise<void> {
+    const { subject, text } = await this.render('context_switch_code', { code, targetLabel });
     return this.deliver(to, subject, text);
   }
 

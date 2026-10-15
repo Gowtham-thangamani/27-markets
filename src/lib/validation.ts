@@ -14,11 +14,29 @@ export const loginSchema = z.object({
 })
 export type LoginValues = z.infer<typeof loginSchema>
 
+/** Optional leading `+`, then 8–15 digits not starting with 0 (loose E.164 shape). */
+const PHONE_RE = /^\+?[1-9]\d{7,14}$/
+
+/** Whole years between `dob` and today — used for the 18+ registration gate. */
+function ageFrom(dob: Date): number {
+  const now = new Date()
+  let age = now.getFullYear() - dob.getFullYear()
+  const hadBirthdayThisYear =
+    now.getMonth() > dob.getMonth() || (now.getMonth() === dob.getMonth() && now.getDate() >= dob.getDate())
+  if (!hadBirthdayThisYear) age--
+  return age
+}
+
 export const registerStep1 = z.object({
   firstName: z.string().min(2, 'Enter your first name'),
   lastName: z.string().min(2, 'Enter your last name'),
   email: z.string().email('Enter a valid email'),
-  phone: z.string().min(7, 'Enter a valid phone number'),
+  phone: z.string().regex(PHONE_RE, 'Enter a valid mobile number, e.g. +14155551234'),
+  dateOfBirth: z
+    .string()
+    .min(1, 'Date of birth is required')
+    .refine((v) => !Number.isNaN(new Date(v).getTime()), 'Enter a valid date of birth')
+    .refine((v) => ageFrom(new Date(v)) >= 18, 'You must be at least 18 years old to register'),
 })
 export const registerStep2 = z.object({
   country: z.string().min(1, 'Select your country'),
@@ -73,6 +91,8 @@ export const ticketSchema = z.object({
 export const profileSchema = z.object({
   name: z.string().min(2, 'Enter your name'),
   email: z.string().email('Enter a valid email'),
-  phone: z.string().min(7, 'Enter a valid phone number'),
+  // Optional here (older accounts may not have one on file yet) but must be a
+  // real mobile number if provided — registration requires it outright.
+  phone: z.string().refine((v) => v === '' || PHONE_RE.test(v), 'Enter a valid mobile number, e.g. +14155551234'),
   country: z.string().min(2, 'Enter your country'),
 })

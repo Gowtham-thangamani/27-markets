@@ -10,8 +10,9 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
+import type { UserRole } from '@prisma/client';
 import { AuthService, type RequestContext } from './auth.service';
-import { RegisterDto, LoginDto, TotpVerifyDto, ChangePasswordDto, VerifyEmailDto, ForgotPasswordDto, ResetPasswordDto, DisableTwoFactorDto } from './dto';
+import { RegisterDto, LoginDto, TotpVerifyDto, ChangePasswordDto, VerifyEmailDto, ForgotPasswordDto, ResetPasswordDto, DisableTwoFactorDto, RequestContextSwitchDto, ConfirmContextSwitchDto } from './dto';
 import { setAuthCookies, clearAuthCookies, REFRESH_COOKIE_NAME } from './cookies';
 import { CurrentUser, Public } from '../common/decorators';
 import type { Env } from '../config/env.validation';
@@ -128,5 +129,27 @@ export class AuthController {
   async disableTwoFactor(@CurrentUser('id') userId: string, @Body() dto: DisableTwoFactorDto, @Req() req: Request) {
     await this.auth.disableTwoFactor(userId, dto, ctxFrom(req));
     return { ok: true };
+  }
+
+  // Switching a session's active role (CLIENT <-> PARTNER) on an account that holds both.
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @HttpCode(200)
+  @Post('switch/request')
+  requestSwitch(@CurrentUser('id') userId: string, @Body() dto: RequestContextSwitchDto) {
+    return this.auth.requestContextSwitch(userId, dto.targetRole as UserRole);
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @HttpCode(200)
+  @Post('switch/confirm')
+  async confirmSwitch(
+    @CurrentUser('id') userId: string,
+    @Body() dto: ConfirmContextSwitchDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { user, tokens } = await this.auth.confirmContextSwitch(userId, dto.targetRole as UserRole, dto.code, ctxFrom(req));
+    setAuthCookies(res, tokens, this.config);
+    return { user };
   }
 }

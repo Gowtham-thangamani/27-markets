@@ -116,6 +116,8 @@ const validRegisterDto = {
   password: 'Password1',
   firstName: 'Alice',
   lastName: 'Smith',
+  phone: '+14155551234',
+  dateOfBirth: '1990-01-01',
   acceptTerms: true as const,
 };
 
@@ -165,13 +167,17 @@ describe('AuthService.register – referral attribution', () => {
   });
 
   it('does not set referredByPartnerId when no ref is supplied', async () => {
-    const partnerFindUnique = jest.fn();
+    const partnerFindUnique = jest.fn().mockResolvedValue(null);
     const prisma = makeRegisterPrisma(partnerFindUnique);
     const service = makeRegisterService(prisma);
 
     await service.register({ ...validRegisterDto }, { ip: '127.0.0.1' });
 
-    expect(partnerFindUnique).not.toHaveBeenCalled();
+    // No ?ref= lookup — the only partnerProfile.findUnique call is toPublic()'s
+    // hasPartnerProfile check (by userId, not by referralCode).
+    expect(partnerFindUnique).not.toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ referralCode: expect.anything() }) }),
+    );
   });
 });
 
@@ -182,6 +188,7 @@ describe('AuthService.login — login-alert email', () => {
     const prisma = {
       user: { findUnique: jest.fn().mockResolvedValue(user) },
       session: { create: jest.fn().mockResolvedValue({ id: 's1' }), update: jest.fn().mockResolvedValue({}) },
+      partnerProfile: { findUnique: jest.fn().mockResolvedValue(null) },
     } as any;
     const tokens = { signAccess: jest.fn().mockResolvedValue('at'), signRefresh: jest.fn().mockResolvedValue('rt'), hashToken: jest.fn().mockReturnValue('h') } as any;
     const config = { get: jest.fn((k: string) => (k === 'LOGIN_EMAIL_OTP' ? false : 604800)) } as any;
@@ -222,6 +229,7 @@ describe('AuthService.login — brute-force lockout (H-7)', () => {
     const prisma = {
       user: { findUnique: jest.fn().mockResolvedValue(user), update },
       session: { create: jest.fn().mockResolvedValue({ id: 's1' }), update: jest.fn().mockResolvedValue({}) },
+      partnerProfile: { findUnique: jest.fn().mockResolvedValue(null) },
     } as any;
     const tokens = { signAccess: jest.fn().mockResolvedValue('at'), signRefresh: jest.fn().mockResolvedValue('rt'), hashToken: jest.fn().mockReturnValue('h') } as any;
     const config = { get: jest.fn((k: string) => (k === 'LOGIN_EMAIL_OTP' ? false : 604800)) } as any;
@@ -264,6 +272,7 @@ describe('AuthService.login — email OTP (LOGIN_EMAIL_OTP)', () => {
       user: { findUnique: jest.fn().mockResolvedValue(user), update: jest.fn().mockResolvedValue({}) },
       session: { create: jest.fn().mockResolvedValue({ id: 's1' }), update: jest.fn().mockResolvedValue({}) },
       loginOtp,
+      partnerProfile: { findUnique: jest.fn().mockResolvedValue(null) },
     } as any;
     const tokens = { signAccess: jest.fn().mockResolvedValue('at'), signRefresh: jest.fn().mockResolvedValue('rt'), hashToken: jest.fn((s: string) => `h:${s}`) } as any;
     const config = { get: jest.fn((k: string) => (k === 'LOGIN_EMAIL_OTP' ? true : 604800)) } as any;
@@ -350,5 +359,74 @@ describe('AuthService.disableTwoFactor — re-auth (M-2)', () => {
     (authenticator.verify as jest.Mock).mockReturnValue(true);
     await service.disableTwoFactor('u1', { currentPassword: 'mypassword', code: '123456' } as any, {});
     expect(update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'u1' }, data: expect.objectContaining({ twoFactorEnabled: false, twoFactorSecret: null }) }));
+  });
+});
+
+describe('AuthService context switch (client <-> IB partner)', () => {
+  const sha256 = (s: string) => require('node:crypto').createHash('sha256').update(s).digest('hex');
+
+  function build(overrides: { user?: any; partnerProfile?: any; switchOtp?: any } = {}) {
+    const user = { id: 'u1', email: 'alice@example.com', firstName: 'Alice', role: 'CLIENT', ...overrides.user };
+    const userUpdate = jest.fn().mockResolvedValue({ ...user, role: 'PARTNER' });
+    const contextSwitchOtp = {
+      findUnique: jest.fn().mockResolvedValue(overrides.switchOtp ?? null),
+      upsert: jest.fn().mockResolvedValue({}),
+      update: jest.fn().mockResolvedValue({}),
+      delete: jest.fn().mockResolvedValue({}),
+    };
+    const prisma = {
+      user: { findUniqueOrThrow: jest.fn().mockResolvedValue(user), update: userUpdate },
+      partnerProfile: { findUnique: jest.fn().mockResolvedValue(overrides.partnerProfile ?? null) },
+      contextSwitchOtp,
+      session: { create: jest.fn().mockResolvedValue({ id: 's1' }), update: jest.fn().mockResolvedValue({}), updateMany: jest.fn().mockResolvedValue({}) },
+    } as any;
+    const tokens = { signAccess: jest.fn().mockResolvedValue('at'), signRefresh: jest.fn().mockResolvedValue('rt'), hashToken: jest.fn().mockReturnValue('h') } as any;
+    const email = { sendContextSwitchCode: jest.fn().mockResolvedValue(undefined) } as any;
+    const audit = { record: jest.fn() } as any;
+    const config = { get: jest.fn().mockReturnValue(604800) } as any;
+    const service = new AuthService(prisma, tokens, audit, {} as any, config, {} as any, email, {} as any, { create: jest.fn() } as any);
+    return { service, prisma, email, userUpdate, contextSwitchOtp };
+  }
+
+  it('requestContextSwitch emails a code when the client has a partner profile', async () => {
+    const { service, email, prisma } = build({ partnerProfile: { id: 'pp1' } });
+    await service.requestContextSwitch('u1', 'PARTNER' as any);
+    expect(prisma.contextSwitchOtp.upsert).toHaveBeenCalled();
+    expect(email.sendContextSwitchCode).toHaveBeenCalledWith('alice@example.com', expect.stringMatching(/^\d{6}$/), 'IB Partner');
+  });
+
+  it('requestContextSwitch rejects switching to PARTNER without a partner profile', async () => {
+    const { service } = build({ partnerProfile: null });
+    await expect(service.requestContextSwitch('u1', 'PARTNER' as any)).rejects.toThrow(/partner profile/i);
+  });
+
+  it('requestContextSwitch rejects switching to the role already active', async () => {
+    const { service } = build({ user: { role: 'CLIENT' } });
+    await expect(service.requestContextSwitch('u1', 'CLIENT' as any)).rejects.toThrow(/already/i);
+  });
+
+  it('confirmContextSwitch flips the role, revokes other sessions, and issues fresh tokens', async () => {
+    const otp = { codeHash: sha256('123456'), attempts: 0, targetRole: 'PARTNER', expiresAt: new Date(Date.now() + 60_000) };
+    const { service, prisma, userUpdate } = build({ partnerProfile: { id: 'pp1' }, switchOtp: otp });
+
+    const res = await service.confirmContextSwitch('u1', 'PARTNER' as any, '123456', {});
+
+    expect(userUpdate).toHaveBeenCalledWith({ where: { id: 'u1' }, data: { role: 'PARTNER' } });
+    expect(prisma.session.updateMany).toHaveBeenCalledWith({ where: { userId: 'u1', revokedAt: null }, data: { revokedAt: expect.any(Date) } });
+    expect(res.tokens).toEqual({ accessToken: 'at', refreshToken: 'rt' });
+  });
+
+  it('confirmContextSwitch rejects a wrong code and increments attempts', async () => {
+    const otp = { codeHash: sha256('123456'), attempts: 0, targetRole: 'PARTNER', expiresAt: new Date(Date.now() + 60_000) };
+    const { service, contextSwitchOtp } = build({ partnerProfile: { id: 'pp1' }, switchOtp: otp });
+
+    await expect(service.confirmContextSwitch('u1', 'PARTNER' as any, '000000', {})).rejects.toThrow(/invalid code/i);
+    expect(contextSwitchOtp.update).toHaveBeenCalledWith({ where: { userId: 'u1' }, data: { attempts: { increment: 1 } } });
+  });
+
+  it('confirmContextSwitch rejects an expired code', async () => {
+    const otp = { codeHash: sha256('123456'), attempts: 0, targetRole: 'PARTNER', expiresAt: new Date(Date.now() - 1000) };
+    const { service } = build({ partnerProfile: { id: 'pp1' }, switchOtp: otp });
+    await expect(service.confirmContextSwitch('u1', 'PARTNER' as any, '123456', {})).rejects.toThrow(/expired/i);
   });
 });

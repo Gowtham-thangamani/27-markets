@@ -6,7 +6,7 @@ describe('PartnersService.apply', () => {
     const prisma = { partnerApplication: { create: jest.fn().mockResolvedValue(created) } } as any;
     const audit = { record: jest.fn() } as any;
     const config = { get: jest.fn().mockReturnValue('https://app.example') } as any;
-    const service = new PartnersService(prisma, audit, config);
+    const service = new PartnersService(prisma, audit, config, { sendNotification: jest.fn().mockResolvedValue(undefined) } as any);
 
     const res = await service.apply({
       firstName: 'Pat', lastName: 'Lee', email: 'Pat@Example.com', company: 'PatPromo',
@@ -46,7 +46,7 @@ describe('PartnersService.approve', () => {
   it('creates a partner user + profile + invite token and returns code + inviteUrl', async () => {
     const { prisma, audit, config } = deps();
     const { PartnersService } = require('./partners.service');
-    const service = new PartnersService(prisma, audit, config);
+    const service = new PartnersService(prisma, audit, config, { sendNotification: jest.fn().mockResolvedValue(undefined) } as any);
     const res = await service.approve('admin1', 'app1');
     expect(res.ok).toBe(true);
     expect(res.referralCode).toHaveLength(8);
@@ -58,15 +58,40 @@ describe('PartnersService.approve', () => {
     const { prisma, audit, config } = deps();
     prisma.partnerApplication.findUnique.mockResolvedValue({ id: 'app1', status: 'APPROVED' });
     const { PartnersService } = require('./partners.service');
-    const service = new PartnersService(prisma, audit, config);
+    const service = new PartnersService(prisma, audit, config, { sendNotification: jest.fn().mockResolvedValue(undefined) } as any);
     await expect(service.approve('admin1', 'app1')).rejects.toBeInstanceOf(BadRequestException);
   });
 
-  it('rejects when the email already has a user (409)', async () => {
+  it('attaches a partner profile to an existing client account instead of creating a duplicate', async () => {
     const { prisma, audit, config } = deps();
-    prisma.user.findUnique.mockResolvedValue({ id: 'existing' });
+    prisma.user.findUnique.mockResolvedValue({ id: 'existing', email: 'p@x.io', firstName: 'Pat', role: 'CLIENT', partnerProfile: null });
+    const email = { sendNotification: jest.fn().mockResolvedValue(undefined) };
     const { PartnersService } = require('./partners.service');
-    const service = new PartnersService(prisma, audit, config);
+    const service = new PartnersService(prisma, audit, config, email as any);
+
+    const res = await service.approve('admin1', 'app1');
+
+    expect(res).toEqual({ ok: true, referralCode: expect.any(String), inviteUrl: null });
+    expect(prisma.partnerProfile.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ userId: 'existing' }) }),
+    );
+    expect(prisma.user.create).not.toHaveBeenCalled();
+    expect(email.sendNotification).toHaveBeenCalledWith('p@x.io', expect.objectContaining({ firstName: 'Pat' }));
+  });
+
+  it('rejects when the existing account already has a partner profile (409)', async () => {
+    const { prisma, audit, config } = deps();
+    prisma.user.findUnique.mockResolvedValue({ id: 'existing', role: 'CLIENT', partnerProfile: { id: 'pp1' } });
+    const { PartnersService } = require('./partners.service');
+    const service = new PartnersService(prisma, audit, config, { sendNotification: jest.fn().mockResolvedValue(undefined) } as any);
+    await expect(service.approve('admin1', 'app1')).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('rejects when the existing account is staff (409)', async () => {
+    const { prisma, audit, config } = deps();
+    prisma.user.findUnique.mockResolvedValue({ id: 'existing', role: 'ADMIN', partnerProfile: null });
+    const { PartnersService } = require('./partners.service');
+    const service = new PartnersService(prisma, audit, config, { sendNotification: jest.fn().mockResolvedValue(undefined) } as any);
     await expect(service.approve('admin1', 'app1')).rejects.toBeInstanceOf(ConflictException);
   });
 });
@@ -79,7 +104,7 @@ describe('PartnersService sub-IB upline', () => {
         findUnique: jest.fn().mockResolvedValue(uplineUserId ? { userId: uplineUserId } : null),
       },
     } as any;
-    const service = new PartnersService(prisma, { record: jest.fn() } as any, { get: jest.fn() } as any);
+    const service = new PartnersService(prisma, { record: jest.fn() } as any, { get: jest.fn() } as any, {} as any);
     return { service, prisma };
   };
 
@@ -124,7 +149,7 @@ describe('PartnersService sub-IB upline', () => {
     const prisma: any = { ...prismaTx, $transaction: jest.fn(async (fn: any) => fn(prismaTx)) };
     const service = new PartnersService(prisma, { record: jest.fn() } as any, {
       get: jest.fn().mockReturnValue('https://app.example'),
-    } as any);
+    } as any, {} as any);
 
     await service.approve('admin1', 'app1');
 

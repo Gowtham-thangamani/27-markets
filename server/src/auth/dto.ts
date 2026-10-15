@@ -3,6 +3,7 @@ import {
   IsBoolean,
   IsEmail,
   IsISO8601,
+  IsIn,
   IsOptional,
   IsString,
   Matches,
@@ -32,19 +33,19 @@ export class RegisterDto {
   @MaxLength(60)
   lastName!: string;
 
-  @IsOptional()
   @IsString()
-  @MaxLength(32)
-  phone?: string;
+  @Matches(/^\+?[1-9]\d{7,14}$/, { message: 'Enter a valid mobile number, e.g. +14155551234' })
+  phone!: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(80)
   country?: string;
 
-  @IsOptional()
-  @IsISO8601()
-  dateOfBirth?: string;
+  // Format only — the 18+ check runs in AuthService.register() since it needs
+  // "now" rather than a static rule.
+  @IsISO8601({}, { message: 'Enter a valid date of birth' })
+  dateOfBirth!: string;
 
   @IsOptional()
   @IsString()
@@ -147,4 +148,17 @@ export class ChangePasswordDto {
   @Matches(/[A-Za-z]/, { message: 'Password must contain a letter' })
   @Matches(/[0-9]/, { message: 'Password must contain a number' })
   newPassword!: string;
+}
+
+// Switching a session's active role between CLIENT and PARTNER, for an account
+// that holds both (e.g. a client who is also an approved IB).
+export class RequestContextSwitchDto {
+  @IsIn(['CLIENT', 'PARTNER'])
+  targetRole!: 'CLIENT' | 'PARTNER';
+}
+
+export class ConfirmContextSwitchDto extends RequestContextSwitchDto {
+  @IsString()
+  @Matches(/^\d{6}$/, { message: 'Code must be 6 digits' })
+  code!: string;
 }
