@@ -91,7 +91,7 @@ const navItems: NavItem[] = [
     to: '/partnership',
     menu: [
       { label: 'IB Program', labelKey: 'nav.ibProgram', to: '/partnership', desc: 'Rebates, tools & support', icon: Handshake },
-      { label: 'IB Signup', labelKey: 'nav.becomePartner', to: '/partner/apply', desc: 'Register as an Introducing Broker', icon: UserPlus },
+      { label: 'Become a Partner', labelKey: 'nav.becomePartner', to: '/partner/apply', desc: 'Apply in minutes', icon: UserPlus },
     ],
   },
   {

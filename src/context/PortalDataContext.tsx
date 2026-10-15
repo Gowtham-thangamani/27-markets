@@ -45,10 +45,6 @@ interface PortalDataValue {
   kyc: KycStep[]
   tickets: SupportTicket[]
   notifications: NotificationItem[]
-  /** The account currently shown on the dashboard — switch it with `selectAccount`. */
-  selectedAccountId: string | null
-  selectedAccount: TradingAccount | null
-  selectAccount: (id: string) => void
   totals: { balance: number; equity: number; freeMargin: number; marginLevel: number }
   kycProgress: number
   loading: boolean
@@ -78,8 +74,6 @@ export function PortalDataProvider({ children }: { children: ReactNode }) {
   const [tickets, setTickets] = useLocalStorage<SupportTicket[]>('apex.tickets', seedTickets)
   // Notifications are backend-persisted (deposit/withdrawal events, etc.).
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
-  // Which account the dashboard shows — persisted so a refresh keeps the choice.
-  const [selectedAccountId, setSelectedAccountId] = useLocalStorage<string | null>('apex.selectedAccountId', null)
 
   const refresh = useCallback(async () => {
     if (!isAuthenticated) return
@@ -114,32 +108,15 @@ export function PortalDataProvider({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated, refresh])
 
-  // Keep the selection valid: fall back to a Live account (else the first
-  // account) whenever there's no selection yet, or the stored one no longer exists.
-  useEffect(() => {
-    if (accounts.length === 0) return
-    if (selectedAccountId && accounts.some((a) => a.id === selectedAccountId)) return
-    const fallback = accounts.find((a) => a.mode === 'Live') ?? accounts[0]
-    setSelectedAccountId(fallback.id)
-  }, [accounts, selectedAccountId, setSelectedAccountId])
-
-  const selectedAccount = useMemo(
-    () => accounts.find((a) => a.id === selectedAccountId) ?? null,
-    [accounts, selectedAccountId],
-  )
-
-  const selectAccount = useCallback(
-    (id: string) => setSelectedAccountId(id),
-    [setSelectedAccountId],
-  )
-
-  // The dashboard reflects whichever account is selected, not an aggregate —
-  // switching accounts changes what's shown.
   const totals = useMemo(() => {
-    if (!selectedAccount) return { balance: 0, equity: 0, freeMargin: 0, marginLevel: 0 }
-    const { balance, equity, freeMargin, marginLevel } = selectedAccount
+    const live = accounts.filter((a) => a.mode === 'Live')
+    const balance = live.reduce((s, a) => s + a.balance, 0)
+    const equity = live.reduce((s, a) => s + a.equity, 0)
+    const freeMargin = live.reduce((s, a) => s + a.freeMargin, 0)
+    const used = equity - freeMargin
+    const marginLevel = used > 0 ? (equity / used) * 100 : 0
     return { balance, equity, freeMargin, marginLevel }
-  }, [selectedAccount])
+  }, [accounts])
 
   const kycProgress = useMemo(() => {
     if (kyc.length === 0) return 0
@@ -241,9 +218,6 @@ export function PortalDataProvider({ children }: { children: ReactNode }) {
         kyc,
         tickets,
         notifications,
-        selectedAccountId,
-        selectedAccount,
-        selectAccount,
         totals,
         kycProgress,
         loading,

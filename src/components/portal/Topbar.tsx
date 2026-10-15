@@ -1,9 +1,7 @@
-import { useState } from 'react'
-import { ArrowLeftRight, Bell, Menu, Plus } from 'lucide-react'
+import { Bell, Menu, Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Badge } from '@/components/ui'
 import { Dropdown, DropdownItem } from '@/components/ui/Dropdown'
-import { SwitchAccountModal } from '@/components/SwitchAccountModal'
 import { useAuth } from '@/context/AuthContext'
 import { usePortalData } from '@/context/PortalDataContext'
 import { initials, formatDateTime } from '@/lib/format'
@@ -18,8 +16,6 @@ export function Topbar({ onOpenSidebar, onOpenAccount }: TopbarProps) {
   const navigate = useNavigate()
   const { notifications, markAllNotificationsRead } = usePortalData()
   const unread = notifications.filter((n) => !n.read).length
-  const [switchOpen, setSwitchOpen] = useState(false)
-  const canSwitchToPartner = user?.role === 'CLIENT' && user.hasPartnerProfile
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-white/[0.06] bg-ink-900/85 px-4 backdrop-blur-xl sm:px-6">
@@ -37,16 +33,6 @@ export function Topbar({ onOpenSidebar, onOpenAccount }: TopbarProps) {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        {canSwitchToPartner && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="hidden gap-1.5 sm:inline-flex"
-            onClick={() => setSwitchOpen(true)}
-          >
-            <ArrowLeftRight className="h-4 w-4" /> Switch to IB
-          </Button>
-        )}
         <Button size="sm" className="hidden gap-1.5 sm:inline-flex" onClick={onOpenAccount}>
           <Plus className="h-4 w-4" /> Open New Account
         </Button>
@@ -109,18 +95,8 @@ export function Topbar({ onOpenSidebar, onOpenAccount }: TopbarProps) {
           <DropdownItem onClick={() => navigate('/portal/profile')}>Profile settings</DropdownItem>
           <DropdownItem onClick={() => navigate('/portal/kyc')}>KYC verification</DropdownItem>
           <DropdownItem onClick={() => navigate('/portal/support')}>Support</DropdownItem>
-          {canSwitchToPartner && (
-            <>
-              <div className="my-1 h-px bg-white/[0.06]" />
-              <DropdownItem onClick={() => setSwitchOpen(true)}>Switch to IB Partner</DropdownItem>
-            </>
-          )}
         </Dropdown>
       </div>
-
-      {canSwitchToPartner && (
-        <SwitchAccountModal open={switchOpen} onClose={() => setSwitchOpen(false)} targetRole="PARTNER" />
-      )}
     </header>
   )
 }

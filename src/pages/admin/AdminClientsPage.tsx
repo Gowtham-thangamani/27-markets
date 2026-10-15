@@ -8,7 +8,6 @@ import { formatCurrency, formatDate, initials } from '@/lib/format'
 import { ApiError } from '@/lib/api'
 import { adminApi, type ClientDetail, type ClientListItem } from '@/lib/adminApi'
 import { DataTable, type Column } from '@/components/admin/table'
-import { GenerateDocumentModal } from '@/components/admin/GenerateDocumentModal'
 
 export default function AdminClientsPage() {
   const toast = useToast()
@@ -122,32 +121,7 @@ function ClientDetailModal({
 }) {
   const toast = useToast()
   const [note, setNote] = useState('')
-  const [genOpen, setGenOpen] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [staff, setStaff] = useState<{ id: string; firstName: string; lastName: string }[]>([])
-  const [agentSaving, setAgentSaving] = useState(false)
-
-  // Staff picker options for the sales-agent assignment, loaded once the modal opens.
-  useEffect(() => {
-    if (!client) return
-    let alive = true
-    adminApi.getStaff().then((s) => { if (alive) setStaff(s) }).catch(() => undefined)
-    return () => { alive = false }
-  }, [client])
-
-  const assignAgent = async (agentId: string | null) => {
-    if (!client) return
-    setAgentSaving(true)
-    try {
-      await adminApi.setSalesAgent(client.id, agentId)
-      onNoteAdded(await adminApi.getClient(client.id)) // refresh the open client
-      toast.success('Sales agent updated')
-    } catch (e) {
-      toast.error('Could not assign agent', e instanceof ApiError ? e.message : (e as Error).message)
-    } finally {
-      setAgentSaving(false)
-    }
-  }
 
   const addNote = async () => {
     if (!client || note.trim().length === 0) return
@@ -173,28 +147,6 @@ function ClientDetailModal({
             <Field label="Country" value={client.country ?? '—'} />
             <Field label="Status" value={client.status} />
             <Field label="Joined" value={formatDate(client.joinedAt)} />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-xs text-gray-500">Sales agent</label>
-            <select
-              aria-label="Sales agent"
-              value={client.assignedAgentId ?? ''}
-              disabled={agentSaving}
-              onChange={(e) => assignAgent(e.target.value || null)}
-              className="w-full max-w-xs rounded-lg border border-white/10 bg-ink-800/60 px-3 py-2 text-sm text-gray-200 outline-none focus:border-brand-500 disabled:opacity-50"
-            >
-              <option value="" className="bg-ink-800">Unassigned</option>
-              {staff.map((s) => (
-                <option key={s.id} value={s.id} className="bg-ink-800">{s.firstName} {s.lastName}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex justify-end">
-            <Button size="sm" variant="ghost" onClick={() => setGenOpen(true)}>
-              Generate document
-            </Button>
           </div>
 
           <div>
@@ -268,8 +220,6 @@ function ClientDetailModal({
               )}
             </div>
           </div>
-
-          <GenerateDocumentModal client={genOpen ? client : null} onClose={() => setGenOpen(false)} />
         </div>
       )}
     </Modal>

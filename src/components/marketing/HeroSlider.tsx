@@ -6,6 +6,7 @@ import { Button } from '@/components/ui'
 import { asset } from '@/lib/asset'
 import { fadeUp, staggerContainer } from '@/lib/motion'
 import { HeroFloatingCards } from '@/components/marketing/HeroFloatingCards'
+import { HeroPartnerCards } from '@/components/marketing/HeroPartnerCards'
 import { useT } from '@/i18n/LanguageContext'
 
 interface Quote {
@@ -85,17 +86,6 @@ const SLIDES: Slide[] = [
     secondary: { label: 'Open Account', to: '/register', labelKey: 'hero3.ctaSecondary' },
     visual: 'coins',
   },
-]
-
-// Floating market icons for the "Keep More Per Trade" slide. The dark-cornered
-// PNGs are radial-masked (in the render) so only the glowing disc shows.
-const FLOAT_ICONS = [
-  { src: 'float-forex.webp', alt: 'Forex', pos: 'left-0 top-0 w-[36%]' },
-  { src: 'float-metals.webp', alt: 'Metals', pos: 'right-0 top-4 w-[32%]' },
-  { src: 'float-i3.webp', alt: 'Crypto', pos: 'left-[33%] top-[16%] w-[38%]' },
-  { src: 'float-indices.webp', alt: 'Indices', pos: 'bottom-[26%] left-1 w-[32%]' },
-  { src: 'float-stocks.webp', alt: 'Stocks', pos: 'bottom-6 right-1 w-[36%]' },
-  { src: 'float-commodities.webp', alt: 'Commodities', pos: 'bottom-0 left-[31%] w-[34%]' },
 ]
 
 const TRUST = [
@@ -281,43 +271,33 @@ export function HeroSlider({ onLight, quotes, single = false }: HeroSliderProps)
                 </div>
               )}
               {slide.visual === 'coins' && (
-                <div className="relative mx-auto aspect-square w-full max-w-md">
-                  {FLOAT_ICONS.map((f, i) => (
-                    <motion.img
-                      key={f.src}
-                      src={asset(f.src)}
-                      alt={f.alt}
-                      loading="lazy"
-                      decoding="async"
-                      className={`absolute ${f.pos} select-none`}
-                      style={{
-                        WebkitMaskImage:
-                          'radial-gradient(circle at 50% 50%, #000 60%, transparent 72%)',
-                        maskImage: 'radial-gradient(circle at 50% 50%, #000 60%, transparent 72%)',
-                        filter: 'drop-shadow(0 10px 30px rgba(225,29,46,0.45))',
-                      }}
-                      animate={reduce ? undefined : { y: [0, -14, 0] }}
-                      transition={{ duration: 4 + i, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
-                    />
-                  ))}
-                </div>
+                <img
+                  src={asset('growth-coins.webp')}
+                  alt="Growing trading returns"
+                  width={625}
+                  height={416}
+                  loading="lazy"
+                  decoding="async"
+                  className="mx-auto w-full max-w-md select-none drop-shadow-[0_24px_70px_rgba(225,29,46,0.3)]"
+                />
               )}
               {slide.visual === 'analytics' && (
                 <div className="relative">
-                  {/* Ambient glow so the graphic sits in the scene. */}
+                  {/* Ambient glow so the transparent graphic sits in the scene. */}
                   <div
                     aria-hidden
-                    className="pointer-events-none absolute left-1/2 top-1/2 h-[70%] w-[90%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/20 blur-3xl"
+                    className="pointer-events-none absolute left-1/2 top-1/2 h-[70%] w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/20 blur-3xl"
                   />
                   <img
-                    src={asset('hero-bearbull.webp')}
-                    alt="Bull and bear — trade both directions"
-                    width={1502}
-                    height={984}
+                    src={asset('hero-analytics.webp')}
+                    alt="Rising trading performance — steadily climbing returns"
+                    width={648}
+                    height={647}
                     loading="lazy"
                     decoding="async"
-                    className="relative mx-auto w-full max-w-2xl select-none drop-shadow-[0_18px_55px_rgba(225,29,46,0.35)]"
+                    className="relative mx-auto w-[56%] select-none drop-shadow-[0_18px_55px_rgba(225,29,46,0.35)]"
                   />
+                  <HeroPartnerCards />
                 </div>
               )}
             </motion.div>

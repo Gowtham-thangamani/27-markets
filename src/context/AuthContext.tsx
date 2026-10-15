@@ -28,8 +28,6 @@ export interface ProfilePatch {
   notifyMarketing?: boolean
 }
 
-export type SwitchTargetRole = 'CLIENT' | 'PARTNER'
-
 interface AuthContextValue {
   user: UserProfile | null
   isAuthenticated: boolean
@@ -39,8 +37,6 @@ interface AuthContextValue {
   logout: () => Promise<void>
   refreshUser: () => Promise<UserProfile>
   updateProfile: (patch: ProfilePatch) => Promise<void>
-  requestSwitch: (targetRole: SwitchTargetRole) => Promise<void>
-  confirmSwitch: (targetRole: SwitchTargetRole, code: string) => Promise<UserProfile>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -123,18 +119,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(mapUser(u))
   }, [])
 
-  const requestSwitch = useCallback(async (targetRole: SwitchTargetRole) => {
-    await api.post('/auth/switch/request', { targetRole })
-  }, [])
-
-  const confirmSwitch = useCallback(
-    async (targetRole: SwitchTargetRole, code: string) => {
-      await api.post('/auth/switch/confirm', { targetRole, code })
-      return refreshUser()
-    },
-    [refreshUser],
-  )
-
   return (
     <AuthContext.Provider
       value={{
@@ -146,8 +130,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         refreshUser,
         updateProfile,
-        requestSwitch,
-        confirmSwitch,
       }}
     >
       {children}

@@ -8,7 +8,6 @@ export interface PartnerClientAccount { type: AccountType; mode: AccountMode; st
 /** Row of the dashboard's recent-referrals strip. */
 export interface PartnerClientSummary { id: string; name: string; email: string; country: string | null; kyc: Kyc; createdAt: string }
 export type ClientSortBy = 'name' | 'country' | 'conversion' | 'campaign' | 'signup'
-export interface ClientListParams { page?: number; pageSize?: number; search?: string; sortBy?: ClientSortBy; sortDir?: 'asc' | 'desc' }
 export interface PartnerClientList { rows: PartnerClient[]; total: number; page: number; pageSize: number }
 export type ConversionStatus = 'NO_ANSWER' | 'ON_BOARDING' | 'CONVERTED' | 'NOT_INTERESTED'
 /** Row of the full clients list, with accounts, CRM state and financials. */
