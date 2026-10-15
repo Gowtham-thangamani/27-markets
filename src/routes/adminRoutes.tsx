@@ -8,6 +8,7 @@ import { placeholderLinks } from '../components/admin/adminNav'
 
 const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'))
 const AdminClientsPage = lazy(() => import('../pages/admin/AdminClientsPage'))
+const AdminClientDetailPage = lazy(() => import('../pages/admin/AdminClientDetailPage'))
 const AdminBlockedUsersPage = lazy(() => import('../pages/admin/AdminBlockedUsersPage'))
 const AdminLeadsPage = lazy(() => import('../pages/admin/AdminLeadsPage'))
 const AdminSupportPage = lazy(() => import('../pages/admin/AdminSupportPage'))
@@ -84,6 +85,7 @@ export function adminRoutes() {
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="clients" element={<AdminClientsPage />} />
+        <Route path="clients/:id" element={<AdminClientDetailPage />} />
         <Route path="blocked-users" element={<AdminBlockedUsersPage />} />
         <Route path="leads" element={<AdminLeadsPage />} />
         <Route path="support" element={<AdminSupportPage />} />

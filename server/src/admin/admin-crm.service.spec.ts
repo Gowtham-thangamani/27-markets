@@ -1,3 +1,4 @@
+import { toMoney } from '../ledger/money';
 import { AdminCrmService } from './admin-crm.service';
 
 // Unit tests for the CRM service's client methods. Prisma/ledger/audit are
@@ -131,6 +132,12 @@ describe('AdminCrmService — clients', () => {
       kycFieldDefinition: { findMany: jest.fn().mockResolvedValue([]) },
       consent: { findMany: jest.fn().mockResolvedValue([]) },
       consentAcceptance: { findMany: jest.fn().mockResolvedValue([]) },
+      // addClientNote returns getClient(), which now also loads the profile
+      // history sections.
+      posting: { findMany: jest.fn().mockResolvedValue([]) },
+      order: { findMany: jest.fn().mockResolvedValue([]) },
+      auditLog: { findMany: jest.fn().mockResolvedValue([]) },
+      lead: { findFirst: jest.fn().mockResolvedValue(null) },
     } as any;
     const service = new AdminCrmService(prisma, {} as any, { record } as any, { create: jest.fn() } as any);
 
@@ -142,5 +149,108 @@ describe('AdminCrmService — clients', () => {
     expect(record).toHaveBeenCalledWith(
       expect.objectContaining({ userId: 'staff1', action: 'crm.client.note', entityId: 'c1' }),
     );
+  });
+});
+
+describe('AdminCrmService.getClient — profile sections', () => {
+  const RECENT = 20;
+
+  const makeService = (overrides: Record<string, any> = {}) => {
+    const ledgerAccountId = 'la1';
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'c1',
+          email: 'ada@example.com',
+          firstName: 'Ada',
+          lastName: 'Lovelace',
+          phone: null,
+          country: 'UK',
+          status: 'ACTIVE',
+          role: 'CLIENT',
+          createdAt: new Date('2026-01-01'),
+          kycProfile: null,
+          assignedAgentId: null,
+          assignedAgent: null,
+          clientNotesAbout: [],
+          tickets: [],
+          tradingAccounts: [
+            { id: 'a1', number: 'MT5-1', type: 'STANDARD', mode: 'LIVE', status: 'ACTIVE', ledgerAccount: { id: ledgerAccountId } },
+          ],
+        }),
+      },
+      kycAnswer: { findMany: jest.fn().mockResolvedValue([]) },
+      kycFieldDefinition: { findMany: jest.fn().mockResolvedValue([]) },
+      consent: { findMany: jest.fn().mockResolvedValue([]) },
+      consentAcceptance: { findMany: jest.fn().mockResolvedValue([]) },
+      posting: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'p1',
+            direction: 'CREDIT',
+            amount: '250.00',
+            currency: 'USD',
+            createdAt: new Date('2026-02-02'),
+            journalEntry: { reference: 'TX-1', kind: 'DEPOSIT', status: 'POSTED', simulated: true },
+          },
+        ]),
+      },
+      order: {
+        findMany: jest.fn().mockResolvedValue([
+          { id: 'o1', symbol: 'EURUSD', side: 'BUY', type: 'MARKET', quantity: '1', price: '1.08', status: 'FILLED', simulated: true, createdAt: new Date('2026-02-03') },
+        ]),
+      },
+      auditLog: {
+        findMany: jest.fn().mockResolvedValue([
+          { id: 'al1', action: 'auth.login', entity: null, entityId: null, ip: '1.2.3.4', createdAt: new Date('2026-02-04') },
+        ]),
+      },
+      lead: { findFirst: jest.fn().mockResolvedValue({ id: 'l1', source: 'WAITLIST', status: 'CONVERTED', createdAt: new Date('2025-12-01') }) },
+      ...overrides,
+    } as any;
+    const ledger = { balanceOf: jest.fn().mockResolvedValue(toMoney(0)) } as any;
+    return { service: new AdminCrmService(prisma, ledger, {} as any, { create: jest.fn() } as any), prisma };
+  };
+
+  it('returns the client money history from the ledger', async () => {
+    const { service } = makeService();
+    const res: any = await service.getClient('c1');
+    expect(res.transactions).toHaveLength(1);
+    expect(res.transactions[0]).toMatchObject({ reference: 'TX-1', kind: 'DEPOSIT', direction: 'CREDIT' });
+  });
+
+  it('returns trading activity, audit entries and the originating lead', async () => {
+    const { service } = makeService();
+    const res: any = await service.getClient('c1');
+    expect(res.orders[0]).toMatchObject({ symbol: 'EURUSD', side: 'BUY' });
+    expect(res.auditLog[0]).toMatchObject({ action: 'auth.login' });
+    expect(res.lead).toMatchObject({ source: 'WAITLIST' });
+  });
+
+  it('caps every section so a long-lived client cannot time the page out', async () => {
+    const { service, prisma } = makeService();
+    await service.getClient('c1');
+    expect(prisma.posting.findMany.mock.calls[0][0].take).toBe(RECENT);
+    expect(prisma.order.findMany.mock.calls[0][0].take).toBe(RECENT);
+    expect(prisma.auditLog.findMany.mock.calls[0][0].take).toBe(RECENT);
+  });
+
+  it('scopes the money history to this client ledger accounts only', async () => {
+    const { service, prisma } = makeService();
+    await service.getClient('c1');
+    expect(prisma.posting.findMany.mock.calls[0][0].where.ledgerAccountId).toEqual({ in: ['la1'] });
+  });
+
+  it('skips the ledger query entirely when the client has no accounts', async () => {
+    const { service, prisma } = makeService({
+      user: { findUnique: jest.fn().mockResolvedValue({
+        id: 'c1', email: 'a@b.c', firstName: 'A', lastName: 'B', phone: null, country: null,
+        status: 'ACTIVE', role: 'CLIENT', createdAt: new Date(), kycProfile: null,
+        assignedAgentId: null, assignedAgent: null, clientNotesAbout: [], tickets: [], tradingAccounts: [],
+      }) },
+    });
+    const res: any = await service.getClient('c1');
+    expect(prisma.posting.findMany).not.toHaveBeenCalled();
+    expect(res.transactions).toEqual([]);
   });
 });

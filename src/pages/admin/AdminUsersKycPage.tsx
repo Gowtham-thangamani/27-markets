@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useCallback, useEffect, useState } from 'react'
 import { ShieldCheck } from 'lucide-react'
 import { Badge } from '@/components/ui'
@@ -33,11 +34,13 @@ const columns: Column<ClientListItem>[] = [
   {
     key: 'client', header: 'Client', filter: 'text', sortable: true,
     accessor: (c) => `${c.firstName} ${c.lastName}`,
+    // A Link rather than a row onClick: staff compare clients side by side, so
+    // middle-click and "open in new tab" have to work.
     render: (c) => (
-      <div>
+      <Link to={`/admin/clients/${c.id}`} className="block hover:underline">
         <div className="font-medium text-white">{c.firstName} {c.lastName}</div>
         <div className="text-xs text-gray-500">{c.email}</div>
-      </div>
+      </Link>
     ),
   },
   { key: 'identity', header: 'Identity', filter: 'select', accessor: (c) => c.kycProfile?.identityStatus ?? 'NOT_SUBMITTED', render: (c) => <StepBadge status={c.kycProfile?.identityStatus ?? 'NOT_SUBMITTED'} /> },

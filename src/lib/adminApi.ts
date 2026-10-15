@@ -115,6 +115,46 @@ export interface ClientDetail {
   consents: { label: string; accepted: boolean }[]
   assignedAgentId: string | null
   assignedAgent: string | null
+  /** Most recent ledger movements. `direction` carries the sign; `amount` is positive. */
+  transactions: ClientTransaction[]
+  /** Most recent orders. Mostly simulated while the platform runs in SIMULATION. */
+  orders: ClientOrder[]
+  auditLog: ClientAuditEntry[]
+  /** The lead this client converted from, when they came through one. */
+  lead: { id: string; source: string; status: string; createdAt: string } | null
+}
+
+export interface ClientTransaction {
+  id: string
+  reference: string
+  kind: string
+  status: string
+  direction: 'DEBIT' | 'CREDIT'
+  amount: string
+  currency: string
+  simulated: boolean
+  at: string
+}
+
+export interface ClientOrder {
+  id: string
+  symbol: string
+  side: string
+  type: string
+  quantity: string
+  price: string
+  status: string
+  simulated: boolean
+  createdAt: string
+}
+
+export interface ClientAuditEntry {
+  id: string
+  action: string
+  entity: string | null
+  entityId: string | null
+  ip: string | null
+  createdAt: string
 }
 
 export interface Lead {

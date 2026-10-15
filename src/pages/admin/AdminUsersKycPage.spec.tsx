@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 
 vi.mock('@/lib/adminApi', () => ({
   adminApi: {
@@ -12,12 +13,22 @@ vi.mock('@/lib/adminApi', () => ({
 
 import AdminUsersKycPage from './AdminUsersKycPage'
 
+const renderPage = () => render(<MemoryRouter><AdminUsersKycPage /></MemoryRouter>)
+
 describe('AdminUsersKycPage', () => {
   it('shows per-client KYC step statuses and a derived overall', async () => {
-    render(<AdminUsersKycPage />)
+    renderPage()
     await waitFor(() => expect(screen.getByText(/Ada Lovelace/)).toBeInTheDocument())
     expect(screen.getByText(/Alan Turing/)).toBeInTheDocument()
     expect(screen.getAllByText('Approved').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Pending').length).toBeGreaterThan(0)
+  })
+
+  it('links each client through to their full profile', async () => {
+    renderPage()
+    // A real link, not a row onClick, so staff can middle-click to compare
+    // clients side by side.
+    const link = await screen.findByRole('link', { name: /Ada Lovelace/ })
+    expect(link).toHaveAttribute('href', '/admin/clients/c1')
   })
 })

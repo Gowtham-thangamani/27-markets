@@ -7,6 +7,13 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { formatMoney, toMoney } from '../ledger/money';
 import type { NoteDto, ReplyTicketDto, UpdateLeadDto, UpdateTicketDto } from './crm-dto';
 
+/**
+ * How many rows each history section of the client profile returns. The page
+ * shows a recent slice rather than everything: a client with years of orders or
+ * audit entries would otherwise make one request fetch tens of thousands of rows.
+ */
+const RECENT_LIMIT = 20;
+
 @Injectable()
 export class AdminCrmService {
   constructor(
@@ -85,6 +92,50 @@ export class AdminCrmService {
     const acceptedSet = new Set(acceptedRows.map((a) => a.consentId));
     const consents = consentDefs.map((c) => ({ label: c.label, accepted: acceptedSet.has(c.id) }));
 
+    // Recent-N rather than everything: a long-lived client can accumulate
+    // thousands of orders and audit rows, and the profile page must not wait on
+    // them. Each section shows the latest slice; drill-downs can paginate later.
+    const ledgerAccountIds = user.tradingAccounts
+      .map((a) => a.ledgerAccount?.id)
+      .filter((v): v is string => Boolean(v));
+
+    const [postings, orders, auditEntries, lead] = await Promise.all([
+      // No accounts means no ledger accounts, and `in: []` would scan for nothing.
+      ledgerAccountIds.length
+        ? this.prisma.posting.findMany({
+            where: { ledgerAccountId: { in: ledgerAccountIds } },
+            include: { journalEntry: true },
+            orderBy: { createdAt: 'desc' },
+            take: RECENT_LIMIT,
+          })
+        : Promise.resolve([]),
+      this.prisma.order.findMany({
+        where: { userId: id },
+        orderBy: { createdAt: 'desc' },
+        take: RECENT_LIMIT,
+      }),
+      this.prisma.auditLog.findMany({
+        where: { userId: id },
+        orderBy: { createdAt: 'desc' },
+        take: RECENT_LIMIT,
+      }),
+      // The lead this client converted from, if they came through one.
+      this.prisma.lead.findFirst({ where: { convertedUserId: id } }),
+    ]);
+
+    // Direction carries the sign; the stored amount is always positive.
+    const transactions = postings.map((p) => ({
+      id: p.id,
+      reference: p.journalEntry.reference,
+      kind: p.journalEntry.kind,
+      status: p.journalEntry.status,
+      direction: p.direction,
+      amount: formatMoney(toMoney(p.amount.toString())),
+      currency: p.currency,
+      simulated: p.journalEntry.simulated,
+      at: p.createdAt,
+    }));
+
     return {
       id: user.id,
       email: user.email,
@@ -97,6 +148,10 @@ export class AdminCrmService {
       accounts,
       notes: user.clientNotesAbout,
       tickets: user.tickets,
+      transactions,
+      orders,
+      auditLog: auditEntries,
+      lead,
       kycAnswers,
       consents,
       assignedAgentId: user.assignedAgentId,
