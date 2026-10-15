@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle2, Info, X, AlertTriangle, XCircle } from 'lucide-react'
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 
 type ToastKind = 'success' | 'error' | 'info' | 'warning'
@@ -54,13 +54,20 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     [remove]
   )
 
-  const helpers: ToastContextValue = {
-    toast,
-    success: (title, description) => toast({ kind: 'success', title, description }),
-    error: (title, description) => toast({ kind: 'error', title, description }),
-    info: (title, description) => toast({ kind: 'info', title, description }),
-    warning: (title, description) => toast({ kind: 'warning', title, description }),
-  }
+  // Memoised: this object is the context value, so a fresh one on every provider
+  // render changes identity for every consumer. Anything holding "toast" in a
+  // useCallback or useEffect dependency list then re-runs each time ANY toast
+  // appears — GenerateDocumentModal reloads and clears the admin's typed values.
+  const helpers: ToastContextValue = useMemo(
+    () => ({
+      toast,
+      success: (title, description) => toast({ kind: 'success', title, description }),
+      error: (title, description) => toast({ kind: 'error', title, description }),
+      info: (title, description) => toast({ kind: 'info', title, description }),
+      warning: (title, description) => toast({ kind: 'warning', title, description }),
+    }),
+    [toast],
+  )
 
   return (
     <ToastContext.Provider value={helpers}>
