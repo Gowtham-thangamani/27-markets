@@ -1,8 +1,8 @@
 import { lazy } from 'react'
-import { Route } from 'react-router-dom'
+import { Navigate, Route } from 'react-router-dom'
 import { MarketingLayout } from '../layouts/MarketingLayout'
 import { ExternalRedirect } from './ExternalRedirect'
-import { HOST_FOR_SURFACE } from '../lib/surface'
+import { HOST_FOR_SURFACE, SURFACE } from '../lib/surface'
 
 const HomePage = lazy(() => import('../pages/HomePage'))
 const AboutPage = lazy(() => import('../pages/AboutPage'))
@@ -22,7 +22,25 @@ const PartnerApplyPage = lazy(() => import('../pages/PartnerApplyPage'))
 const DisclaimerPage = lazy(() => import('../pages/DisclaimerPage'))
 const LegalPage = lazy(() => import('../pages/LegalPage'))
 
-const IB_DASHBOARD = `${HOST_FOR_SURFACE.partner}/partner/dashboard`
+/**
+ * Where the IB aliases point.
+ *
+ * On the marketing-only build the partner routes are not in this bundle, so the
+ * alias has to leave for the partner host. On the combined build they ARE here,
+ * so it must route internally — sending it to another hostname would be wrong
+ * even once that host exists, and today that host has no DNS record at all.
+ */
+export const IB_DASHBOARD =
+  SURFACE === 'marketing' ? `${HOST_FOR_SURFACE.partner}/partner/dashboard` : '/partner/dashboard'
+
+/** Leaves for the partner host only when the partner routes are not in this build. */
+function IbRedirect() {
+  return IB_DASHBOARD.startsWith('https://') ? (
+    <ExternalRedirect to={IB_DASHBOARD} />
+  ) : (
+    <Navigate to={IB_DASHBOARD} replace />
+  )
+}
 
 /** Public marketing site. No authentication anywhere in this tree. */
 export function marketingRoutes() {
@@ -43,11 +61,10 @@ export function marketingRoutes() {
       <Route path="/blog" element={<BlogListPage />} />
       <Route path="/blog/:slug" element={<BlogDetailPage />} />
       <Route path="/partner/apply" element={<PartnerApplyPage />} />
-      {/* Short, brandable aliases for the IB portal. It is a separate build on
-          its own hostname, so these must leave this site rather than route
-          internally — /partner/dashboard does not exist in the marketing bundle. */}
-      <Route path="/ib-portal" element={<ExternalRedirect to={IB_DASHBOARD} />} />
-      <Route path="/ibpartner" element={<ExternalRedirect to={IB_DASHBOARD} />} />
+      {/* Short, brandable aliases for the IB portal. Where they point depends on
+          the build — see IB_DASHBOARD above. */}
+      <Route path="/ib-portal" element={<IbRedirect />} />
+      <Route path="/ibpartner" element={<IbRedirect />} />
       <Route path="/disclaimer" element={<DisclaimerPage />} />
       <Route path="/legal/:doc" element={<LegalPage />} />
     </Route>
