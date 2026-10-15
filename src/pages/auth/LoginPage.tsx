@@ -8,8 +8,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
 import { zodResolver } from '@/lib/zodResolver'
 import { loginSchema, type LoginValues } from '@/lib/validation'
-import { isStaffRole, landingUrlForRole, surfaceForRole } from '@/lib/roles'
-import { SURFACE } from '@/lib/surface'
+import { destinationAfterLogin, isStaffRole, landingUrlForRole } from '@/lib/roles'
 import { ApiError } from '@/lib/api'
 import { useSeo } from '@/lib/useSeo'
 import { useT } from '@/i18n/LanguageContext'
@@ -50,12 +49,7 @@ export default function LoginPage() {
         needTotp ? code : undefined,
         needEmailOtp ? code : undefined,
       )
-      // Only honour the guard's "from" when this build actually holds that role's
-      // pages. A stale deep link can land an ADMIN on the partner host's /login;
-      // following "from" there would bounce them into a 404 they cannot leave,
-      // instead of sending them to the admin host.
-      const roleIsLocal = SURFACE === 'all' || surfaceForRole(user.role) === SURFACE
-      const dest = explicitFrom && roleIsLocal ? explicitFrom : landingUrlForRole(user.role)
+      const dest = destinationAfterLogin(user.role, { from: explicitFrom, needRole })
       toast.success(t('auth.login.welcomeToast'), isStaffRole(user.role) ? t('auth.login.crm') : t('auth.login.portal'))
       if (dest.startsWith('https://')) {
         // This role's pages live on another host — its routes don't exist here.

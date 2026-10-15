@@ -43,3 +43,33 @@ export const landingUrlForRole = (role: AppRole, build: Surface = SURFACE): stri
   if (build === 'all' || build === target) return path
   return `${HOST_FOR_SURFACE[target]}${path}`
 }
+
+/**
+ * Does this role satisfy the requirement a guard stated when it sent the user
+ * to /login? The labels come from WrongRoleRedirect.
+ */
+export const roleSatisfies = (role: AppRole, need: string): boolean => {
+  if (need === 'partner') return isPartnerRole(role)
+  if (need === 'staff') return isStaffRole(role)
+  if (need === 'agent') return isAgentRole(role)
+  return true
+}
+
+/**
+ * Where to send someone immediately after they sign in.
+ *
+ * A guard that refuses entry records the page it refused, so a user who then
+ * signs in with the right account lands where they were heading. But if they
+ * sign in with an account that STILL cannot get in — an admin entering their
+ * own credentials on the IB portal's login page — returning them there just
+ * bounces them back to /login, with no way out. So the remembered page is only
+ * honoured when the role actually satisfies what the guard asked for.
+ */
+export const destinationAfterLogin = (
+  role: AppRole,
+  { from, needRole, build = SURFACE }: { from?: string; needRole?: string; build?: Surface } = {},
+): string => {
+  const mayReturn = Boolean(from) && (!needRole || roleSatisfies(role, needRole))
+  const sameBuild = build === 'all' || surfaceForRole(role) === build
+  return mayReturn && sameBuild ? (from as string) : landingUrlForRole(role, build)
+}

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  destinationAfterLogin,
   isPartnerRole,
   landingPathForRole,
   landingUrlForRole,
@@ -76,5 +77,39 @@ describe('landingUrlForRole — different surface', () => {
     expect(landingUrlForRole('CLIENT', 'marketing')).toBe(
       'https://portal.27markets.com/portal/dashboard',
     )
+  })
+})
+
+describe('destinationAfterLogin', () => {
+  it('returns the user to where they were heading when their role can get in', () => {
+    expect(
+      destinationAfterLogin('PARTNER', { from: '/partner/clients', needRole: 'partner', build: 'all' }),
+    ).toBe('/partner/clients')
+  })
+
+  it('does NOT return a wrong-role user to the page that rejected them', () => {
+    // Signing in as admin on the IB portal's login page used to send them back
+    // to /partner/dashboard, where RequirePartner bounced them to /login again
+    // — an unescapable loop. They belong on the admin dashboard.
+    expect(
+      destinationAfterLogin('ADMIN', { from: '/partner/dashboard', needRole: 'partner', build: 'all' }),
+    ).toBe('/admin/dashboard')
+    expect(
+      destinationAfterLogin('CLIENT', { from: '/admin/leads', needRole: 'staff', build: 'all' }),
+    ).toBe('/portal/dashboard')
+  })
+
+  it('treats AGENT as satisfying a staff requirement', () => {
+    expect(
+      destinationAfterLogin('AGENT', { from: '/admin/leads', needRole: 'staff', build: 'all' }),
+    ).toBe('/admin/leads')
+  })
+
+  it('honours a plain "from" with no role requirement', () => {
+    expect(destinationAfterLogin('CLIENT', { from: '/portal/funds', build: 'all' })).toBe('/portal/funds')
+  })
+
+  it('falls back to the role landing page when there is no "from"', () => {
+    expect(destinationAfterLogin('PARTNER', { build: 'all' })).toBe('/partner/dashboard')
   })
 })
