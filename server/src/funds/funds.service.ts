@@ -424,6 +424,10 @@ export class FundsService {
         simulated: e.simulated,
         amount: formatMoney(clientLeg ? clientLeg.amount : toMoney(0)),
         signedAmount: formatMoney(signed),
+        // Which trading account this movement belongs to, so the portal can show
+        // history for the account the client is actually looking at. Null for
+        // entries with no client-side leg (system-only adjustments).
+        accountId: clientLeg?.ledgerAccount.tradingAccountId ?? null,
         date: e.createdAt,
         memo: e.memo,
       };

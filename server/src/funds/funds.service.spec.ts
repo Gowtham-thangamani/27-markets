@@ -168,3 +168,59 @@ describe('FundsService.transfer', () => {
     expect(Number(arg.guardBalance.atLeast)).toBe(250);
   });
 });
+
+describe('FundsService.history — which account a movement belongs to', () => {
+  it('returns the trading account id so the portal can filter history by account', async () => {
+    const { service, prisma } = makeService();
+    prisma.journalEntry = {
+      findMany: jest.fn().mockResolvedValue([
+        {
+          reference: 'TX-1',
+          kind: 'DEPOSIT',
+          status: 'POSTED',
+          simulated: true,
+          createdAt: new Date('2026-03-01'),
+          memo: null,
+          postings: [
+            // The client's own leg — this is the one that identifies the account.
+            {
+              direction: 'CREDIT',
+              amount: new Prisma.Decimal(250),
+              ledgerAccountId: 'la1',
+              ledgerAccount: { userId: 'u1', tradingAccountId: 'acct-1' },
+            },
+            // The system counter-leg, which belongs to nobody.
+            {
+              direction: 'DEBIT',
+              amount: new Prisma.Decimal(250),
+              ledgerAccountId: 'sys',
+              ledgerAccount: { userId: null, tradingAccountId: null },
+            },
+          ],
+        },
+      ]),
+    };
+
+    const rows: any = await service.history('u1');
+
+    expect(rows[0].accountId).toBe('acct-1');
+    expect(rows[0].reference).toBe('TX-1');
+  });
+
+  it('leaves accountId null when no client leg can be identified', async () => {
+    const { service, prisma } = makeService();
+    prisma.journalEntry = {
+      findMany: jest.fn().mockResolvedValue([
+        {
+          reference: 'TX-2', kind: 'FEE', status: 'POSTED', simulated: true,
+          createdAt: new Date('2026-03-02'), memo: null,
+          postings: [{ direction: 'DEBIT', amount: new Prisma.Decimal(5), ledgerAccountId: 'sys', ledgerAccount: { userId: null, tradingAccountId: null } }],
+        },
+      ]),
+    };
+
+    const rows: any = await service.history('u1');
+
+    expect(rows[0].accountId).toBeNull();
+  });
+});
