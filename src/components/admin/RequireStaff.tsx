@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { isStaffRole } from '@/lib/roles'
 import { Logo } from '@/components/Logo'
-import { RoleRedirect } from '@/components/RoleRedirect'
+import { WrongRoleRedirect } from '@/components/WrongRoleRedirect'
 
 /** Gate /admin routes behind an authenticated STAFF (Admin/Agent) session. */
 export function RequireStaff({ children }: { children: ReactNode }) {
@@ -26,7 +26,7 @@ export function RequireStaff({ children }: { children: ReactNode }) {
   }
 
   if (!isStaffRole(user.role as Parameters<typeof isStaffRole>[0])) {
-    return <RoleRedirect role={user.role} />
+    return <WrongRoleRedirect need="staff" />
   }
 
   return <>{children}</>

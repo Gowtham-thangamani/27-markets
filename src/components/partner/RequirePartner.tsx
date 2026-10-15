@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { isPartnerRole, isStaffRole } from '@/lib/roles'
 import { Logo } from '@/components/Logo'
-import { RoleRedirect } from '@/components/RoleRedirect'
+import { WrongRoleRedirect } from '@/components/WrongRoleRedirect'
 
 /** Gate /partner routes behind an authenticated PARTNER session. */
 export function RequirePartner({ children }: { children: ReactNode }) {
@@ -27,7 +27,7 @@ export function RequirePartner({ children }: { children: ReactNode }) {
 
   const role = user.role as Parameters<typeof isPartnerRole>[0]
   if (!isPartnerRole(role)) {
-    return <RoleRedirect role={role} />
+    return <WrongRoleRedirect need="partner" />
   }
 
   return <>{children}</>

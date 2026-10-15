@@ -23,7 +23,10 @@ it('redirects an unauthenticated visitor to /login', async () => {
   expect(screen.getByText('LOGIN PAGE')).toBeInTheDocument()
 })
 
-it('redirects a CLIENT away from partner routes to /portal/dashboard', async () => {
+// /partner is a URL handed to IB partners. Someone signed in with the wrong
+// role should get the chance to sign in as a partner, not be silently
+// teleported to their own dashboard as if the link were broken.
+it('offers a sign-in to a CLIENT who opens a partner route', async () => {
   vi.resetModules()
   vi.doMock('@/context/AuthContext', () => ({
     useAuth: () => ({ user: { role: 'CLIENT' }, isAuthenticated: true, loading: false }),
@@ -36,11 +39,13 @@ it('redirects a CLIENT away from partner routes to /portal/dashboard', async () 
           path="/partner/dashboard"
           element={<RequirePartner><div>PARTNER AREA</div></RequirePartner>}
         />
+        <Route path="/login" element={<div>LOGIN PAGE</div>} />
         <Route path="/portal/dashboard" element={<div>PORTAL PAGE</div>} />
       </Routes>
     </MemoryRouter>,
   )
-  expect(screen.getByText('PORTAL PAGE')).toBeInTheDocument()
+  expect(screen.getByText('LOGIN PAGE')).toBeInTheDocument()
+  expect(screen.queryByText('PORTAL PAGE')).not.toBeInTheDocument()
 })
 
 it('renders children for an authenticated PARTNER', async () => {

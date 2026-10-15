@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { isAgentRole, isAdminRole, isPartnerRole } from '@/lib/roles'
 import { Logo } from '@/components/Logo'
-import { RoleRedirect } from '@/components/RoleRedirect'
+import { WrongRoleRedirect } from '@/components/WrongRoleRedirect'
 
 /** Gate /agent routes behind an authenticated AGENT (or ADMIN, for oversight). */
 export function RequireAgent({ children }: { children: ReactNode }) {
@@ -27,7 +27,7 @@ export function RequireAgent({ children }: { children: ReactNode }) {
 
   const role = user.role
   if (!isAgentRole(role) && !isAdminRole(role)) {
-    return <RoleRedirect role={role} />
+    return <WrongRoleRedirect need="agent" />
   }
 
   return <>{children}</>

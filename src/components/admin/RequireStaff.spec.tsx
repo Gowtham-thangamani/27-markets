@@ -37,10 +37,11 @@ describe('RequireStaff', () => {
     expect(screen.getByText('ADMIN CONTENT')).toBeInTheDocument();
   });
 
-  it('redirects an authenticated non-staff user to the portal', () => {
+  it('offers a sign-in to an authenticated non-staff user', () => {
     authState = { user: { role: 'CLIENT' }, isAuthenticated: true, loading: false };
     renderAt();
-    expect(screen.getByText('PORTAL PAGE')).toBeInTheDocument();
+    expect(screen.getByText('LOGIN PAGE')).toBeInTheDocument();
+    expect(screen.queryByText('PORTAL PAGE')).not.toBeInTheDocument();
     expect(screen.queryByText('ADMIN CONTENT')).not.toBeInTheDocument();
   });
 

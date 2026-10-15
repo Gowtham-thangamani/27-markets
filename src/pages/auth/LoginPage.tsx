@@ -16,12 +16,15 @@ import { useT } from '@/i18n/LanguageContext'
 
 export default function LoginPage() {
   useSeo({ title: 'Log In — 27 Markets' })
-  const { login } = useAuth()
+  const { login, user: currentUser } = useAuth()
   const toast = useToast()
   const t = useT()
   const navigate = useNavigate()
   const location = useLocation()
   const explicitFrom = (location.state as { from?: string })?.from
+  // Set by WrongRoleRedirect when a signed-in user opens an area their role
+  // cannot enter, so we can say why they are looking at a login form.
+  const needRole = (location.state as { needRole?: string })?.needRole
 
   const [needTotp, setNeedTotp] = useState(false)
   const [needEmailOtp, setNeedEmailOtp] = useState(false)
@@ -94,6 +97,29 @@ export default function LoginPage() {
     <AuthShell>
       <h1 className="font-display text-3xl font-bold text-white">{t('auth.login.welcome')}</h1>
       <p className="mt-2 text-sm text-gray-400">{t('auth.login.sub')}</p>
+
+      {/* Explains why a signed-in user is suddenly looking at a login form.
+          Without it, being bounced here from /partner reads as a broken link. */}
+      {needRole && (
+        <div
+          role="status"
+          className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200"
+        >
+          <p>
+            That area needs {needRole === 'agent' ? 'an' : 'a'}{' '}
+            <strong className="font-semibold">{needRole}</strong> account.
+            {currentUser?.email ? ` You are signed in as ${currentUser.email}.` : ''}
+          </p>
+          {currentUser && (
+            <Link
+              to={landingUrlForRole(currentUser.role)}
+              className="mt-1 inline-block underline underline-offset-2 hover:text-amber-100"
+            >
+              Go to your own dashboard instead
+            </Link>
+          )}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4" noValidate>
         <Input
