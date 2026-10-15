@@ -21,6 +21,17 @@ export function Modal({ open, onClose, title, description, children, className }
   useBodyScrollLock(open)
   const dialogRef = useRef<HTMLDivElement>(null)
 
+  // onClose is almost always an inline arrow, so its identity changes on every
+  // render of the parent. Holding it in a ref keeps the effect below keyed on
+  // `open` alone. With onClose in the dependency list, typing into any field
+  // inside a modal re-ran the whole effect per keystroke: the cleanup restored
+  // focus to the opener and the setup moved it to the first control, so only
+  // one character ever landed before focus jumped to the close button.
+  const onCloseRef = useRef(onClose)
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
+
   // Escape to close + focus trap + restore focus to the opener.
   useEffect(() => {
     if (!open) return
@@ -34,7 +45,7 @@ export function Modal({ open, onClose, title, description, children, className }
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose()
+        onCloseRef.current()
         return
       }
       if (e.key !== 'Tab' || !dialogRef.current) return
@@ -59,7 +70,7 @@ export function Modal({ open, onClose, title, description, children, className }
       window.removeEventListener('keydown', onKey)
       opener?.focus?.()
     }
-  }, [open, onClose])
+  }, [open])
 
   return createPortal(
     <AnimatePresence>
