@@ -69,6 +69,17 @@ export default function AdminClientDetailPage() {
   if (error) return <><PageTitle title="Client" subtitle="Full profile." /><ErrorState description={error} onRetry={load} /></>
   if (!data) return <><PageTitle title="Client" subtitle="Full profile." /><div className="grid gap-4 lg:grid-cols-2"><SkeletonCard /><SkeletonCard /></div></>
 
+  // The frontend and backend deploy separately, so between the two the API can
+  // still be returning the payload from before these sections existed. Default
+  // them rather than reading .length off undefined and dropping the whole page
+  // into the error boundary — a missing section should read as empty, not break
+  // everything else on the page.
+  const accounts = data.accounts ?? []
+  const transactions = data.transactions ?? []
+  const orders = data.orders ?? []
+  const auditLog = data.auditLog ?? []
+  const tickets = data.tickets ?? []
+
   return (
     <>
       <Link to="/admin/clients" className="mb-3 inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-white">
@@ -101,9 +112,9 @@ export default function AdminClientDetailPage() {
       </Card>
 
       <div className="grid gap-4">
-        <Section title="Trading accounts" empty="No accounts opened yet." isEmpty={data.accounts.length === 0}>
+        <Section title="Trading accounts" empty="No accounts opened yet." isEmpty={accounts.length === 0}>
           <Table head={['Account', 'Type', 'Mode', 'Status', 'Balance']}>
-            {data.accounts.map((a) => (
+            {accounts.map((a) => (
               <tr key={a.id}>
                 <td className="px-3 py-2 font-mono text-white">{a.number}</td>
                 <td className="px-3 py-2 text-gray-300">{a.type}</td>
@@ -115,9 +126,9 @@ export default function AdminClientDetailPage() {
           </Table>
         </Section>
 
-        <Section title="Deposits & withdrawals" empty="No transactions yet." isEmpty={data.transactions.length === 0}>
+        <Section title="Deposits & withdrawals" empty="No transactions yet." isEmpty={transactions.length === 0}>
           <Table head={['Reference', 'Kind', 'Direction', 'Amount', 'Status', 'Date']}>
-            {data.transactions.map((t) => (
+            {transactions.map((t) => (
               <tr key={t.id}>
                 <td className="px-3 py-2 font-mono text-white">{t.reference}</td>
                 <td className="px-3 py-2 text-gray-300">{t.kind}</td>
@@ -132,9 +143,9 @@ export default function AdminClientDetailPage() {
           </Table>
         </Section>
 
-        <Section title="Trading activity" empty="No orders yet." isEmpty={data.orders.length === 0}>
+        <Section title="Trading activity" empty="No orders yet." isEmpty={orders.length === 0}>
           <Table head={['Symbol', 'Side', 'Type', 'Qty', 'Price', 'Status', 'Date']}>
-            {data.orders.map((o) => (
+            {orders.map((o) => (
               <tr key={o.id}>
                 <td className="px-3 py-2 font-medium text-white">{o.symbol}</td>
                 <td className="px-3 py-2"><Badge tone={o.side === 'BUY' ? 'success' : 'danger'}>{o.side}</Badge></td>
@@ -148,9 +159,9 @@ export default function AdminClientDetailPage() {
           </Table>
         </Section>
 
-        <Section title="Activity & audit" empty="No activity recorded yet." isEmpty={data.auditLog.length === 0}>
+        <Section title="Activity & audit" empty="No activity recorded yet." isEmpty={auditLog.length === 0}>
           <Table head={['Action', 'Entity', 'IP', 'When']}>
-            {data.auditLog.map((a) => (
+            {auditLog.map((a) => (
               <tr key={a.id}>
                 <td className="px-3 py-2 font-mono text-white">{a.action}</td>
                 <td className="px-3 py-2 text-gray-300">{a.entity ?? '—'}</td>
@@ -161,9 +172,9 @@ export default function AdminClientDetailPage() {
           </Table>
         </Section>
 
-        <Section title="Support tickets" empty="No tickets raised." isEmpty={data.tickets.length === 0}>
+        <Section title="Support tickets" empty="No tickets raised." isEmpty={tickets.length === 0}>
           <Table head={['Subject', 'Status', 'Updated']}>
-            {data.tickets.map((t) => (
+            {tickets.map((t) => (
               <tr key={t.id}>
                 <td className="px-3 py-2 text-white">{t.subject}</td>
                 <td className="px-3 py-2 text-gray-300">{t.status}</td>

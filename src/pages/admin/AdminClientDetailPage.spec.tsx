@@ -81,3 +81,21 @@ describe('AdminClientDetailPage', () => {
     expect(await screen.findByRole('button', { name: /try again|retry/i })).toBeInTheDocument()
   })
 })
+
+describe('AdminClientDetailPage — tolerating an older API', () => {
+  it('still renders when the API omits the new sections', async () => {
+    // The frontend and backend deploy independently. Between the two, the API
+    // returns the pre-profile payload with no transactions/orders/auditLog/lead.
+    // Reading .length on those crashed the page into the error boundary.
+    const { transactions, orders, auditLog, lead, ...legacy } = base
+    void transactions; void orders; void auditLog; void lead
+    vi.mocked(adminApi.getClient).mockResolvedValue(legacy as never)
+
+    renderPage()
+
+    expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument()
+    expect(screen.getByText(/no transactions/i)).toBeInTheDocument()
+    expect(screen.getByText(/no orders/i)).toBeInTheDocument()
+    expect(screen.getByText(/no activity recorded/i)).toBeInTheDocument()
+  })
+})
