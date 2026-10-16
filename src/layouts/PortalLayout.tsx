@@ -5,6 +5,7 @@ import { SidebarContent } from '@/components/portal/Sidebar'
 import { Topbar } from '@/components/portal/Topbar'
 import { OpenAccountModal } from '@/components/portal/OpenAccountModal'
 import { VerifyEmailBanner } from '@/components/portal/VerifyEmailBanner'
+import { LoadErrorBanner } from '@/components/portal/LoadErrorBanner'
 import { useBodyScrollLock } from '@/lib/hooks'
 
 interface PortalUIContextValue {
@@ -72,6 +73,7 @@ export function PortalLayout() {
           <main id="portal-scroll" tabIndex={-1} className="flex-1 overflow-y-auto outline-none">
             <div className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8">
               <VerifyEmailBanner />
+              <LoadErrorBanner />
               <Outlet />
               <p className="mt-10 border-t border-white/[0.06] pt-5 text-[11px] leading-relaxed text-gray-500">
                 <span className="font-semibold text-gray-400">Risk warning:</span> Trading leveraged

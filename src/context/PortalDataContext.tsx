@@ -81,23 +81,43 @@ export function PortalDataProvider({ children }: { children: ReactNode }) {
   // Which account the dashboard shows — persisted so a refresh keeps the choice.
   const [selectedAccountId, setSelectedAccountId] = useLocalStorage<string | null>('apex.selectedAccountId', null)
 
+  /**
+   * Each endpoint is settled independently. With Promise.all, one rejection
+   * skipped every setState after it: a failing /funds/history left `accounts`
+   * at [], so the Accounts page told a client "No accounts yet" while the
+   * server was refusing to open a sixth demo account because they already had
+   * five. Whatever loads is shown; `error` says the rest didn't.
+   */
   const refresh = useCallback(async () => {
     if (!isAuthenticated) return
     setLoading(true)
     setError(null)
     try {
-      const [accs, txs, kycStatus, notifs] = await Promise.all([
+      const [accs, txs, kycStatus, notifs] = await Promise.allSettled([
         api.get<ApiAccount[]>('/accounts'),
         api.get<ApiTransaction[]>('/funds/history'),
         api.get<ApiKycStatus>('/kyc'),
-        api.get<NotificationItem[]>('/notifications').catch(() => [] as NotificationItem[]),
+        api.get<NotificationItem[]>('/notifications'),
       ])
-      setAccounts(accs.map(mapAccount))
-      setTransactions(txs.map(mapTransaction))
-      setKyc(mapKyc(kycStatus))
-      setNotifications(notifs)
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Failed to load portal data')
+      if (accs.status === 'fulfilled') setAccounts(accs.value.map(mapAccount))
+      if (txs.status === 'fulfilled') setTransactions(txs.value.map(mapTransaction))
+      if (kycStatus.status === 'fulfilled') setKyc(mapKyc(kycStatus.value))
+      if (notifs.status === 'fulfilled') setNotifications(notifs.value)
+
+      // Notifications are cosmetic — their absence is not worth alarming anyone.
+      const failed = [accs, txs, kycStatus].filter((r) => r.status === 'rejected')
+      const first = failed[0] as PromiseRejectedResult | undefined
+      setError(
+        first
+          ? first.reason instanceof ApiError
+            ? first.reason.message
+            : 'Failed to load portal data'
+          : null,
+      )
+    } catch {
+      // allSettled cannot reject, so this is a mapper bug rather than the
+      // network. Still surface it instead of leaving a silent empty portal.
+      setError('Failed to load portal data')
     } finally {
       setLoading(false)
     }

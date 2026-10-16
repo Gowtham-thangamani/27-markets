@@ -35,6 +35,31 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
   }) as MediaQueryList;
 }
 
+// Node 25 ships its own partial `localStorage` global, which shadows jsdom's
+// and has no clear()/key() — so `localStorage.clear()` in a beforeEach throws
+// "is not a function" and takes the whole spec file down with it. Install a
+// complete in-memory implementation on window so tests get the browser API.
+if (typeof window !== 'undefined') {
+  const store = new Map<string, string>();
+  const shim: Storage = {
+    get length() {
+      return store.size;
+    },
+    key: (i: number) => [...store.keys()][i] ?? null,
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, String(v)),
+    removeItem: (k: string) => void store.delete(k),
+    clear: () => store.clear(),
+  };
+  for (const target of [window, globalThis]) {
+    Object.defineProperty(target, 'localStorage', {
+      value: shim,
+      configurable: true,
+      writable: true,
+    });
+  }
+}
+
 // jsdom lacks ResizeObserver, used by recharts ResponsiveContainer.
 class MockResizeObserver {
   observe() {}

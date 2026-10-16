@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { Plus, Copy, Wallet } from 'lucide-react'
-import { Badge, Button, EmptyState } from '@/components/ui'
+import { Badge, Button, EmptyState, ErrorState } from '@/components/ui'
 import { PageTitle } from '@/components/portal/PageTitle'
 import { statusTone } from '@/components/portal/statusTone'
 import { usePortalUI } from '@/layouts/PortalLayout'
@@ -10,7 +10,7 @@ import { formatCurrency, formatDate } from '@/lib/format'
 import { fadeUp, staggerContainer } from '@/lib/motion'
 
 export default function PortalAccountsPage() {
-  const { accounts } = usePortalData()
+  const { accounts, error, refresh } = usePortalData()
   const { openNewAccount } = usePortalUI()
   const toast = useToast()
 
@@ -31,7 +31,16 @@ export default function PortalAccountsPage() {
         }
       />
 
-      {accounts.length === 0 ? (
+      {/* An empty list only means "no accounts" when the load actually
+          succeeded. Showing the empty state after a failure told clients with
+          five demo accounts that they had none. */}
+      {accounts.length === 0 && error ? (
+        <ErrorState
+          title="Could not load your accounts"
+          description={`${error} Your accounts have not been changed.`}
+          onRetry={() => void refresh()}
+        />
+      ) : accounts.length === 0 ? (
         <EmptyState
           icon={Wallet}
           title="No accounts yet"
