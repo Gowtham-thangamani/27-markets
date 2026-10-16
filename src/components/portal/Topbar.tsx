@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Button, Badge } from '@/components/ui'
 import { Dropdown, DropdownItem } from '@/components/ui/Dropdown'
 import { SwitchAccountModal } from '@/components/SwitchAccountModal'
+import { AccountSwitcher } from '@/components/portal/AccountSwitcher'
 import { useAuth } from '@/context/AuthContext'
 import { usePortalData } from '@/context/PortalDataContext'
 import { initials, formatDateTime } from '@/lib/format'
@@ -37,6 +38,7 @@ export function Topbar({ onOpenSidebar, onOpenAccount }: TopbarProps) {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
+        <AccountSwitcher />
         {canSwitchToPartner && (
           <Button
             size="sm"

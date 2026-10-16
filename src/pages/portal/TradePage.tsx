@@ -14,6 +14,7 @@ import { ApiError } from '@/lib/api'
 import { tradingApi, type OrderSide, type OrderType, type OrderStatus, type Order, type Position, type Margin } from '@/lib/tradingApi'
 import { useTradeInstruments } from '@/lib/useTradeInstruments'
 import { formatCurrency } from '@/lib/format'
+import { preferredAccountId } from '@/lib/accounts'
 import { cn } from '@/lib/cn'
 
 const ORDER_TYPES: { value: OrderType; label: string }[] = [
@@ -38,7 +39,7 @@ function Stat({ label, value, tone = 'neutral' }: { label: string; value: string
 const fmtNum = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 export default function TradePage() {
-  const { accounts } = usePortalData()
+  const { accounts, selectedAccountId } = usePortalData()
   const { openNewAccount } = usePortalUI()
   const toast = useToast()
   const { quotes } = useLiveQuotes()
@@ -128,8 +129,10 @@ export default function TradePage() {
   }, [load])
 
   useEffect(() => {
-    if (!accountId && demoAccounts[0]) setAccountId(demoAccounts[0].id)
-  }, [demoAccounts, accountId])
+    // Trade only operates on demo accounts, so honour the global selection
+    // when it is one and fall back to the first demo account when it is not.
+    if (!accountId) setAccountId(preferredAccountId(demoAccounts, selectedAccountId))
+  }, [demoAccounts, accountId, selectedAccountId])
 
   // Follow the ?symbol= in the URL (e.g. arriving from a market card / preview).
   useEffect(() => {

@@ -114,27 +114,15 @@ export default function DashboardPage() {
         </Link>
       )}
 
-      {/* ── Account switcher — pick which account the dashboard reflects ── */}
-      {accounts.length > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-3">
-          <label htmlFor="dashboard-account" className="text-xs uppercase tracking-wide text-gray-500">
-            Account
-          </label>
-          <select
-            id="dashboard-account"
-            value={selectedAccountId ?? ''}
-            onChange={(e) => selectAccount(e.target.value)}
-            className="rounded-lg border border-white/10 bg-ink-800 px-3 py-1.5 text-sm text-gray-200"
-          >
-            {accounts.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.number} · {a.type} · {a.mode}
-              </option>
-            ))}
-          </select>
-          {selectedAccount && (
-            <Badge tone={selectedAccount.mode === 'Live' ? 'success' : 'neutral'}>{selectedAccount.mode}</Badge>
-          )}
+      {/* The account picker lives in the topbar now, so one choice drives every
+          page instead of only this one. */}
+      {selectedAccount && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-gray-400">
+          <span className="text-xs uppercase tracking-wide text-gray-500">Showing</span>
+          <span className="font-medium text-white">{selectedAccount.number}</span>
+          <Badge tone={selectedAccount.mode === 'Live' ? 'success' : 'neutral'}>
+            {selectedAccount.mode}
+          </Badge>
         </div>
       )}
 

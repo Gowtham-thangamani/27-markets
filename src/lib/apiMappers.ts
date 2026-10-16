@@ -77,6 +77,8 @@ export interface ApiTransaction {
   simulated: boolean
   amount: string
   signedAmount: string
+  /** Absent on an API older than the per-account history change. */
+  accountId?: string | null
   date: string
   memo?: string | null
 }
@@ -137,6 +139,7 @@ export function mapTransaction(t: ApiTransaction): Transaction {
     currency: 'USD',
     status: txStatusFromApi[t.status] ?? 'Completed',
     account: '',
+    accountId: t.accountId ?? null,
     date: t.date,
   }
 }

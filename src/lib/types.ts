@@ -31,6 +31,8 @@ export interface Transaction {
   currency: string
   status: TxStatus
   account: string
+  /** Trading account this movement belongs to; null for system-only entries. */
+  accountId: string | null
   date: string
 }
 

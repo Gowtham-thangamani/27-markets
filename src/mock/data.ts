@@ -85,12 +85,12 @@ export const seedAccounts: TradingAccount[] = [
 ]
 
 export const seedTransactions: Transaction[] = [
-  { id: 'TX-90412', kind: 'Deposit', method: 'Bank Transfer', amount: 5000, currency: 'USD', status: 'Completed', account: '21001234', date: '2026-06-18T12:30:00Z' },
-  { id: 'TX-90388', kind: 'Withdrawal', method: 'Credit / Debit Card', amount: 1200, currency: 'USD', status: 'Pending', account: '21005678', date: '2026-06-17T09:12:00Z' },
-  { id: 'TX-90355', kind: 'Deposit', method: 'Crypto (USDT)', amount: 2500, currency: 'USD', status: 'Completed', account: '21001234', date: '2026-06-15T16:48:00Z' },
-  { id: 'TX-90299', kind: 'Transfer', method: 'Internal Transfer', amount: 800, currency: 'USD', status: 'Completed', account: '21009876', date: '2026-06-12T10:05:00Z' },
-  { id: 'TX-90187', kind: 'Deposit', method: 'E-Wallet (Skrill)', amount: 3000, currency: 'USD', status: 'Completed', account: '21005678', date: '2026-06-08T14:20:00Z' },
-  { id: 'TX-90055', kind: 'Withdrawal', method: 'Bank Transfer', amount: 600, currency: 'USD', status: 'Failed', account: '21001234', date: '2026-06-03T18:00:00Z' },
+  { id: 'TX-90412', kind: 'Deposit', method: 'Bank Transfer', amount: 5000, currency: 'USD', status: 'Completed', account: '21001234', accountId: '21001234', date: '2026-06-18T12:30:00Z' },
+  { id: 'TX-90388', kind: 'Withdrawal', method: 'Credit / Debit Card', amount: 1200, currency: 'USD', status: 'Pending', account: '21005678', accountId: '21005678', date: '2026-06-17T09:12:00Z' },
+  { id: 'TX-90355', kind: 'Deposit', method: 'Crypto (USDT)', amount: 2500, currency: 'USD', status: 'Completed', account: '21001234', accountId: '21001234', date: '2026-06-15T16:48:00Z' },
+  { id: 'TX-90299', kind: 'Transfer', method: 'Internal Transfer', amount: 800, currency: 'USD', status: 'Completed', account: '21009876', accountId: '21009876', date: '2026-06-12T10:05:00Z' },
+  { id: 'TX-90187', kind: 'Deposit', method: 'E-Wallet (Skrill)', amount: 3000, currency: 'USD', status: 'Completed', account: '21005678', accountId: '21005678', date: '2026-06-08T14:20:00Z' },
+  { id: 'TX-90055', kind: 'Withdrawal', method: 'Bank Transfer', amount: 600, currency: 'USD', status: 'Failed', account: '21001234', accountId: '21001234', date: '2026-06-03T18:00:00Z' },
 ]
 
 export const seedKyc: KycStep[] = [

@@ -27,6 +27,7 @@ import { transferSchema } from '@/lib/validation'
 import { useAppSettings } from '@/lib/useAppSettings'
 import { useIdempotencyKey } from '@/lib/idempotency'
 import { formatCurrency, formatDateTime } from '@/lib/format'
+import { preferredAccountId } from '@/lib/accounts'
 import { fundingStatusLabel } from '@/lib/fundingStatus'
 import { z } from 'zod'
 
@@ -126,7 +127,7 @@ const methodStatusBadge = (s: DepositMethod['status']) =>
 const reqStatusTone = (s: DepositRequestRow['status']) => (s === 'APPROVED' ? 'success' : s === 'REJECTED' ? 'danger' : 'warning')
 
 function DepositTab() {
-  const { accounts, deposit } = usePortalData()
+  const { accounts, deposit, selectedAccountId } = usePortalData()
   const idem = useIdempotencyKey()
   const toast = useToast()
   const { minDeposit } = useAppSettings()
@@ -161,7 +162,7 @@ function DepositTab() {
   const open = (m: DepositMethod) => {
     if (m.status === 'unavailable') return
     setActive(m)
-    setAccountId(liveAccounts[0]?.id ?? '')
+    setAccountId(preferredAccountId(liveAccounts, selectedAccountId))
     setAmount('')
     setAsset(m.assets?.[0]?.symbol ?? '')
     setInstructions(null) // shown only after a request is submitted
@@ -331,7 +332,7 @@ interface SavedCardRow {
 }
 
 function SavedCards() {
-  const { accounts } = usePortalData()
+  const { accounts, selectedAccountId } = usePortalData()
   const { minDeposit } = useAppSettings()
   const idem = useIdempotencyKey()
   const toast = useToast()
@@ -389,7 +390,7 @@ function SavedCards() {
 
   const openDeposit = (c: SavedCardRow) => {
     setDepCard(c)
-    setAccountId(live[0]?.id ?? '')
+    setAccountId(preferredAccountId(live, selectedAccountId))
     setAmount('')
   }
   const doDeposit = async () => {
@@ -476,7 +477,7 @@ function SavedCards() {
 }
 
 function WithdrawTab() {
-  const { accounts, transactions, refresh } = usePortalData()
+  const { accounts, transactions, refresh, selectedAccountId } = usePortalData()
   const idem = useIdempotencyKey()
   const toast = useToast()
   const liveAccounts = accounts.filter((a) => a.mode === 'Live')
@@ -498,8 +499,8 @@ function WithdrawTab() {
   const [onboarding, setOnboarding] = useState(false)
 
   useEffect(() => {
-    if (!accountId && liveAccounts[0]) setAccountId(liveAccounts[0].id)
-  }, [liveAccounts, accountId])
+    if (!accountId) setAccountId(preferredAccountId(liveAccounts, selectedAccountId))
+  }, [liveAccounts, accountId, selectedAccountId])
 
   useEffect(() => {
     api
@@ -703,7 +704,9 @@ function TransferTab() {
 }
 
 function HistoryTab() {
-  const { transactions } = usePortalData()
+  // Scoped to the selected account, so the history matches the account the
+  // rest of the portal is showing.
+  const { transactionsForSelected: transactions } = usePortalData()
 
   if (transactions.length === 0) {
     return <EmptyState icon={History} title="No transactions yet" description="Your deposits, withdrawals, and transfers will appear here." />

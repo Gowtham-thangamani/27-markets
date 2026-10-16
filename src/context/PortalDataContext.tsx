@@ -10,6 +10,7 @@ import {
   type ApiKycStatus,
   type ApiTransaction,
 } from '@/lib/apiMappers'
+import { transactionsForAccount } from '@/lib/accounts'
 import { useAuth } from './AuthContext'
 import { track } from '@/lib/analytics'
 import { useLocalStorage } from '@/lib/hooks'
@@ -42,6 +43,8 @@ interface TransferInput {
 interface PortalDataValue {
   accounts: TradingAccount[]
   transactions: Transaction[]
+  /** `transactions` narrowed to the selected account — what the portal shows. */
+  transactionsForSelected: Transaction[]
   kyc: KycStep[]
   tickets: SupportTicket[]
   notifications: NotificationItem[]
@@ -153,6 +156,11 @@ export function PortalDataProvider({ children }: { children: ReactNode }) {
     [setSelectedAccountId],
   )
 
+  const transactionsForSelected = useMemo(
+    () => transactionsForAccount(transactions, selectedAccountId),
+    [transactions, selectedAccountId],
+  )
+
   // The dashboard reflects whichever account is selected, not an aggregate —
   // switching accounts changes what's shown.
   const totals = useMemo(() => {
@@ -258,6 +266,7 @@ export function PortalDataProvider({ children }: { children: ReactNode }) {
       value={{
         accounts,
         transactions,
+        transactionsForSelected,
         kyc,
         tickets,
         notifications,

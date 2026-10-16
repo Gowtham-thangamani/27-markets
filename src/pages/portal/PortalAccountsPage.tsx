@@ -10,7 +10,7 @@ import { formatCurrency, formatDate } from '@/lib/format'
 import { fadeUp, staggerContainer } from '@/lib/motion'
 
 export default function PortalAccountsPage() {
-  const { accounts, error, refresh } = usePortalData()
+  const { accounts, error, refresh, selectedAccountId, selectAccount } = usePortalData()
   const { openNewAccount } = usePortalUI()
   const toast = useToast()
 
@@ -55,11 +55,28 @@ export default function PortalAccountsPage() {
           className="grid gap-4 md:grid-cols-2"
         >
           {accounts.map((a) => (
-            <motion.div key={a.id} variants={fadeUp} className="glass-panel card-lift p-5">
+            <motion.div
+              key={a.id}
+              variants={fadeUp}
+              className={`glass-panel card-lift p-5 ${
+                a.id === selectedAccountId ? 'ring-1 ring-brand-500/40' : ''
+              }`}
+            >
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-display text-lg font-bold text-white">{a.number}</h3>
+                    {a.id === selectedAccountId ? (
+                      <Badge tone="brand">Active</Badge>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => selectAccount(a.id)}
+                        className="rounded-md border border-white/10 px-2 py-0.5 text-[11px] font-medium text-gray-400 transition-colors hover:border-brand-500/40 hover:text-brand-300"
+                      >
+                        Switch to
+                      </button>
+                    )}
                     <button
                       onClick={() => copy(a.number)}
                       className="text-gray-500 hover:text-white"
