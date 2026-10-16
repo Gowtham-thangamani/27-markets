@@ -79,12 +79,34 @@ describe('PartnersService.approve', () => {
     expect(email.sendNotification).toHaveBeenCalledWith('p@x.io', expect.objectContaining({ firstName: 'Pat' }));
   });
 
-  it('rejects when the existing account already has a partner profile (409)', async () => {
+  it('resolves an application from someone who is already a partner, without a second profile', async () => {
+    // This used to throw 409 on every attempt, which left the application
+    // PENDING forever: approving was impossible and rejecting would file a
+    // false record against a real partner. Approving is now idempotent — it
+    // closes the application against the profile they already have.
     const { prisma, audit, config } = deps();
-    prisma.user.findUnique.mockResolvedValue({ id: 'existing', role: 'CLIENT', partnerProfile: { id: 'pp1' } });
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'existing',
+      role: 'CLIENT',
+      partnerProfile: { id: 'pp1', referralCode: 'EXISTING' },
+    });
+    const email = { sendNotification: jest.fn().mockResolvedValue(undefined) };
     const { PartnersService } = require('./partners.service');
-    const service = new PartnersService(prisma, audit, config, { sendNotification: jest.fn().mockResolvedValue(undefined) } as any);
-    await expect(service.approve('admin1', 'app1')).rejects.toBeInstanceOf(ConflictException);
+    const service = new PartnersService(prisma, audit, config, email as any);
+
+    const res = await service.approve('admin1', 'app1');
+
+    expect(res).toEqual({ ok: true, referralCode: 'EXISTING', inviteUrl: null });
+    expect(prisma.partnerProfile.create).not.toHaveBeenCalled();
+    expect(prisma.user.create).not.toHaveBeenCalled();
+    expect(prisma.partnerApplication.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'app1' },
+        data: expect.objectContaining({ status: 'APPROVED', resultingUserId: 'existing' }),
+      }),
+    );
+    // Nothing changed for them, so no "you're approved" email.
+    expect(email.sendNotification).not.toHaveBeenCalled();
   });
 
   it('rejects when the existing account is staff (409)', async () => {

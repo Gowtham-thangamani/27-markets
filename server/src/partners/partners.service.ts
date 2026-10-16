@@ -77,10 +77,35 @@ export class PartnersService {
     const email = app.email.toLowerCase();
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
-      include: { partnerProfile: { select: { id: true } } },
+      include: { partnerProfile: { select: { id: true, referralCode: true } } },
     });
+    // Already a partner — almost always a second application from someone who
+    // forgot they had one. A second profile is not an option (one referral code
+    // per account, or the commission tree forks), but neither is leaving this
+    // PENDING: approving threw 409 every time and rejecting would file a false
+    // record against a legitimate partner, so the queue had no way out at all.
+    // Resolve the application against the profile they already have instead.
     if (existingUser?.partnerProfile) {
-      throw new ConflictException('This account already has an IB partner profile');
+      await this.prisma.partnerApplication.update({
+        where: { id },
+        data: {
+          status: PartnerApplicationStatus.APPROVED,
+          reviewedAt: new Date(),
+          reviewedById: adminId,
+          resultingUserId: existingUser.id,
+          notes: 'Already an IB partner — resolved against the existing profile.',
+        },
+      });
+      await this.audit.record({
+        userId: adminId,
+        action: 'partner.application.approve',
+        entity: 'PartnerApplication',
+        entityId: id,
+        metadata: { alreadyPartner: true, referralCode: existingUser.partnerProfile.referralCode },
+      });
+      // No email — nothing changed for them, and a second "you're approved"
+      // would be confusing.
+      return { ok: true, referralCode: existingUser.partnerProfile.referralCode, inviteUrl: null };
     }
     // Staff applying under their own email is unusual enough to need a human
     // to sort out manually, rather than silently attaching partner capability.
